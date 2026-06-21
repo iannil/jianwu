@@ -1,0 +1,105 @@
+schema_version: 1
+id: diagnosis-decoding-breakthrough
+name:
+  zh: 诊断-解码-破局型
+  en: Diagnosis-Decoding-Breakthrough
+description: |
+  适用于揭示一个被普遍误解或忽视的隐性机制（通常是某种权力结构、博弈规则、
+  或系统性陷阱），帮助读者看清现实、理解底层逻辑、并找到行动路径。
+  三部或四部构成"症状 → 机制 → 语境 → 反制"的完整闭环。
+when_to_use:
+  goals:
+    - understanding
+    - decision-making
+  topic_types:
+    - power-structure
+    - social-mechanism
+    - strategic-game
+    - organizational-behavior
+  audience_fit:
+    - practitioner
+    - strategist
+    - advanced-general
+  not_recommended_for:
+    - purely-technical
+    - purely-academic
+    - positive-narrative
+parts:
+  - role: diagnosis
+    title_template:
+      zh: "第{n}部 诊断——{subtitle}"
+      en: "Part {n}. Diagnosis — {subtitle}"
+    guidance: |
+      这一部让读者"看见那堵看不见的墙"。
+      写作策略：开篇用一个具象故事或典型案例（人物化、场景化）钩住读者，
+      然后剖开表象，暴露出隐藏的分层、规则或权力结构。
+      避免：抽象理论先行；要让读者先有"被击中"的体验再给概念。
+      允许：故事化叙述、强烈对比、犀利判断。
+    typical_chapters: [2, 4]
+    chapter_role_hints:
+      - "引子章：用一个具体人物/事件钩住读者（典型如李默/陈凯式对比）"
+      - "命名章：给隐性机制命名（如'评估异化'、'隐形分层'）"
+      - "症候章：列举机制的多种表象症状"
+  - role: decoding
+    title_template:
+      zh: "第{n}部 解码——{subtitle}"
+      en: "Part {n}. Decoding — {subtitle}"
+    guidance: |
+      这一部解码机制的底层逻辑——它由哪些组件构成，靠什么运转。
+      通常会引入一个核心隐喻（如"组织机器"、"漏斗"、"热带草原"）作为承载。
+      避免：纯学术术语堆砌；隐喻要可触可感。
+      允许：分类学（如把组织分成几种"机器类型"）。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "隐喻章：引入一个核心隐喻承载整套解码逻辑"
+      - "分类章：把机制拆成若干子类型或组件"
+      - "动力章：分析机制如何自我强化、如何扩张"
+  - role: context
+    title_template:
+      zh: "第{n}部 {context_name}——{subtitle}"
+      en: "Part {n}. {context_name} — {subtitle}"
+    guidance: |
+      这一部（可选）把机制放到更大的语境中考察（商业、地缘、历史等）。
+      帮助读者看到"这不是个例，而是普遍模式"。
+      多个语境部可以并列（如 forced-convergence 的"商业丛林"+"大国博弈"）。
+      避免：脱离核心机制的发散；要扣住主轴。
+      允许：跨尺度类比（从个体到组织到国家）。
+    typical_chapters: [2, 4]
+    chapter_role_hints:
+      - "语境章：把机制放到一个新尺度/新场域中重演"
+      - "对照章：跨语境对比，凸显机制的不变性"
+    conditional: true
+    skip_when: "主题本身就是单一语境（如只谈组织内部），无需展开"
+  - role: breakthrough
+    title_template:
+      zh: "第{n}部 破局——{subtitle}"
+      en: "Part {n}. Breakthrough — {subtitle}"
+    guidance: |
+      这一部给读者行动路径。不是空洞的"加油努力"，而是基于前面的解码给出
+      具体可执行的策略、心法、检查清单。
+      避免：脱离前文的鸡汤式激励；策略要扣住解码出来的机制漏洞。
+      允许：实战建议、风险提示、长期视角。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "诊断章：让读者先自检（你在哪一层？你处于什么位置？）"
+      - "策略章：给出 2-3 套差异化生存策略"
+      - "退出章：长期视角下的退出/转型路径"
+examples:
+  - slug: silent-games
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/practices/silent-games/
+    fit_score: 0.95
+    note: 标准三部范本（诊断/解码/破局）
+  - slug: forced-convergence
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/practices/forced-convergence/
+    fit_score: 0.92
+    note: 四部扩展版（多了 context 部，分别讲商业与地缘）
+metadata:
+  extracted_from: zhurongshuo-corpus-v1
+  extracted_at: 2026-06-21
+  author: jianwu+human
+  notes: |
+    核心结构源自 silent-games（三部）与 forced-convergence（四部）的共同模式。
+    context 部是可选的，根据主题复杂度决定是否插入。
+    关键识别特征：以"揭示一个被忽视的隐性机制"为驱动，叙事性强，故事化开篇。

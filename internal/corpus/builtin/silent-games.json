@@ -1,0 +1,67 @@
+{
+  "slug": "silent-games",
+  "title": {
+    "zh": "无声对局：大型组织的隐形分层与晋升逻辑",
+    "en": "Silent Games: The Invisible Stratification and Promotion Logic in Large Organizations"
+  },
+  "subtitle": null,
+  "archetype": "diagnosis-decoding-breakthrough",
+  "audience": "practitioner",
+  "depth": "intermediate",
+  "goal": "decision-making",
+  "length": "medium",
+  "language": ["zh", "en"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/practices/silent-games/",
+    "accessed_at": "2026-06-21"
+  },
+  "abstract": "用人物化叙事剖开大型组织的隐形分层，揭示「执行者」与「诠释者」两种物种的分化逻辑，给出三大生存战略。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "第一部分：诊断——看见那堵无形的墙",
+        "en": "Part I: Diagnosis — Seeing the Invisible Wall"
+      },
+      "role": "diagnosis",
+      "intro": "用李默/陈凯式人物对比让读者看见职场分层的真相，命名「执行者/诠释者」两种物种。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第一章：分层的真相：组织里的\"两个物种\"", "en": "Chapter 1: The Truth of Stratification" }, "abstract": "用角马迁徙隐喻开篇，剖开组织内的生态位分化，命名两种物种。" },
+        { "index": 2, "title": { "zh": "第二章：第一层分界线——信息差", "en": "Chapter 2: Information Asymmetry" }, "abstract": "揭示执行指令与决策背景之间的信息差如何决定职场命运。" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "第二部分：解码——三种\"组织机器\"的底层逻辑",
+        "en": "Part II: Decoding — The Underlying Logic of Three Organizational Machines"
+      },
+      "role": "decoding",
+      "intro": "引入「组织机器」核心隐喻，解码不同类型组织的底层运行逻辑。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第三章：稳定型机器——央企国企的生存法则", "en": null }, "abstract": "解码以稳定为最高法则的组织机器的运行机制与晋升逻辑。" },
+        { "index": 2, "title": { "zh": "第四章：增长型机器——民企外企的加速赛道", "en": null }, "abstract": "解码以增长为最高法则的组织机器，分析其加速与耗竭机制。" },
+        { "index": 3, "title": { "zh": "第五章：颠覆型机器——科技公司的物种演化", "en": null }, "abstract": "解码以颠覆为最高法则的组织机器，分析其在 AGI 时代的演化路径。" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "第三部分：破局——个体的三大生存战略",
+        "en": "Part III: Breakthrough — Three Survival Strategies"
+      },
+      "role": "breakthrough",
+      "intro": "给读者三大差异化生存战略——进入上升轨道、借船出海、打造救生艇。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第六章：寻找并进入上升轨道", "en": null }, "abstract": "如何识别组织的核心动力轨道并主动进入。" },
+        { "index": 2, "title": { "zh": "第七章：把组织当资源平台——借船出海", "en": null }, "abstract": "如何在岗位内累积可迁移的体系外能力。" },
+        { "index": 3, "title": { "zh": "第八章：打造救生艇——体系外能力的长期构建", "en": null }, "abstract": "如何为随时离开做准备——个人品牌、副业、独立作品。" }
+      ]
+    }
+  ],
+  "extracted_by": "ai-assisted",
+  "extracted_at": "2026-06-21",
+  "extraction_confidence": "high",
+  "notes": "诊断-解码-破局原型的标准三部范本。叙事性最强，开篇人物化钩子是关键识别特征。"
+}

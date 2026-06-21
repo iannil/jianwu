@@ -1,0 +1,107 @@
+schema_version: 1
+id: foundations-application-practice
+name:
+  zh: 基础-应用-实战型
+  en: Foundations-Application-Practice
+description: |
+  适用于需要系统化传授一个技术或专业技能领域的工程性图书。
+  从最基础的内功（语言、工具、概念）出发，走到核心能力构建，再到高级进阶与综合实战。
+  兼顾理论的严谨与工程的实操，目标是把读者从入门带到能独立交付工业级产出。
+when_to_use:
+  goals:
+    - practical-skill
+    - mastery
+  topic_types:
+    - technical
+    - engineering
+    - tooling
+    - methodology
+  audience_fit:
+    - beginner-to-intermediate
+    - career-switcher
+    - upgrader
+  not_recommended_for:
+    - purely-philosophical
+    - strategic-decision-making
+    - cultural-critique
+parts:
+  - role: foundations
+    title_template:
+      zh: "第{n}篇 基础{subtitle}篇——{focus}"
+      en: "Part {n}. Foundations — {focus}"
+    guidance: |
+      这一篇打地基。覆盖后续学习必需的前置知识（语言、工具链、核心概念、工程规范）。
+      写作策略：假设读者是新手但聪明；快速但完整地建立认知骨架。
+      避免：跳跃式假设读者已懂；要让基础稳固。
+      允许：图示、代码示例、对照表、动手练习。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "环境章：开发环境、工具链、第一个 hello world"
+      - "语言章：核心语言特性与工程化写法"
+      - "概念章：本领域核心概念的直觉化解释"
+      - "规范章：工程规范、调试方法、协作基础"
+  - role: application
+    title_template:
+      zh: "第{n}篇 核心{subtitle}篇——{focus}"
+      en: "Part {n}. Core Capabilities — {focus}"
+    guidance: |
+      这一篇是全书的心脏。覆盖本领域当前最重要的能力（如 LLM 时代的微调/RAG/Agent）。
+      写作策略：理论与实践并重，每个关键点都配代码或操作步骤。
+      避免：仅讲理论不讲实现；要让读者能跟着做出来。
+      允许：完整代码块、架构图、决策树、踩坑提示。
+    typical_chapters: [4, 6]
+    chapter_role_hints:
+      - "原理章：核心技术的原理与直觉（用类比/图示）"
+      - "实现章：从零到一实现一次（带注释代码）"
+      - "工程章：生产化注意事项、常见陷阱、性能权衡"
+      - "项目章：一个小型但完整的实战项目"
+  - role: advanced
+    title_template:
+      zh: "第{n}篇 高级{subtitle}篇——{focus}"
+      en: "Part {n}. Advanced — {focus}"
+    guidance: |
+      这一篇带读者从"合格"走向"卓越"。覆盖性能优化、规模化、深度专题、前沿话题。
+      写作策略：假设读者已掌握前篇内容；提供差异化的深度与视野。
+      避免：和前篇重复；要明显跨上一个台阶。
+      允许：性能剖析、集群方案、对比基准、研究性话题。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "优化章：性能/成本/规模的优化方法论与实操"
+      - "深度章：某一专题的深度展开（如知识图谱、推理加速）"
+      - "前瞻章：领域前沿与未来 1-3 年趋势"
+  - role: capstone
+    title_template:
+      zh: "第{n}部分 实战{subtitle}——{focus}"
+      en: "Part {n}. Capstone — {focus}"
+    guidance: |
+      这一部（可选）用一个综合大项目把全书知识融会贯通。
+      也可以是案例集、最佳实践集、面试/求职指南等收尾性内容。
+      避免：和前篇割裂；要让读者感到"前面的知识在这里被串起来"。
+      允许：端到端项目、多案例对照、能力自检清单。
+    typical_chapters: [2, 4]
+    chapter_role_hints:
+      - "综合项目章：从需求到上线的端到端实战"
+      - "案例集章：3-5 个真实场景的应用剖析"
+      - "进阶指南章：求职、深造、社区参与等软技能"
+    conditional: true
+    skip_when: "前三部已足够完整，或实战内容已分散在各篇末尾"
+examples:
+  - slug: ai-engineer-in-action
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/practices/ai-engineer-in-action/
+    fit_score: 0.96
+    note: 标准三部范本（基础内功/核心能力/高级进阶）
+  - slug: intelligent-computing-center-construction-guide
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/practices/intelligent-computing-center-construction-guide/
+    fit_score: 0.90
+    note: 四部扩展版（多 capstone 部，含实践案例与总结）
+metadata:
+  extracted_from: zhurongshuo-corpus-v1
+  extracted_at: 2026-06-21
+  author: jianwu+human
+  notes: |
+    核心结构源自 ai-engineer-in-action（基础内功/核心能力/高级进阶）与
+    intelligent-computing-center-construction-guide（基础与核心组件/集群构建与虚拟化/应用平台与运维/实践案例与总结）的共同模式。
+    capstone 部可选；当主题偏纯技术教学时常用，当主题偏方法论时可能省略。
+    关键识别特征：明确的"从入门到精通"进阶曲线；理论 + 代码 + 项目的三位一体。

@@ -1,0 +1,72 @@
+{
+  "slug": "advancement-of-reality",
+  "title": {
+    "zh": "实在进阶：观察、收敛与动态生成",
+    "en": "The Advancement of Reality: Observation, Convergence, and Dynamic Becoming"
+  },
+  "subtitle": null,
+  "archetype": "ontology-epistemology-practice",
+  "audience": "advanced-practitioner",
+  "depth": "advanced",
+  "goal": "understanding",
+  "length": "long",
+  "language": ["zh", "en"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/books/advancement-of-reality/",
+    "accessed_at": "2026-06-21"
+  },
+  "abstract": "《实在建构》的进阶续作，把本体论、认识论与实践论压成三部展开，更聚焦于动态生成与个体解放路径。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "第一部分：本体论——可能性与动态存在",
+        "en": "Part I: Ontology — Possibility and Dynamic Existence"
+      },
+      "role": "ontology",
+      "intro": "深化「可能性基底」与「观察-收敛」模型，强调动态生成性。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第一章 可能性基底", "en": "Chapter 1: The Ground of Possibility" }, "abstract": "重审可能性基底概念，扩展其动态属性与生成机制。" },
+        { "index": 2, "title": { "zh": "第二章 观察即收敛", "en": "Chapter 2: Observation Is Convergence" }, "abstract": "深入观察-收敛模型的微观机制，区分不同层级观察的收敛强度。" },
+        { "index": 3, "title": { "zh": "第三章 意识的多层级谱系", "en": "Chapter 3: The Multilevel Spectrum of Consciousness" }, "abstract": "扩展意识谱系，从粒子到反思意识给出连续谱。" },
+        { "index": 4, "title": { "zh": "第四章 主客同源与时空建构", "en": "Chapter 4: The Shared Origin of Subject and Object" }, "abstract": "把主客同源推到极致，论证时空是观察协同收敛的产物。" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "第二部分：认识论与秩序论——共识与权力的演化",
+        "en": "Part II: Epistemology and Order — The Evolution of Consensus and Power"
+      },
+      "role": "epistemology",
+      "intro": "把认识论和秩序论合并讨论，凸显观念生态与权力差序的耦合。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第五章 降维的真理：作为不完全映射的认知", "en": "Chapter 5: The Diminished Truth" }, "abstract": "认知永远是不完全映射，论证其过程性完备特性。" },
+        { "index": 2, "title": { "zh": "第六章 观念生态与共识闭环", "en": "Chapter 6: The Ecology of Ideas" }, "abstract": "观念作为生态成员的演化机制，共识闭环的形成与突破。" },
+        { "index": 3, "title": { "zh": "第七章 权力差序的起源：收敛能力的差异化", "en": "Chapter 7: The Origin of Power Hierarchies" }, "abstract": "收敛能力差异作为权力差序的本体论根源。" },
+        { "index": 4, "title": { "zh": "第八章 评估异化：从市场到算法的控制", "en": "Chapter 8: Assessing Alienation" }, "abstract": "评估异化在数字时代的最新形态——算法垄断评估权。" },
+        { "index": 5, "title": { "zh": "第九章 制度的博弈与历史的脉络", "en": "Chapter 9: The Game of Institutions" }, "abstract": "制度作为收敛能力固化的博弈产物。" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "第三部分：实践论——可能的实现",
+        "en": "Part III: Practice — The Realization of Possibility"
+      },
+      "role": "practice",
+      "intro": "把实践论扩展为更完整的解放路径，引入容错伦理学。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第十章 自由意志的再发现：作为可用余量的选择", "en": "Chapter 10: The Rediscovery of Free Will" }, "abstract": "把自由意志锚定在可用余量上。" },
+        { "index": 2, "title": { "zh": "第十一章 可持续决策的艺术", "en": "The Art of Sustainable Decision-Making" }, "abstract": "可持续决策的进阶方法——在前瞻与稳定间取得动态平衡。" },
+        { "index": 3, "title": { "zh": "第十二章 观察者的修行：个体解放之路", "en": "Chapter 12: The Practitioner of Observation" }, "abstract": "作为观察者的修行心法。" },
+        { "index": 4, "title": { "zh": "第十三章 容错伦理学：一种面向过程的道德", "en": "Chapter 13: Fault-Tolerant Ethics" }, "abstract": "提出基于过程哲学的容错伦理学——道德不是静态准则而是动态修正。" }
+      ]
+    }
+  ],
+  "extracted_by": "ai-assisted",
+  "extracted_at": "2026-06-21",
+  "extraction_confidence": "medium",
+  "notes": "三部压缩版（本体+认识/秩序+实践），仍属 ontology-epistemology-practice 原型，证明原型的可伸缩性。"
+}

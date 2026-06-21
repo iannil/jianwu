@@ -1,0 +1,82 @@
+{
+  "slug": "reality-construction",
+  "title": {
+    "zh": "实在建构：从无限可能到有限确定",
+    "en": "Reality Construction: From Infinite Possibility to Finite Certainty"
+  },
+  "subtitle": null,
+  "archetype": "ontology-epistemology-practice",
+  "audience": "educated-general",
+  "depth": "advanced",
+  "goal": "understanding",
+  "length": "long",
+  "language": ["zh", "en"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/books/reality-construction/",
+    "accessed_at": "2026-06-21"
+  },
+  "abstract": "以原创本体论概念「可能性基底」为锚点，从存在、认知、秩序、实践四个维度系统重构实在观，回应评估异化时代的意义危机。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "第一部 存在——世界的本来",
+        "en": "Part I. Existence — The World as It Is"
+      },
+      "role": "ontology",
+      "intro": "本体论基石。引入「可能性基底」概念，阐述宇宙如何从不确定的潜能中通过无处不在的「观察」行为持续涌现。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第一章 可能性基底：万物未形时", "en": "Chapter 1: The Ground of Possibility" }, "abstract": "界定「可能性基底」的形而上学地位——超越存在与非存在二元对立的前本体论实在，与现代物理学（量子波函数、弦论景观、真空零点能）及哲学史（柏拉图、亚里士多德、怀特海、道家）深度对话。" },
+        { "index": 2, "title": { "zh": "第二章 观察即收敛", "en": "Chapter 2: Observation Is Convergence" }, "abstract": "提出「观察-收敛」模型，论证任何层级的观察都是对可能性的第一次收敛；主客二分在此模型中被消解。" },
+        { "index": 3, "title": { "zh": "第三章 意识的多层级谱系", "en": "Chapter 3: The Multilevel Spectrum of Consciousness" }, "abstract": "建立温和的泛体验论立场，从基本粒子相互作用到人类反思意识，给出意识层级的连续谱。" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "第二部 认知——建构的工具",
+        "en": "Part II. Cognition — Tools of Construction"
+      },
+      "role": "epistemology",
+      "intro": "审视人类作为观察者参与建构的工具箱——语言、理论、观念——及其深刻的双重性：既是脚手架也是牢笼。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第四章 主客同源与时空建构", "en": "Chapter 4: The Shared Origin of Subject and Object" }, "abstract": "论证主客体在「观察」这一统一行动中同时生成，时空本身也是收敛出的次级结构。" },
+        { "index": 2, "title": { "zh": "第五章 降维的真理：作为不完全映射的认知", "en": "Chapter 5: The Diminished Truth" }, "abstract": "提出认知的「过程性完备」概念——任何认知都是对无限可能性的有限映射，永远处于未完成状态。" },
+        { "index": 3, "title": { "zh": "第六章 观念生态与共识闭环", "en": "Chapter 6: The Ecology of Ideas" }, "abstract": "把观念视为生态系统的成员，分析观念如何形成共识闭环、如何排斥异端、如何演化。" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "第三部 秩序——全体的契约",
+        "en": "Part III. Order — The Contract of the Whole"
+      },
+      "role": "order",
+      "intro": "从个体认知上升到宏观社会结构，剖析法律、道德、市场等如何作为大规模观察共识形成，重点分析权力差序与评估异化。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第七章 权力差序的起源：收敛能力的差异化", "en": "Chapter 7: The Origin of Power Hierarchies" }, "abstract": "揭示权力差序的本体论根源——不同个体/群体收敛可能性的能力差异。" },
+        { "index": 2, "title": { "zh": "第八章 评估异化：从市场到算法的控制", "en": "Chapter 8: Assessing Alienation" }, "abstract": "追踪评估异化从马克思劳动异化到算法时代认知异化的演化路径，给出四阶段模型。" },
+        { "index": 3, "title": { "zh": "第九章 制度的博弈与历史的脉络", "en": "Chapter 9: The Game of Institutions" }, "abstract": "把制度视为收敛能力的固化产物，分析其形成、维持、变迁的博弈逻辑。" }
+      ]
+    },
+    {
+      "index": 4,
+      "title": {
+        "zh": "第四部 实践——重返无限",
+        "en": "Part IV. Practice — Return to the Infinite"
+      },
+      "role": "practice",
+      "intro": "回到个体，建立不确定情境下的可持续决策框架，核心概念为「可用余量」与「选择权」。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第十章 自由意志的再发现：作为可用余量的选择", "en": "Chapter 10: The Rediscovery of Free Will" }, "abstract": "把自由意志的本体论根基定位为「可用余量」——在因果链条缝隙中保留的可能性空间。" },
+        { "index": 2, "title": { "zh": "第十一章 可持续决策的艺术", "en": "The Art of Sustainable Decision-Making" }, "abstract": "论证最优决策不是单点最优而是动态可持续，给出保持选择权在场的实操框架。" },
+        { "index": 3, "title": { "zh": "第十二章 观察者的修行：个体解放之路", "en": "Chapter 12: The Practitioner of Observation" }, "abstract": "总结作为自觉观察者的修行心法——重夺评估权、拓展可用余量、参与共同建构。" }
+      ]
+    }
+  ],
+  "extracted_by": "ai-assisted",
+  "extracted_at": "2026-06-21",
+  "extraction_confidence": "high",
+  "notes": "代表书之一。四部结构完整对应 ontology-epistemology-practice 原型。"
+}

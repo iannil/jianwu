@@ -1,0 +1,83 @@
+{
+  "slug": "intelligent-computing-center-construction-guide",
+  "title": {
+    "zh": "智算中心建设指南：大模型算力的基础架构",
+    "en": "Intelligent Computing Center Construction Guide: Foundational Infrastructure for Large Model Computing Power"
+  },
+  "subtitle": null,
+  "archetype": "foundations-application-practice",
+  "audience": "intermediate-to-advanced",
+  "depth": "advanced",
+  "goal": "mastery",
+  "length": "long",
+  "language": ["zh"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/practices/intelligent-computing-center-construction-guide/",
+    "accessed_at": "2026-06-21"
+  },
+  "abstract": "面向智算中心建设的系统化工程指南，从硬件架构到集群构建到应用平台到落地案例。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "第一部分：基础与核心组件",
+        "en": "Part I: Foundations and Core Components"
+      },
+      "role": "foundations",
+      "intro": "智算中心的硬件基础——从需求分析到 GPU 硬件架构到 I/O 框架。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第1章：AI与大模型时代对基础架构的需求", "en": null }, "abstract": "智算中心的需求图谱，从训练到推理的差异化要求。" },
+        { "index": 2, "title": { "zh": "第2章 软件程序与专用硬件的结合", "en": null }, "abstract": "软硬件协同设计原则，算力利用率的优化基础。" },
+        { "index": 3, "title": { "zh": "第3章 GPU硬件架构剖析", "en": null }, "abstract": "GPU 计算单元、内存层次、互连结构的深度剖析。" },
+        { "index": 4, "title": { "zh": "第4章 GPU服务器的设计与实现", "en": null }, "abstract": "GPU 服务器的硬件选型、拓扑设计、散热与供电。" },
+        { "index": 5, "title": { "zh": "第5章 机器学习所依托的I/O框架体系", "en": null }, "abstract": "I/O 框架对训练效率的影响，存储/网络的协同优化。" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "第二部分：集群构建与虚拟化",
+        "en": "Part II: Cluster Construction and Virtualization"
+      },
+      "role": "application",
+      "intro": "把单机 GPU 扩展为大规模集群，覆盖网络、存储、调度的工程化实现。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第6章 GPU集群的网络设计与实现", "en": null }, "abstract": "RDMA、InfiniBand、RoCE 等高速网络的设计与实现。" },
+        { "index": 2, "title": { "zh": "第7章 GPU板卡级算力调度技术", "en": null }, "abstract": "板卡级算力切分与调度，多租户场景下的资源隔离。" },
+        { "index": 3, "title": { "zh": "第8章 GPU虚拟化调度方案", "en": null }, "abstract": "vGPU、MIG 等虚拟化技术的对比与选型。" },
+        { "index": 4, "title": { "zh": "第9章 GPU集群的网络虚拟化设计与实现", "en": null }, "abstract": "网络虚拟化在大规模集群中的作用与实现。" },
+        { "index": 5, "title": { "zh": "第10章 GPU集群的存储设计与实现", "en": null }, "abstract": "分布式文件系统、对象存储在智算场景的优化。" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "第三部分：应用平台与运维",
+        "en": "Part III: Application Platform and Operations"
+      },
+      "role": "advanced",
+      "intro": "在硬件集群之上构建机器学习应用平台与运维体系。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第11章 机器学习应用开发与运行平台的设计与实现", "en": null }, "abstract": "面向 ML 工程师的应用平台架构、调度、监控。" },
+        { "index": 2, "title": { "zh": "第12章 基于云平台的GPU集群的管理与运营", "en": null }, "abstract": "云原生架构下的集群管理与商业化运营。" }
+      ]
+    },
+    {
+      "index": 4,
+      "title": {
+        "zh": "第四部分：实践案例与总结",
+        "en": "Part IV: Practice Cases and Summary"
+      },
+      "role": "capstone",
+      "intro": "落地案例集，把前述理论在真实场景中验证。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第13章 服务机器学习的GPU计算平台落地案例", "en": null }, "abstract": "若干真实智算中心建设案例的端到端剖析。" }
+      ]
+    }
+  ],
+  "extracted_by": "ai-assisted",
+  "extracted_at": "2026-06-21",
+  "extraction_confidence": "medium",
+  "notes": "基础-应用-实战原型的四部扩展版，多了一个 capstone 部（实践案例与总结）。"
+}

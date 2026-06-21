@@ -1,0 +1,104 @@
+schema_version: 1
+id: ontology-epistemology-practice
+name:
+  zh: 本体-认识-实践型
+  en: Ontology-Epistemology-Practice
+description: |
+  适用于需要在基础层面建立深度理解的领域。从一个领域的"根本存在"出发，
+  走到"我们如何认识它"，再到"它如何形成秩序"，最后回到"个体如何行动"。
+  四部构成完整闭环：从宇宙本体到个体实践。
+when_to_use:
+  goals: [understanding]
+  topic_types:
+    - foundational
+    - philosophical
+    - scientific
+    - civilizational
+  audience_fit:
+    - scholar
+    - advanced-practitioner
+    - educated-general
+  not_recommended_for:
+    - practical-playbook
+    - quick-reference
+    - tool-tutorial
+parts:
+  - role: ontology
+    title_template:
+      zh: "第{n}部 {topic}的本体——{subtitle}"
+      en: "Part {n}. The Ontology of {topic} — {subtitle}"
+    guidance: |
+      这一部要回答"这个领域里根本性的存在是什么"。
+      写作策略：通过"否定式定义"切入（先说不是什么），再给出"最小完备集"的肯定式描述，
+      最后把概念放到与已知思想（哲学史、物理学、东方智慧等）的对话中定位。
+      避免：实操步骤、案例堆砌、技术细节、商业逻辑。
+      允许：长句、复杂术语（首次出现给定义）、思辨性的隐喻。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "引言章：用时代症状或终极追问切入，引出本书核心概念"
+      - "定义章：通过否定式界定核心概念（不是 X，不是 Y，而是 Z）"
+      - "属性章：拆解核心概念的 3-5 个根本属性"
+      - "对话章：与既有思想体系（哲学史、科学前沿、东方智慧）对话定位"
+  - role: epistemology
+    title_template:
+      zh: "第{n}部 认识——{subtitle}"
+      en: "Part {n}. Epistemology — {subtitle}"
+    guidance: |
+      这一部聚焦"我们作为观察者，用什么工具参与这个领域的建构"。
+      工具不限于理性，还包括语言、观念、技术、媒介等。
+      核心要点：所有工具都有双重性（既是脚手架，也是牢笼）。
+      避免：脱离认识论语境的纯实操指南。
+      允许：对工具的批判性审视。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "工具章：介绍核心认识工具及其结构"
+      - "双重性章：分析工具如何同时 enable 和 constrain"
+      - "演化章：工具的历史演化与未来可能"
+  - role: order
+    title_template:
+      zh: "第{n}部 秩序——{subtitle}"
+      en: "Part {n}. Order — {subtitle}"
+    guidance: |
+      这一部从个体认知上升到宏观社会结构。
+      核心问题：无数个体如何协调出相对稳定的社会秩序？
+      重点分析：权力差序、共识形成、制度演化。
+      避免：纯抽象的哲学讨论（要落到具体制度/案例）。
+      允许：历史案例、跨文化比较。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "结构章：剖析某一类核心社会结构（法律、市场、国家等）"
+      - "权力章：分析该结构中的权力差序与利益分配"
+      - "演化章：结构的形成、维持、变迁机制"
+  - role: practice
+    title_template:
+      zh: "第{n}部 实践——{subtitle}"
+      en: "Part {n}. Practice — {subtitle}"
+    guidance: |
+      这一部回到个体，回答"理解了这一切之后，我该如何生活与行动"。
+      核心概念：可持续决策、可用余量、选择权。
+      避免：抽象的伦理呼吁；要给出可操作的判断框架。
+      允许：策略性建议、心法传授。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "决策章：建立不确定情境下的判断框架"
+      - "余量章：如何守护和拓展个体/组织的可用余量"
+      - "行动章：具体行动策略与心法"
+examples:
+  - slug: reality-construction
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/books/reality-construction/
+    fit_score: 0.98
+    note: 标准范本，四部结构完整对应
+  - slug: advancement-of-reality
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/books/advancement-of-reality/
+    fit_score: 0.93
+    note: 三部压缩版（本体论+认识论与秩序论+实践论），仍属此原型
+metadata:
+  extracted_from: zhurongshuo-corpus-v1
+  extracted_at: 2026-06-21
+  author: jianwu+human
+  notes: |
+    核心结构源自 reality-construction 的四部划分（存在/认知/秩序/实践）。
+    advancement-of-reality 是三部压缩版，验证了原型的可伸缩性。
+    关键识别特征：以一个原创本体论概念为锚点，全本书围绕这个概念的展开。

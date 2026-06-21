@@ -1,0 +1,82 @@
+{
+  "slug": "forced-convergence",
+  "title": {
+    "zh": "强制收敛：隐藏的控制与反制",
+    "en": "Forced Convergence: Hidden Control and Countermeasures"
+  },
+  "subtitle": null,
+  "archetype": "diagnosis-decoding-breakthrough",
+  "audience": "strategist",
+  "depth": "advanced",
+  "goal": "decision-making",
+  "length": "long",
+  "language": ["zh", "en"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/practices/forced-convergence/",
+    "accessed_at": "2026-06-21"
+  },
+  "abstract": "揭示「强制收敛」这一跨尺度控制机制——从心理战到商业生态到大国博弈——并给出反制路径。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "第一部：底层逻辑——强制收敛的物理与心理学",
+        "en": "Part I: The Underlying Logic — The Physics and Psychology of Forced Convergence"
+      },
+      "role": "decoding",
+      "intro": "解码强制收敛的底层机制，从物理降熵到心理锚定到逻辑闭环。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第一章 降熵法则：时空维度的隐蔽控制", "en": "Chapter 1: The Law of Entropy Reduction" }, "abstract": "把强制收敛映射到物理学降熵过程，揭示其跨尺度的隐蔽性。" },
+        { "index": 2, "title": { "zh": "第二章 认知锚点：心理战中的\"强制步\"", "en": "Chapter 2: Cognitive Anchors" }, "abstract": "心理战中的强制步机制，如何通过锚定效应锁定对手选择。" },
+        { "index": 3, "title": { "zh": "第三章 构造绝杀：逻辑闭环的艺术", "en": "Chapter 3: The Art of the Checkmate" }, "abstract": "如何构造一个对手无法退出的逻辑闭环。" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "第二部：商业丛林——生态壁垒中的隐形控制",
+        "en": "Part II: The Business Jungle — Invisible Control in Ecological Barriers"
+      },
+      "role": "context",
+      "intro": "把强制收敛放到商业语境中，揭示供应链、标准、消费主义如何成为收敛工具。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第四章 标准的暴政：打造\"不得不\"的生态", "en": "Chapter 4: The Tyranny of Standards" }, "abstract": "如何通过标准制定打造对手不得不跟随的生态。" },
+        { "index": 2, "title": { "zh": "第五章 锁死阀门：关系链与供应链的囚笼", "en": null }, "abstract": "通过关系链与供应链锁定，构造退出壁垒。" },
+        { "index": 3, "title": { "zh": "第六章 消费主义的迷宫：在货架上剥夺选择", "en": "Chapter 6: The Labyrinth of Consumerism" }, "abstract": "消费主义如何通过无限选择反向剥夺真实选择权。" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "第三部：大国博弈——宏大叙事下的绝对收敛",
+        "en": "Part III: Great Power Games — Absolute Convergence Under Grand Narratives"
+      },
+      "role": "context",
+      "intro": "把强制收敛推到地缘尺度，分析金融、科技、历史国运的收敛机制。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第七章 战略逼压：没有硝烟的\"切香肠战术\"", "en": null }, "abstract": "战略逼压的渐进式蚕食战术。" },
+        { "index": 2, "title": { "zh": "第八章 金融与科技的\"禁手\"：现代战争的底层收敛", "en": null }, "abstract": "金融制裁与科技封锁作为现代战争的底层收敛工具。" },
+        { "index": 3, "title": { "zh": "第九章 历史的单行道：那些被剥夺国运的时刻", "en": "Chapter 9: The One-Way Street of History" }, "abstract": "历史上国运被剥夺的关键时刻，作为强制收敛的极端案例。" }
+      ]
+    },
+    {
+      "index": 4,
+      "title": {
+        "zh": "第四部：反制——如何打破漏斗，夺回选择权",
+        "en": "Part IV: Countermeasures — Breaking the Funnel"
+      },
+      "role": "breakthrough",
+      "intro": "给读者反制路径——从识破到掀翻棋盘到成为不可测。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第十章 识破隐形控制：第一时间嗅到危险", "en": "Chapter 10: Exposing Invisible Control" }, "abstract": "如何在强制收敛启动的早期识破它。" },
+        { "index": 2, "title": { "zh": "第十一章 掀翻棋盘：非对称竞争与正交化打击", "en": null }, "abstract": "面对收敛方，如何用非对称策略掀翻既有棋盘。" },
+        { "index": 3, "title": { "zh": "第十二章 绝对零度下的生机：成为\"不可测\"的人", "en": "Chapter 12: Vitality at Absolute Zero" }, "abstract": "终极反制——让自己成为收敛机制无法预测、无法锁定的存在。" }
+      ]
+    }
+  ],
+  "extracted_by": "ai-assisted",
+  "extracted_at": "2026-06-21",
+  "extraction_confidence": "high",
+  "notes": "诊断-解码-破局原型的四部扩展版，多了一个 context 部（商业+地缘）。证明原型的 context 部是可堆叠的。"
+}

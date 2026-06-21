@@ -1,0 +1,72 @@
+{
+  "slug": "ai-engineer-in-action",
+  "title": {
+    "zh": "AI工程师实战：从Python基础到LLM应用与性能优化",
+    "en": "AI Engineer in Action: From Python Fundamentals to LLM Applications and Performance Optimization"
+  },
+  "subtitle": null,
+  "archetype": "foundations-application-practice",
+  "audience": "beginner-to-intermediate",
+  "depth": "intermediate",
+  "goal": "mastery",
+  "length": "long",
+  "language": ["zh"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/practices/ai-engineer-in-action/",
+    "accessed_at": "2026-06-21"
+  },
+  "abstract": "面向 AGI 时代的 AI 工程师系统化培养手册，从 Python 工程化基础一路带到 LLM 微调/RAG/Agent 与性能优化。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "第一篇：基础内功篇——万丈高楼平地起",
+        "en": "Part I: Foundations"
+      },
+      "role": "foundations",
+      "intro": "打地基。Python 工程化、数据科学工具链、后端服务开发、Docker 容器化等必备基础。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第1章 Python 工程化基础", "en": null }, "abstract": "从语法基础到工程级代码风格、模块组织、依赖管理。" },
+        { "index": 2, "title": { "zh": "第2章 数据科学工具链（NumPy/Pandas/Matplotlib）", "en": null }, "abstract": "数据处理与可视化的核心工具，工程实战常用模式。" },
+        { "index": 3, "title": { "zh": "第3章 后端服务开发（FastAPI/Flask）", "en": null }, "abstract": "构建可供他人调用的 API 服务，工程规范与最佳实践。" },
+        { "index": 4, "title": { "zh": "第4章 Docker 容器化部署", "en": null }, "abstract": "把模型服务打包成可移植、可复现的容器，部署基础。" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "第二篇：核心能力篇——深入大语言模型腹地",
+        "en": "Part II: Core Capabilities"
+      },
+      "role": "application",
+      "intro": "全书心脏。从深度学习基础到 Transformer 再到 LLM 时代的微调、RAG、Agent。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第5章 深度学习基础", "en": null }, "abstract": "神经网络的核心数学与 PyTorch 实操，反向传播直觉化讲解。" },
+        { "index": 2, "title": { "zh": "第6章 Transformer 架构详解", "en": null }, "abstract": "自注意力机制原理与从零实现，覆盖编码器/解码器变体。" },
+        { "index": 3, "title": { "zh": "第7章 LLM 微调实战（PEFT/LoRA）", "en": null }, "abstract": "参数高效微调方法，数据准备、训练、评估全流程。" },
+        { "index": 4, "title": { "zh": "第8章 RAG 检索增强生成", "en": null }, "abstract": "向量数据库、嵌入模型、检索-生成架构的工程化实现。" },
+        { "index": 5, "title": { "zh": "第9章 Agent 开发实战", "en": null }, "abstract": "工具调用、规划、记忆系统的工程化封装。" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "第三篇：高级进阶篇——从优秀到卓越的必经之路",
+        "en": "Part III: Advanced"
+      },
+      "role": "advanced",
+      "intro": "从合格到卓越的进阶。性能优化、规模化部署、知识图谱等深度专题。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第10章 推理性能优化", "en": null }, "abstract": "量化、KV cache、推测解码、vLLM 等推理加速技术。" },
+        { "index": 2, "title": { "zh": "第11章 集群部署与弹性伸缩", "en": null }, "abstract": "大规模推理服务的集群架构与运维。" },
+        { "index": 3, "title": { "zh": "第12章 知识图谱与 LLM 结合", "en": null }, "abstract": "知识图谱增强 LLM 的事实性与可解释性。" },
+        { "index": 4, "title": { "zh": "第13章 综合项目实战", "en": null }, "abstract": "一个端到端的工业级 AI 应用项目，融会贯通全书知识。" }
+      ]
+    }
+  ],
+  "extracted_by": "ai-assisted",
+  "extracted_at": "2026-06-21",
+  "extraction_confidence": "high",
+  "notes": "基础-应用-实战原型的标准三部范本。三篇清晰对应 foundations/application/advanced。"
+}
