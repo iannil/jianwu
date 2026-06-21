@@ -21,9 +21,9 @@ var (
 
 // HTTPError carries status code + body for diagnosis.
 type HTTPError struct {
-	Status  int
-	Body    string
-	Inner   error // wrapped sentinel (ErrNetwork / ErrLLMProvider / etc.)
+	Status int
+	Body   string
+	Inner  error // wrapped sentinel (ErrNetwork / ErrLLMProvider / etc.)
 }
 
 func (e *HTTPError) Error() string {

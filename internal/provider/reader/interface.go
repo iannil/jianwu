@@ -12,8 +12,8 @@ type Reader interface {
 
 // Content is the result of a Read call.
 type Content struct {
-	URL     string
-	Title   string // extracted from page if available
+	URL      string
+	Title    string // extracted from page if available
 	Markdown string // cleaned content
 }
 

@@ -39,6 +39,9 @@ func (s *Searcher) Search(ctx context.Context, query string, opts search.SearchO
 	if opts.MaxResults == 0 {
 		opts.MaxResults = 10
 	}
+	if opts.MaxResults > 50 {
+		opts.MaxResults = 50
+	}
 	body, _ := json.Marshal(map[string]any{
 		"q":   query,
 		"num": opts.MaxResults,

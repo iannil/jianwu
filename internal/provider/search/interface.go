@@ -12,9 +12,9 @@ type Searcher interface {
 
 // SearchOpts controls a single search query.
 type SearchOpts struct {
-	MaxResults int           // default 10
-	TimeRange  TimeRange     // "any" (default) | "past_day" | "past_week" | "past_month" | "past_year"
-	Language   string        // BCP-47 like "zh-CN", "en-US"; empty = no filter
+	MaxResults int       // default 10
+	TimeRange  TimeRange // "any" (default) | "past_day" | "past_week" | "past_month" | "past_year"
+	Language   string    // BCP-47 like "zh-CN", "en-US"; empty = no filter
 }
 
 // TimeRange is an enum for SearchOpts.TimeRange.

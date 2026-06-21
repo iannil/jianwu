@@ -13,6 +13,11 @@ import (
 
 const DefaultBaseURL = "https://r.jina.ai"
 
+const (
+	maxBodyBytes    = 10 << 20 // 10 MB cap on Jina response bodies
+	maxErrBodyBytes = 4 << 10  // 4 KB cap on error bodies
+)
+
 type Config struct {
 	APIKey  string // optional for free tier
 	BaseURL string
@@ -36,6 +41,11 @@ func New(cfg Config) (*Reader, error) {
 }
 
 func (r *Reader) Read(ctx context.Context, targetURL string) (reader.Content, error) {
+	// Validate target URL before issuing request
+	if _, err := url.Parse(targetURL); err != nil {
+		return reader.Content{}, fmt.Errorf("jina: invalid target URL: %w", err)
+	}
+
 	fullURL := r.baseURL + "/" + targetURL
 	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
 	if err != nil {
@@ -51,10 +61,10 @@ func (r *Reader) Read(ctx context.Context, targetURL string) (reader.Content, er
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
-		b, _ := io.ReadAll(resp.Body)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrBodyBytes))
 		return reader.Content{}, fmt.Errorf("%w: HTTP %d for %s: %s", reader.ErrReader, resp.StatusCode, targetURL, string(b))
 	}
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
 	if err != nil {
 		return reader.Content{}, fmt.Errorf("jina: read body: %w", err)
 	}
@@ -69,10 +79,6 @@ func (r *Reader) Read(ctx context.Context, targetURL string) (reader.Content, er
 				break
 			}
 		}
-	}
-	// Encode the target URL safely (already a URL; just verify).
-	if _, err := url.Parse(targetURL); err != nil {
-		return reader.Content{}, fmt.Errorf("jina: invalid target URL: %w", err)
 	}
 	return reader.Content{URL: targetURL, Title: title, Markdown: markdown}, nil
 }

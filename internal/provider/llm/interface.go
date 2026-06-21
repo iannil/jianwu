@@ -19,3 +19,9 @@ type Embedder interface {
 
 // Tooler executes tool calls in an agent loop. Deferred to S7 (expand).
 // type Tooler interface { ... }
+
+// chatterEmbedder is the union of Chatter + Embedder for wrappers that compose both.
+type chatterEmbedder interface {
+	Chatter
+	Embedder
+}

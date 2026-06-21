@@ -44,6 +44,9 @@ func (s *Searcher) Search(ctx context.Context, query string, opts search.SearchO
 	if opts.MaxResults == 0 {
 		opts.MaxResults = 10
 	}
+	if opts.MaxResults > 50 {
+		opts.MaxResults = 50
+	}
 	params := url.Values{}
 	params.Set("q", query)
 	params.Set("count", strconv.Itoa(opts.MaxResults))

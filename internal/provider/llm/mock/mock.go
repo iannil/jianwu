@@ -35,6 +35,9 @@ func NewEmbed(embeddings [][]float32) *Provider {
 }
 
 func (p *Provider) Chat(ctx context.Context, req llm.ChatRequest) (*llm.ChatResponse, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	p.mu.Lock()
 	p.chatCalls = append(p.chatCalls, req)
 	p.mu.Unlock()
@@ -46,6 +49,9 @@ func (p *Provider) Chat(ctx context.Context, req llm.ChatRequest) (*llm.ChatResp
 }
 
 func (p *Provider) Embed(ctx context.Context, req llm.EmbedRequest) (*llm.EmbedResponse, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	p.mu.Lock()
 	p.embedCalls = append(p.embedCalls, req)
 	p.mu.Unlock()

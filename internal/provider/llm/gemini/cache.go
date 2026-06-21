@@ -10,9 +10,10 @@ import (
 // Returns the cache name to use in subsequent GenerateContent calls.
 //
 // Usage (when wired into engine in S3+):
-//   cacheName, _ := gemini.CreateCache(ctx, client, "gemini-2.5-pro", systemPrompt)
-//   config.CachedContent = cacheName
-//   resp, _ := client.Models.GenerateContent(ctx, model, contents, config)
+//
+//	cacheName, _ := gemini.CreateCache(ctx, client, "gemini-2.5-pro", systemPrompt)
+//	config.CachedContent = cacheName
+//	resp, _ := client.Models.GenerateContent(ctx, model, contents, config)
 //
 // For S2 this is a helper that downstream tasks can use; it's not yet wired
 // into Chat because we don't know the cache granularity (per-stage? per-book?).

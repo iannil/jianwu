@@ -50,7 +50,7 @@ func (p *Provider) Chat(ctx context.Context, req llm.ChatRequest) (*llm.ChatResp
 		body["response_format"] = map[string]any{
 			"type": "json_schema",
 			"json_schema": map[string]any{
-				"name": "response",
+				"name":   "response",
 				"schema": json.RawMessage(req.JSONSchema),
 			},
 		}

@@ -93,7 +93,7 @@ func (p *Provider) Embed(ctx context.Context, req llm.EmbedRequest) (*llm.EmbedR
 		if err != nil {
 			return nil, llm.ClassifyError(err, 0)
 		}
-		if resp.Embeddings != nil && len(resp.Embeddings) > 0 && len(resp.Embeddings[0].Values) > 0 {
+		if len(resp.Embeddings) > 0 && len(resp.Embeddings[0].Values) > 0 {
 			out.Embeddings = append(out.Embeddings, resp.Embeddings[0].Values)
 		}
 		// Gemini doesn't return per-call token count in EmbedContent response.

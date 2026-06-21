@@ -27,17 +27,28 @@ var DefaultRetryConfig = RetryConfig{
 // clock is a tiny indirection so tests can skip real Sleep.
 type clock struct{}
 
-func (clock) Sleep(d time.Duration) { time.Sleep(d) }
+func (clock) Wait(ctx context.Context, d time.Duration) error {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.C:
+		return nil
+	}
+}
 
 // RetryWrapper decorates a Chatter with retry on transient errors.
 type RetryWrapper struct {
-	Inner  Chatter
+	Inner  chatterEmbedder
 	Config RetryConfig
-	clock  interface{ Sleep(time.Duration) } // injected for tests
+	clock  interface {
+		Wait(ctx context.Context, d time.Duration) error
+	} // injected for tests
 }
 
 // NewRetryWrapper constructs a RetryWrapper with default config and real clock.
-func NewRetryWrapper(inner Chatter) *RetryWrapper {
+func NewRetryWrapper(inner chatterEmbedder) *RetryWrapper {
 	return &RetryWrapper{Inner: inner, Config: DefaultRetryConfig, clock: clock{}}
 }
 
@@ -78,12 +89,39 @@ func (rw *RetryWrapper) Chat(ctx context.Context, req ChatRequest) (*ChatRespons
 			break // no more attempts
 		}
 		delay := backoff(cfg, attempt)
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
+		if err := clk.Wait(ctx, delay); err != nil {
+			return nil, err
 		}
-		clk.Sleep(delay)
+	}
+	return nil, fmt.Errorf("retry exhausted after %d attempts: %w", cfg.MaxAttempts, lastErr)
+}
+
+func (rw *RetryWrapper) Embed(ctx context.Context, req EmbedRequest) (*EmbedResponse, error) {
+	cfg := rw.Config
+	if cfg.MaxAttempts == 0 {
+		cfg = DefaultRetryConfig
+	}
+	clk := rw.clock
+	if clk == nil {
+		clk = clock{}
+	}
+	var lastErr error
+	for attempt := 0; attempt < cfg.MaxAttempts; attempt++ {
+		resp, err := rw.Inner.Embed(ctx, req)
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+		if !shouldRetry(err) {
+			return nil, err
+		}
+		if attempt == cfg.MaxAttempts-1 {
+			break // no more attempts
+		}
+		delay := backoff(cfg, attempt)
+		if err := clk.Wait(ctx, delay); err != nil {
+			return nil, err
+		}
 	}
 	return nil, fmt.Errorf("retry exhausted after %d attempts: %w", cfg.MaxAttempts, lastErr)
 }

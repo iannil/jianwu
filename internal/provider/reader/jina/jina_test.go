@@ -2,9 +2,12 @@ package jina
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/zhurong/jianwu/internal/provider/reader"
 )
 
 func TestReadSuccess(t *testing.T) {
@@ -38,5 +41,8 @@ func TestRead4xxReturnsError(t *testing.T) {
 	_, err := rdr.Read(context.Background(), "https://example.com/missing")
 	if err == nil {
 		t.Fatal("expected error")
+	}
+	if !errors.Is(err, reader.ErrReader) {
+		t.Errorf("expected ErrReader, got %v", err)
 	}
 }

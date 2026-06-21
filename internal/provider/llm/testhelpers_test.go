@@ -22,7 +22,20 @@ func (c *countingChatter) Chat(ctx context.Context, req ChatRequest) (*ChatRespo
 	return c.resp, nil
 }
 
+func (c *countingChatter) Embed(ctx context.Context, req EmbedRequest) (*EmbedResponse, error) {
+	// For tests that don't use Embed, just return a simple response
+	return &EmbedResponse{Embeddings: [][]float32{{0.1, 0.2}}}, nil
+}
+
 // fakeClock lets us skip backoff sleeps in tests.
 type fakeClock struct{ t time.Duration }
 
-func (c *fakeClock) Sleep(d time.Duration) { c.t += d }
+func (c *fakeClock) Wait(ctx context.Context, d time.Duration) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+	c.t += d
+	return nil
+}

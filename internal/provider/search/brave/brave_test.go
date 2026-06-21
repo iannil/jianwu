@@ -3,6 +3,7 @@ package brave
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,5 +60,8 @@ func TestSearch4xxReturnsError(t *testing.T) {
 	_, err := s.Search(context.Background(), "x", search.SearchOpts{})
 	if err == nil {
 		t.Fatal("expected error")
+	}
+	if !errors.Is(err, search.ErrSearchProvider) {
+		t.Errorf("expected ErrSearchProvider, got %v", err)
 	}
 }
