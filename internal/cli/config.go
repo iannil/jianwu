@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -70,7 +71,7 @@ func newConfigSetCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("marshal config: %w", err)
 			}
-			path := wsRoot + "/.jianwu/config.yaml"
+			path := filepath.Join(wsRoot, ".jianwu", "config.yaml")
 			if err := os.WriteFile(path, data, 0o644); err != nil {
 				return err
 			}
@@ -106,7 +107,7 @@ func newConfigListCmd() *cobra.Command {
 func getConfigField(cfg any, key string) (string, error) {
 	v := reflect.ValueOf(cfg)
 	for _, part := range strings.Split(key, ".") {
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			v = v.Elem()
 		}
 		if v.Kind() != reflect.Struct {
@@ -118,7 +119,7 @@ func getConfigField(cfg any, key string) (string, error) {
 		}
 		v = f
 	}
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	return fmt.Sprintf("%v", v.Interface()), nil
@@ -129,7 +130,7 @@ func setConfigField(cfg any, key, value string) error {
 	v := reflect.ValueOf(cfg).Elem()
 	parts := strings.Split(key, ".")
 	for i, part := range parts {
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			v = v.Elem()
 		}
 		if v.Kind() != reflect.Struct {
@@ -182,7 +183,7 @@ func flattenConfig(cfg any) []string {
 	var out []string
 	var walk func(prefix string, v reflect.Value)
 	walk = func(prefix string, v reflect.Value) {
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			v = v.Elem()
 		}
 		switch v.Kind() {

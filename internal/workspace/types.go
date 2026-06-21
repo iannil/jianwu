@@ -19,6 +19,6 @@ var ErrWorkspaceNotFound = errors.New("workspace not found: no .jianwu/ in this 
 
 // InitOpts controls Init behavior.
 type InitOpts struct {
-    // Bare: when true, do not create books/exports/archive directories.
-    Bare bool
+	// Bare: when true, do not create books/exports/archive directories.
+	Bare bool
 }

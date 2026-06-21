@@ -5,11 +5,13 @@ import (
 	"encoding/hex"
 	"regexp"
 	"strings"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 var (
-	nonASCII          = regexp.MustCompile(`[^a-zA-Z0-9\s-]`)
-	whitespace         = regexp.MustCompile(`\s+`)
+	nonASCII            = regexp.MustCompile(`[^a-zA-Z0-9\s-]`)
+	whitespace          = regexp.MustCompile(`\s+`)
 	leadingTrailingDash = regexp.MustCompile(`^-+|-+$`)
 )
 
@@ -32,8 +34,10 @@ func Slugify(title string) string {
 		return t
 	}
 	// Non-ASCII: hash fallback (short, deterministic)
-	sum := sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(title))))
-	return "b-" + hex.EncodeToString(sum[:])[:12]
+	t = strings.ToLower(strings.TrimSpace(title))
+	t = norm.NFC.String(t)
+	sum := sha256.Sum256([]byte(t))
+	return "b-" + hex.EncodeToString(sum[:])[:16]
 }
 
 func isASCII(s string) bool {

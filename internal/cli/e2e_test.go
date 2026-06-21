@@ -20,8 +20,8 @@ func TestE2EHappyPath(t *testing.T) {
 		cmd.SetArgs(args)
 		// Each command resolves workspace from "." via FindWorkspace,
 		// so we chdir into root for non-init commands.
-		cmd.Execute()
-		return out.String(), nil
+		err := cmd.Execute()
+		return out.String(), err
 	}
 
 	// init in root

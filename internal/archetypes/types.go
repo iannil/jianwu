@@ -40,10 +40,6 @@ type LocalizedTemplate struct {
 	En string `yaml:"en"`
 }
 
-type Conditional struct {
-	Trigger string `yaml:"trigger"`
-}
-
 type Example struct {
 	Slug      string  `yaml:"slug"`
 	Source    string  `yaml:"source"`

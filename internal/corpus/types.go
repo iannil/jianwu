@@ -29,11 +29,11 @@ type Source struct {
 }
 
 type Part struct {
-	Index    int              `json:"index"`
-	Title    LocalizedTitle   `json:"title"`
-	Role     string           `json:"role"`
-	Intro    string           `json:"intro,omitempty"`
-	Chapters []Chapter        `json:"chapters"`
+	Index    int            `json:"index"`
+	Title    LocalizedTitle `json:"title"`
+	Role     string         `json:"role"`
+	Intro    string         `json:"intro,omitempty"`
+	Chapters []Chapter      `json:"chapters"`
 }
 
 type Chapter struct {

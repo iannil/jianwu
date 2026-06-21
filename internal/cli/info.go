@@ -31,7 +31,11 @@ func newInfoCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			secrets, _ := config.LoadSecrets()
+			secrets, secretsErr := config.LoadSecrets()
+			if secretsErr != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "warning: could not load secrets: %v\n", secretsErr)
+				secrets = &config.Secrets{} // empty so printInfo doesn't nil-deref
+			}
 			printInfo(cmd, ws, secrets)
 			return nil
 		},
@@ -59,6 +63,8 @@ func printInfo(cmd *cobra.Command, ws *workspace.Workspace, s *config.Secrets) {
 	fmt.Fprintf(out, "  gemini: %s\n", secretStatus(s.GeminiAPIKey))
 	fmt.Fprintf(out, "  glm:    %s\n", secretStatus(s.GLMAPIKey))
 	fmt.Fprintf(out, "  brave:  %s\n", secretStatus(s.BraveAPIKey))
+	fmt.Fprintf(out, "  serper: %s\n", secretStatus(s.SerperAPIKey))
+	fmt.Fprintf(out, "  jina:   %s\n", secretStatus(s.JinaAPIKey))
 }
 
 func secretStatus(v string) string {

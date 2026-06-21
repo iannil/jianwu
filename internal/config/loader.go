@@ -10,9 +10,9 @@ import (
 
 // Load resolves the config layers (excluding env/CLI which the CLI layer
 // applies later). Layer precedence (low to high):
-//   1. BuiltinDefaults
-//   2. global: ~/.config/jianwu/config.yaml (if exists)
-//   3. workspace: <wsRoot>/.jianwu/config.yaml (if exists)
+//  1. BuiltinDefaults
+//  2. global: ~/.config/jianwu/config.yaml (if exists)
+//  3. workspace: <wsRoot>/.jianwu/config.yaml (if exists)
 func Load(wsRoot string) (*Config, error) {
 	cfg := BuiltinDefaults()
 

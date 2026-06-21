@@ -1,6 +1,10 @@
 package book
 
-import "testing"
+import (
+	"testing"
+
+	"golang.org/x/text/unicode/norm"
+)
 
 func TestSlugifyAsciiTitle(t *testing.T) {
 	cases := []struct {
@@ -34,6 +38,26 @@ func TestSlugifyChineseTitleReturnsPinyinOrHash(t *testing.T) {
 	for _, r := range got {
 		if !(r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '-') {
 			t.Errorf("Slugify output contains non-slug char %q", r)
+		}
+	}
+}
+
+func TestSlugifyNFCEquivalence(t *testing.T) {
+	// NFC (composed): "café" as single codepoint U+00E9
+	nfc := "café"
+	// NFD (decomposed): "e" + combining acute accent U+0301
+	nfd := norm.NFD.String(nfc)
+
+	slugNFC := Slugify(nfc)
+	slugNFD := Slugify(nfd)
+
+	if slugNFC != slugNFD {
+		t.Errorf("NFC and NFD forms produced different slugs: NFC=%q, NFD=%q", slugNFC, slugNFD)
+	}
+	// Both should produce ASCII-only slugs
+	for _, r := range slugNFC {
+		if r > 127 {
+			t.Errorf("NFC slug contains non-ASCII: %q", slugNFC)
 		}
 	}
 }

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,9 +61,10 @@ func TestInfoOutsideWorkspaceReturnsExit3(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 	// The CLI main should map workspace errors to ExitCodeWorkspaceNotFound;
-	// here we just check the error is non-nil and recognizable.
-	if !strings.Contains(err.Error(), "workspace") {
-		t.Errorf("error should mention workspace, got: %v", err)
+	// here we assert the error is *InfoError with correct exit code.
+	var ie *InfoError
+	if !errors.As(err, &ie) || ie.Code != ExitCodeWorkspaceNotFound {
+		t.Errorf("want *InfoError with Code=%d, got %v", ExitCodeWorkspaceNotFound, err)
 	}
 }
 
