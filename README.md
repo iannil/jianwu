@@ -50,6 +50,24 @@ go build -o ./bin/jianwu ./cmd/jianwu
 
 See `DESIGN.md` for the full design doc.
 
+## Providers (v0.2.0)
+
+LLM:
+- **Gemini** via official `google.golang.org/genai` SDK (gemini-2.5-pro, gemini-2.5-flash, text-embedding-004)
+- **GLM** via direct REST, OpenAI-compatible client (glm-4.6, glm-4-air, embedding-3). Reusable for Qwen/Moonshot/DeepSeek.
+
+Search:
+- **Brave Search API** (primary)
+- **Serper.dev** (fallback)
+
+URL Reader:
+- **Jina Reader** (`r.jina.ai`)
+
+Retry policy: 3 attempts with exponential backoff + jitter on network/429/5xx.
+Fallback policy: primary fails after retry → fallback model takes over.
+
+Both are abstracted behind small Go interfaces (`Chatter`, `Embedder`, `Searcher`, `Reader`) — engine layers (S3+) compose them.
+
 ## License
 
 Code: AGPL-3.0 (see `LICENSE`).
