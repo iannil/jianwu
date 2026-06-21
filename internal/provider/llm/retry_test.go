@@ -7,11 +7,6 @@ import (
 	"time"
 )
 
-// fakeClock lets us skip backoff sleeps in tests.
-type fakeClock struct{ t time.Duration }
-
-func (c *fakeClock) Sleep(d time.Duration) { c.t += d }
-
 func TestRetryWrapperSucceedsOnFirstTry(t *testing.T) {
 	inner := &countingChatter{resp: &ChatResponse{Content: "ok"}}
 	rw := &RetryWrapper{
@@ -102,20 +97,3 @@ func TestRetryWrapperGivesUpAfterMaxAttempts(t *testing.T) {
 	}
 }
 
-// countingChatter is a test Chatter that returns errors/responses in sequence.
-type countingChatter struct {
-	errs  []error
-	resp  *ChatResponse
-	calls int
-}
-
-func (c *countingChatter) Chat(ctx context.Context, req ChatRequest) (*ChatResponse, error) {
-	defer func() { c.calls++ }()
-	if c.calls < len(c.errs) {
-		err := c.errs[c.calls]
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.resp, nil
-}
