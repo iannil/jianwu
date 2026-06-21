@@ -1,0 +1,23 @@
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+go.work.sum
+vendor/
+
+# Build
+/dist/
+/bin/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Jianwu runtime (if user inits a workspace in this repo)
+.jianwu/
