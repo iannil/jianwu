@@ -69,7 +69,7 @@ func Run(
 		if final == "" {
 			final = rec
 		}
-	} else if final == "skip" || final == "" {
+	} else if final == "skip" {
 		final = pending.DefaultValue
 	}
 

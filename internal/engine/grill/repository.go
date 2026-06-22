@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -55,6 +56,9 @@ func (r *Repository) ListIncomplete() ([]*Session, error) {
 			out = append(out, s)
 		}
 	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].StartedAt.Before(out[j].StartedAt)
+	})
 	return out, nil
 }
 

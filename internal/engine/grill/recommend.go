@@ -3,6 +3,7 @@ package grill
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -78,14 +79,7 @@ func orderedKeys(m map[string]string) []string {
 	for k := range m {
 		keys = append(keys, k)
 	}
-	// Simple sort.
-	for i := 0; i < len(keys); i++ {
-		for j := i + 1; j < len(keys); j++ {
-			if keys[i] > keys[j] {
-				keys[i], keys[j] = keys[j], keys[i]
-			}
-		}
-	}
+	sort.Strings(keys)
 	return keys
 }
 

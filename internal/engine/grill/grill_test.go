@@ -55,9 +55,19 @@ func TestRunCompletesWhenAllAnswered(t *testing.T) {
 		if !d.Required {
 			continue
 		}
-		if _, ok := s.Answers[d.ID]; !ok {
-			// Skip if dim wasn't in walk (conditional).
-			// We're checking that required dims in walk all got answered.
+		// Check if this dim would be in the walk given our answers.
+		walk := tree.Walk(s.Answers)
+		inWalk := false
+		for _, wd := range walk {
+			if wd.ID == d.ID {
+				inWalk = true
+				break
+			}
+		}
+		if inWalk {
+			if _, ok := s.Answers[d.ID]; !ok {
+				t.Errorf("required dim %q in walk but not answered", d.ID)
+			}
 		}
 	}
 }
