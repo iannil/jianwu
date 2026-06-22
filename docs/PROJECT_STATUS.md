@@ -253,8 +253,8 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 - Citation 中的 URL 无 SSRF 校验（Jina 服务端 fetch，我们的客户端不直连）
 
 ### 文档
-- `DESIGN.md` §11 状态行还写"v1.0 设计已锁定，进入实施阶段"（应改为"v1.0.0 已交付"）
-- `EXTRACTION_NOTES.md` 还标"待审阅"（资产实际已被 7 个切片的 review 验证）
+- ~~`DESIGN.md` §11 状态行还写"v1.0 设计已锁定，进入实施阶段"~~ — 已更新（line 7: "v1.0.0 已交付"）
+- ~~`EXTRACTION_NOTES.md` 还标"待审阅"~~ — 已更新（line 9: "v1.0.0 ship 时已通过 7 个切片的 SDD review 验证"）
 
 ## 12. 关键设计决策（grill-me 26 项）
 
