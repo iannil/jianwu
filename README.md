@@ -68,20 +68,20 @@ Both are abstracted behind small Go interfaces (`Chatter`, `Embedder`, `Searcher
 
 ## Engine (v1.0.0)
 
-jianwu v1.0.0 ships the full 5-stage engine:
+jianwu v1.0.0 ships the full 4-stage engine + the `new` command:
 
 - **Outline** (v0.3.0): single LLM call produces full book outline
 - **Scaffolding** (v0.4.0): N chapters in parallel, continue-on-error
 - **Grill** (v0.5.0): stateful interactive Q&A with 12-dimension design tree
-- **`jianwu new`** (v0.6.0): full flow command (grill → outline → scaffolding)
-- **Expand** (v1.0.0): per-chapter agent — 3 iterations (research → draft → validate), web search grounding, citation tracking with `[^N]` footnotes, LLM self-reports unverified claims
+- **Expand** (v1.0.0): per-chapter 3-iteration agent (research → draft → validate), web search grounding, [^N] citation tracking
+- **`jianwu new`** (v0.6.0): command chaining grill → outline → scaffolding
 
 ### v1.0 status
 
-The full闭环 works: `jianwu new` produces a scaffolded book; chapters can be expanded with grounded citations. Not yet implemented: `expand`/`review`/`finalize`/`export` CLI commands (currently the expand engine is library-only).
+`jianwu new` produces a scaffolded book end-to-end. The Expand engine is library-only in v1.0.0 — a CLI command (`jianwu expand <slug> <NN-MM>`) is pending v1.0.x.
 
-Remaining work for v1.1:
-- CLI commands for expand / review / finalize / export
+Remaining work for v1.0.x:
+- CLI command for expand (`jianwu expand <slug> <NN-MM>`)
 - Fallback model wiring (Config carries primary only today)
 - Streaming output for long-running stages
 - Real timeouts on LLM calls

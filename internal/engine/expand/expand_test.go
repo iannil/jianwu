@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/zhurong/jianwu/internal/provider/llm"
 	"github.com/zhurong/jianwu/internal/provider/llm/mock"
@@ -34,7 +36,13 @@ func (m *mockChatter3Phases) Chat(ctx context.Context, req llm.ChatRequest) (*ll
 
 // Embed for chatterEmbedder interface
 func (m *mockChatter3Phases) Embed(ctx context.Context, req llm.EmbedRequest) (*llm.EmbedResponse, error) {
-	return &llm.EmbedResponse{}, nil
+	// Return valid embeddings with dummy data
+	out := make([][]float32, len(req.Inputs))
+	for i := range out {
+		// Return a small embedding vector (3 dimensions)
+		out[i] = []float32{0.1, 0.2, 0.3}
+	}
+	return &llm.EmbedResponse{Embeddings: out}, nil
 }
 
 func TestGenerateChainsIterations(t *testing.T) {
@@ -87,5 +95,47 @@ func TestGeneratePropagatesIter1Error(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestTruncateUTF8(t *testing.T) {
+	s := "这是中文测试字符串"
+	got := truncate(s, 4)
+	if !strings.HasSuffix(got, "...") {
+		t.Errorf("expected ... suffix, got %q", got)
+	}
+	if !utf8.ValidString(got) {
+		t.Errorf("not valid UTF-8: %q", got)
+	}
+	// First 4 runes preserved
+	if !strings.HasPrefix(got, "这是中文") {
+		t.Errorf("expected first 4 runes, got %q", got)
+	}
+}
+
+func TestLookupSimilarBookCapExpires(t *testing.T) {
+	// stubEmbedder returns empty embeddings
+	stubEmbedder := mockChatter3Phases{}
+	reg := NewToolRegistry(nil, nil, &stubEmbedder, nil)
+
+	// 1st call should succeed
+	_, err1 := reg.LookupSimilarBook(context.Background(), "test")
+	if err1 != nil {
+		t.Fatalf("1st call failed: %v", err1)
+	}
+
+	// 2nd call should succeed
+	_, err2 := reg.LookupSimilarBook(context.Background(), "test")
+	if err2 != nil {
+		t.Fatalf("2nd call failed: %v", err2)
+	}
+
+	// 3rd call should error
+	_, err3 := reg.LookupSimilarBook(context.Background(), "test")
+	if err3 == nil {
+		t.Fatal("3rd call should error, but succeeded")
+	}
+	if !strings.Contains(err3.Error(), "call limit") {
+		t.Errorf("expected limit error, got: %v", err3)
 	}
 }

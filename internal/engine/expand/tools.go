@@ -21,8 +21,9 @@ type ToolRegistry struct {
 
 	mu sync.Mutex
 	// Per-chapter call counters
-	webSearchCalls int
-	readURLCalls   int
+	webSearchCalls     int
+	readURLCalls       int
+	lookupSimilarCalls int
 
 	// Citation metadata registry per Q14.A3
 	citations map[string]Citation // keyed by URL
@@ -107,5 +108,9 @@ func truncate(s string, n int) string {
 	if len(s) <= n {
 		return s
 	}
-	return s[:n] + "..."
+	runes := []rune(s)
+	if len(runes) <= n {
+		return s
+	}
+	return string(runes[:n]) + "..."
 }

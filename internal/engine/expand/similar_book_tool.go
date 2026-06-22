@@ -95,7 +95,15 @@ func cosine(a, b []float32) float64 {
 	return dot / (math.Sqrt(na) * math.Sqrt(nb))
 }
 
-// LookupSimilarBook calls the free function with cap 2 (per brief).
+// LookupSimilarBook calls the free function with per-chapter cap 2 (per Q13.A2).
+// Returns top-3 results per call.
 func (t *ToolRegistry) LookupSimilarBook(ctx context.Context, query string) ([]string, error) {
-	return LookupSimilarBooks(ctx, t.Embedder, query, 2)
+	t.mu.Lock()
+	if t.lookupSimilarCalls >= 2 {
+		t.mu.Unlock()
+		return nil, fmt.Errorf("lookup_similar_book call limit (2) reached")
+	}
+	t.lookupSimilarCalls++
+	t.mu.Unlock()
+	return LookupSimilarBooks(ctx, t.Embedder, query, 3)
 }
