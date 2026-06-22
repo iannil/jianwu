@@ -154,54 +154,6 @@
 
 ---
 
-## v1.1 — 功能扩展
-
-> 目标：把 v1.0 的"能跑"提升到"真好用"。多个独立功能，按价值排序做。
-
-### v1.1.0 — 章节迭代命令
-
-- [ ] `jianwu rewrite <slug> <NN-MM>` — 重写已 expand 章节
-- [ ] `jianwu add-chapter <slug> --after <NN-MM> --topic "..."`
-- [ ] `jianwu move-chapter <slug> <NN-MM> <target-part>`
-- [ ] `jianwu delete-chapter <slug> <NN-MM>`
-
-### v1.1.1 — Corpus Sync
-
-- [ ] `jianwu corpus list / show / stats`
-- [ ] `jianwu corpus sync --from <path>` — 从 zhurongshuo 同步扩展语料
-- [ ] `jianwu corpus reindex` — 重建 embedding 索引文件
-
-### v1.1.2 — 自动事实复核
-
-- [ ] Expand 后跑 claims 抽取 agent
-- [ ] 每条 claim 跑独立 web search 验证
-- [ ] outline.json 加 `verified_claims` / `disputed_claims` 字段
-
-### v1.1.3 — Workspace Migration
-
-- [ ] `jianwu migrate` 命令（schema v1 → v2）
-- [ ] 检测旧 workspace + 升级
-
-### v1.1.4 — 多 Export Target
-
-- [ ] `--target zhurongshuo`（适配 zhurongshuo hugo 结构）
-- [ ] `--target hugo`（通用 hugo 站点）
-- [ ] `--target pdf`（pandoc 集成）
-
-### v1.1.5 — 后 3 个原型
-
-- [ ] `micro-meso-macro`（参考：data-as-the-boundary）
-- [ ] `theory-dynamics-history-present`（参考：revisiting-history）
-- [ ] `mindset-method-practice`（参考：open-map / barbaric-order）
-
-### v1.1.6 — Expand Prompt 增强
-
-- [ ] 注入 archetype YAML 到 expand prompts（当前占位符）
-- [ ] 注入 style samples（当前占位符）
-- [ ] 注入 read_adjacent_chapters 结果（工具已就绪，未调用）
-
----
-
 ## v2 — mouqin SaaS
 
 > 目标：把 jianwu 包装成多用户 Web 服务。独立仓库 `mouqin`。

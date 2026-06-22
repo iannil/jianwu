@@ -323,3 +323,78 @@ func TestExpandRunRefusesReviewedEvenWithForce(t *testing.T) {
 		t.Errorf("file was overwritten with --force alone on reviewed chapter")
 	}
 }
+func TestExpandRunAllowWithDoubleForce(t *testing.T) {
+	// Chapter status = reviewed; --force --force (forceCount=2) should allow overwrite.
+	tmp := t.TempDir()
+	// Create workspace marker
+	if err := os.MkdirAll(filepath.Join(tmp, ".jianwu"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmp, ".jianwu", "schema_version"), []byte("1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bookDir := filepath.Join(tmp, "books", "test-book")
+	if err := os.MkdirAll(filepath.Join(bookDir, "chapters"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	existingFM := book.ChapterFrontmatter{
+		Title: "Reviewed", PartIndex: 1, ChapterIndex: 1,
+		Status: book.StatusReviewed, WordCount: 100,
+		GeneratedAt: time.Now().UTC(), Model: "glm-4.6", EngineVersion: "v1.0.1",
+	}
+	if _, err := book.WriteChapter(bookDir, 1, 1, existingFM, "old reviewed content"); err != nil {
+		t.Fatal(err)
+	}
+	meta := &book.Meta{
+		ID: "x", Slug: "test-book", Title: "Test", Status: book.BookStatusDraft,
+		Parameters: book.Parameters{Audience: "scholar", Depth: "advanced", Goal: "understanding", Length: "short"},
+	}
+	if err := book.SaveMeta(filepath.Join(bookDir, "meta.json"), meta); err != nil {
+		t.Fatal(err)
+	}
+	outline := &book.Outline{
+		Parts: []book.OutlinePart{
+			{Index: 1, Chapters: []book.OutlineChapter{{Index: 1, Title: "C1", Status: book.StatusReviewed}}},
+		},
+	}
+	if err := book.SaveOutline(filepath.Join(bookDir, "outline.json"), outline); err != nil {
+		t.Fatal(err)
+	}
+
+	// Inject mock deps so expand.Generate runs without real API.
+	original := providerDepsHook
+	defer func() { providerDepsHook = original }()
+	chatter := &countingChatter{
+		responses: []llm.ChatResponse{
+			{Content: `{"findings":[],"candidates":[]}`},
+			{Content: "## New\n\nnew content after force-force...[^1]\n\n[^1]: [X](https://x.com) accessed 2026-06-22"},
+			{Content: `{"revised_markdown":"## New\n\nnew content after force-force...[^1]\n\n[^1]: [X](https://x.com) accessed 2026-06-22","claims":[{"text":"x","has_citation":true}]}`},
+		},
+	}
+	providerDepsHook = func(_ *config.Config, _ *config.Secrets) (*ProviderDeps, error) {
+		return &ProviderDeps{Chatter: chatter, Searcher: &stubSearcher{}, Reader: &stubReader{}, Embedder: &stubEmbedder{}}, nil
+	}
+
+	oldWd, _ := os.Getwd()
+	defer os.Chdir(oldWd)
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := newExpandCmd()
+	cmd.SetOut(&bytes.Buffer{})
+	cmd.SetErr(&bytes.Buffer{})
+	cmd.SetArgs([]string{"test-book", "01-01", "--force", "--force"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("expected success with --force --force on reviewed chapter, got: %v", err)
+	}
+
+	// Verify file was overwritten.
+	_, body, err := book.ReadChapter(book.ChapterPath(bookDir, 1, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(body, "new content after force-force") {
+		t.Errorf("file was not overwritten; body: %s", body)
+	}
+}

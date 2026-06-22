@@ -161,13 +161,11 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
 	ch.CitationsCount = len(result.Citations)
 	ch.UnverifiedClaims = len(result.UnverifiedClaims)
 	ch.Citations = toBookCitations(result.Citations)
-	now := time.Now().UTC()
 	ch.ExpandedWith = &book.ExpandedWith{
 		Provider:   stageModel.Provider,
 		Model:      stageModel.Model,
 		Iterations: 3,
 	}
-	_ = now // (ReviewedAt not set on expand; set on review)
 
 	if err := book.SaveOutline(filepath.Join(bookDir, "outline.json"), outline); err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
