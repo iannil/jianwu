@@ -2,6 +2,7 @@ package scaffolding
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/zhurong/jianwu/internal/archetypes"
 	"github.com/zhurong/jianwu/internal/book"
@@ -101,20 +102,9 @@ func (in ChapterInput) validate() error {
 		missing = append(missing, "language")
 	}
 	if len(missing) > 0 {
-		return fmt.Errorf("missing required fields: %s", joinComma(missing))
+		return fmt.Errorf("missing required fields: %s", strings.Join(missing, ", "))
 	}
 	return nil
-}
-
-func joinComma(xs []string) string {
-	out := ""
-	for i, x := range xs {
-		if i > 0 {
-			out += ", "
-		}
-		out += x
-	}
-	return out
 }
 
 // yamlMarshalArchetype produces a compact text rendering of an archetype.

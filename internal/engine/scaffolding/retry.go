@@ -19,48 +19,8 @@ func RetryFailed(
 	params ChapterParams,
 	opts Options,
 ) map[string]Result {
-	// Collect failed-chapter jobs.
-	type job struct {
-		key     string
-		partIdx int
-		chIdx   int
-		input   ChapterInput
-	}
-	var jobs []job
-	for _, p := range outline.Parts {
-		for _, c := range p.Chapters {
-			if c.Status != book.StatusFailed {
-				continue
-			}
-			input := ChapterInput{
-				ArchetypeID:  archetypeID,
-				PartIndex:    p.Index,
-				PartTitle:    p.Title,
-				PartRole:     p.Role,
-				ChapterIndex: c.Index,
-				ChapterTitle: c.Title,
-				Topic:        params.Topic,
-				Audience:     params.Audience,
-				Depth:        params.Depth,
-				Goal:         params.Goal,
-				Length:       params.Length,
-				Language:     params.Language,
-			}
-			jobs = append(jobs, job{
-				key:     fmtKey(p.Index, c.Index),
-				partIdx: p.Index,
-				chIdx:   c.Index,
-				input:   input,
-			})
-		}
-	}
-	if len(jobs) == 0 {
-		return map[string]Result{}
-	}
-
 	// Reuse ScaffoldAll's parallel machinery by building a temp outline.
 	filtered := &book.Outline{}
-	partMap := map[int]*book.OutlinePart{} // tracks part index → pointer in filtered
 	for _, p := range outline.Parts {
 		// Only include this part if it has at least one failed chapter.
 		hasFailed := false
@@ -80,7 +40,6 @@ func RetryFailed(
 			}
 		}
 		filtered.Parts = append(filtered.Parts, fp)
-		partMap[p.Index] = &filtered.Parts[len(filtered.Parts)-1]
 	}
 
 	results := ScaffoldAll(ctx, chatter, filtered, archetypeID, params, opts)

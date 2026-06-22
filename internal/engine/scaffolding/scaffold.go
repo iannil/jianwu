@@ -12,7 +12,7 @@ import (
 
 // Options controls parallel scaffolding behavior.
 type Options struct {
-	// Concurrency limits parallel LLM calls. Default 5 per Q12.A1.
+	// Concurrency limits parallel LLM calls. Zero or negative means default (5 per Q12.A1).
 	Concurrency int
 }
 
@@ -82,13 +82,11 @@ func ScaffoldAll(
 	g.SetLimit(opts.Concurrency)
 
 	for _, j := range jobs {
-		j := j
 		g.Go(func() error {
 			// Note: we use gctx for cancellation propagation but each chapter
 			// still attempts even if a sibling failed (continue-on-error).
 			// errgroup normally cancels on first error; we work around this by
 			// always returning nil from g.Go (errors are captured per-chapter).
-			chapCtx := gctx
 			// If errgroup already cancelled due to context cancel, skip.
 			if err := gctx.Err(); err != nil {
 				mu.Lock()
@@ -97,7 +95,7 @@ func ScaffoldAll(
 				return nil
 			}
 
-			out, err := GenerateChapter(chapCtx, chatter, j.input)
+			out, err := GenerateChapter(gctx, chatter, j.input)
 
 			mu.Lock()
 			defer mu.Unlock()
