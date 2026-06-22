@@ -1,11 +1,15 @@
 package cli
 
 import (
+	"context"
 	"testing"
 
+	"github.com/zhurong/jianwu/internal/book"
 	"github.com/zhurong/jianwu/internal/config"
 	"github.com/zhurong/jianwu/internal/provider/llm"
 	"github.com/zhurong/jianwu/internal/provider/llm/mock"
+	"github.com/zhurong/jianwu/internal/provider/reader"
+	"github.com/zhurong/jianwu/internal/provider/search"
 )
 
 func TestBuildChatterIntake(t *testing.T) {
@@ -87,4 +91,55 @@ func TestProviderDepsHookFallsBackToRealAssemblyWhenNil(t *testing.T) {
 	if providerDepsHook == nil {
 		t.Fatal("providerDepsHook should default to real builder, not nil")
 	}
+}
+
+func TestBuildToolRegistryAssemblesAllProviders(t *testing.T) {
+	deps := &ProviderDeps{
+		Chatter:  mock.New(llm.ChatResponse{Content: "x"}),
+		Searcher: &stubSearcher{},
+		Reader:   &stubReader{},
+		Embedder: &stubEmbedder{},
+	}
+	outline := &book.Outline{
+		Parts: []book.OutlinePart{
+			{Index: 1, Chapters: []book.OutlineChapter{{Index: 1, Title: "C1"}}},
+		},
+	}
+
+	registry, err := buildToolRegistry(deps, outline)
+	if err != nil {
+		t.Fatalf("buildToolRegistry: %v", err)
+	}
+	if registry == nil {
+		t.Fatal("registry is nil")
+	}
+	// ToolRegistry has exported Searcher/Reader/Embedder fields (see expand/tools.go).
+	if registry.Searcher == nil {
+		t.Error("Searcher not wired")
+	}
+	if registry.Reader == nil {
+		t.Error("Reader not wired")
+	}
+	if registry.Embedder == nil {
+		t.Error("Embedder not wired")
+	}
+}
+
+// stubSearcher/Reader/Embedder defined at bottom of file or in a shared test helper.
+type stubSearcher struct{}
+
+func (s *stubSearcher) Search(ctx context.Context, query string, opts search.SearchOpts) ([]search.SearchResult, error) {
+	return nil, nil
+}
+
+type stubReader struct{}
+
+func (r *stubReader) Read(ctx context.Context, url string) (reader.Content, error) {
+	return reader.Content{}, nil
+}
+
+type stubEmbedder struct{}
+
+func (e *stubEmbedder) Embed(ctx context.Context, req llm.EmbedRequest) (*llm.EmbedResponse, error) {
+	return &llm.EmbedResponse{}, nil
 }

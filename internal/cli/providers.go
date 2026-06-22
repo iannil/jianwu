@@ -3,7 +3,9 @@ package cli
 import (
 	"fmt"
 
+	"github.com/zhurong/jianwu/internal/book"
 	"github.com/zhurong/jianwu/internal/config"
+	"github.com/zhurong/jianwu/internal/engine/expand"
 	"github.com/zhurong/jianwu/internal/provider/llm"
 	"github.com/zhurong/jianwu/internal/provider/llmfactory"
 	"github.com/zhurong/jianwu/internal/provider/reader"
@@ -102,4 +104,19 @@ func buildProviderDepsReal(cfg *config.Config, secrets *config.Secrets) (*Provid
 		Reader:   reader,
 		Embedder: embedder,
 	}, nil
+}
+
+// buildToolRegistry assembles an expand.ToolRegistry from ProviderDeps + outline.
+// The outlineFn callback is a stub in v1.0.1 (returns empty string); v1.0.2
+// will inject real adjacent-chapter prose per decision Q16=C.
+func buildToolRegistry(deps *ProviderDeps, outline *book.Outline) (*expand.ToolRegistry, error) {
+	if deps == nil {
+		return nil, fmt.Errorf("deps is nil")
+	}
+	outlineFn := func(partIdx, chIdx int) (string, error) {
+		// v1.0.1 stub: return empty; v1.0.2 will read from chapters/ dir
+		// or use outline's abstract/key_concepts.
+		return "", nil
+	}
+	return expand.NewToolRegistry(deps.Searcher, deps.Reader, deps.Embedder, outlineFn), nil
 }
