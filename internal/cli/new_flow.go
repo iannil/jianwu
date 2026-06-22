@@ -87,6 +87,12 @@ func deriveSlugFromTopic(topic string) string {
 	return book.Slugify(topic)
 }
 
+// chatterProviderHook allows tests to inject mock chatters without going through
+// the real factory. Production code uses the real factory via buildChatterProvider.
+var chatterProviderHook = func(cfg *config.Config, secrets *config.Secrets) (chatterProvider, error) {
+	return buildChatterProvider(cfg, secrets)
+}
+
 // runNewFlow executes the full grill → outline → scaffolding pipeline.
 // Returns the final outline and the session (archived) or an error wrapped as *InfoError.
 // This is the public version that builds chatters from config then delegates.
@@ -97,7 +103,7 @@ func runNewFlow(
 	prompt *TerminalPrompt,
 	force bool,
 ) (*book.Outline, *grill.Session, error) {
-	cp, err := buildChatterProvider(cfg, secrets)
+	cp, err := chatterProviderHook(cfg, secrets)
 	if err != nil {
 		return nil, nil, &InfoError{Err: err, Code: ExitCodeLLMProvider}
 	}
