@@ -183,12 +183,14 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
 }
 
 // findChapter returns a pointer to the chapter at (partIdx, chIdx), or error.
+// Index-based iteration so the returned pointer references outline.Parts[i].Chapters[j]
+// directly (mutations persist when outline is saved).
 func findChapter(outline *book.Outline, partIdx, chIdx int) (*book.OutlineChapter, error) {
-	for _, p := range outline.Parts {
-		if p.Index == partIdx {
-			for i := range p.Chapters {
-				if p.Chapters[i].Index == chIdx {
-					return &p.Chapters[i], nil
+	for i := range outline.Parts {
+		if outline.Parts[i].Index == partIdx {
+			for j := range outline.Parts[i].Chapters {
+				if outline.Parts[i].Chapters[j].Index == chIdx {
+					return &outline.Parts[i].Chapters[j], nil
 				}
 			}
 			return nil, fmt.Errorf("chapter %d not found in part %d", chIdx, partIdx)
