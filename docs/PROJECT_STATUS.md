@@ -7,13 +7,14 @@
 
 ## TL;DR
 
-jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。v1.0.0 已交付完整的 4 阶段引擎 + `jianwu new` 命令闭环。
+jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。
 
-- **当前版本**：v1.0.0（tag 在 master）
-- **可用入口**：`jianwu init` / `info` / `config get/set/list` / `new`（完整 grill → outline → scaffolding 闭环）
+- **当前版本**：v1.0.0（已 tag，但范围过早；v1.0.x 系列补齐到 v1.0.5 后视为真正交付）
+- **可用 CLI 入口**：`jianwu init` / `info` / `config get/set/list` / `new`（完整 grill → outline → scaffolding 闭环）
 - **库 API**：`internal/engine/{outline,scaffolding,grill,expand}` 4 个引擎阶段独立可调
-- **CLI 缺口**：`expand` / `review` / `finalize` / `export` 命令（v1.0.x 补）
-- **质量基线**：21 个包测试全绿，`go vet` / `gofmt -l` 全清
+- **CLI 缺口（v1.0.x 补）**：`expand` (v1.0.1) / review+finalize+export+status (v1.0.3)
+- **质量缺口**：expand prompt 注入全是占位符（v1.0.2 修）—— 当前 expand 输出是 generic LLM markdown，不是 zhurongshuo 风格
+- **质量基线**：23 个包测试全绿，`go vet` / `gofmt -l` 全清
 
 ---
 
@@ -199,13 +200,17 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 
 ## 10. 待做（v1.0.x → v1.1）
 
-### v1.0.x（让 v1.0 真正好用）
-- [ ] `jianwu expand <slug> <NN-MM>` CLI 命令（把 expand 引擎接到 CLI）
-- [ ] `jianwu review <slug> <NN-MM>` / `jianwu finalize <slug>` / `jianwu export <slug> --target md`
-- [ ] Fallback model wiring（Config.Models[stage].Fallback 字段 + FallbackWrapper 装配）
-- [ ] Streaming 输出（grill + expand 长时间运行时 token 流式）
-- [ ] LLM 调用超时（避免 hang）
-- [ ] Expand 注入 archetype YAML + style samples 到 prompt（当前用占位符）
+### v1.0.x（让 v1.0 真正名副其实）
+
+> v1.0.0 ship 时实际范围是库 API + new CLI；以下切片把 v1.0 承诺（用户能从 CLI 跑出 zhurongshuo 风格章节）真正补齐。
+> v1.0.5 ship 后视为 v1.0 真正交付。详见 `docs/decisions/26-grill-decisions.md` § v1.0.x 完成度审计决策。
+
+- [ ] `jianwu expand <slug> <NN-MM>` CLI 命令（**v1.0.1**）
+- [ ] Expand prompt 注入 archetype + samples + adjacent + similar book（**v1.0.2**，从 v1.1.6 上移）—— 当前 prompt 是占位符
+- [ ] `jianwu review <slug> <NN-MM>` / `jianwu finalize <slug>` / `jianwu export <slug> --target md` / `jianwu status <slug>`（**v1.0.3**）
+- [ ] Fallback model wiring（**v1.0.4**）
+- [ ] LLM 调用超时（**v1.0.5**）
+- [ ] Streaming 输出（**v1.0.6**，可选 polish）
 
 ### v1.1（功能扩展）
 - [ ] 章节迭代命令（`rewrite` / `add-chapter` / `move-chapter`）
@@ -226,16 +231,20 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 ## 11. 已知技术债
 
 ### 架构层
-- `cli.chatterProviderHook` 是 test-only 全局可变 var（注释已警告），未来重构为 struct field 更干净
+- `cli.chatterProviderHook` 是 test-only 全局可变 var（注释已警告），v1.1 重构为 struct field（决策 Q14=C，v1.0.x 不动）
+- `cli.providerDepsHook`（v1.0.1 新增）同款 test-only 全局可变 var，预演 v1.1 重构方向（决策 Q20=B）
 - 三个 factory 包（`llmfactory` / `searchfactory` / `readerfactory`）独立存在只为打破 import cycle——是 Go 标准做法但显得啰嗦
-- `expand.types.ExpandOutput.Draft` 字段保留 pre-validation draft 用于 debug，正常路径不用
+- `expand.types.ExpandOutput.Draft` 字段保留 pre-validation draft 用于 debug，正常路径不用（v1.1 决定是否暴露为 CLI debug flag）
 
 ### 代码层（minor，可清理）
-- `book.Citation.UsedInParagraph` + `expand.Citation.UsedInParagraph` 字段从未填充（保留 schema 兼容）
-- `expand.ResearchPlan` struct 从未使用（iter 1 直接走 ResearchNotes）
-- `expand.citation.go` 的 `inChinese` 局部变量设置后只在空 `if` body 中读
-- `expand.NewToolRegistryFromProviders` 是 `NewToolRegistry` 的简单 alias（无附加值）
+- `book.Citation.UsedInParagraph` 字段从未填充（保留 schema 兼容；v1.1 决定去留）
 - `cli.new.go` 的 `_ = session` 是预期行为（CLI 摘要不用 session），注释已说明
+
+### 代码层（已清理，留作记录）
+- ~~`expand.ResearchPlan` struct 从未使用~~ — 实际从未定义（误记）
+- ~~`expand.NewToolRegistryFromProviders` 是 alias~~ — 实际从未定义（误记）
+- ~~`expand.citation.go` 的 `inChinese` 空 if~~ — 实际不存在（误记）
+- ~~`expand.Citation.UsedInParagraph` 字段从未填充~~ — 实际从未定义（仅 book 包有）
 
 ### 安全（v1.0 可接受，v2 SaaS 必修）
 - Search/Reader 的 BaseURL 配置无 allowlist（v2 SaaS 需要）
