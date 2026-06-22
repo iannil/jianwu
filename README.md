@@ -68,18 +68,16 @@ Fallback policy: primary fails after retry → fallback model takes over.
 
 Both are abstracted behind small Go interfaces (`Chatter`, `Embedder`, `Searcher`, `Reader`) — engine layers (S3+) compose them.
 
-## Engine (v0.3.0)
+## Engine (v0.4.0)
 
-The 4-stage engine is being built slice by slice. v0.3.0 ships the **Outline** stage:
+The 4-stage engine is being built slice by slice. v0.4.0 ships **Outline + Scaffolding**:
 
-- Input: archetype ID + grill parameters (topic, audience, depth, goal, length, language)
-- Output: complete `outline.json` with parts and chapters
-- Stateless single LLM call with structured output (JSON Schema enforced)
-- Prompt injects: archetype YAML, few-shot style samples, matching reference book outlines
-- Designed to be wrapped by caller (S6 `new` will wrap with RetryWrapper + FallbackWrapper)
+- **Outline** (v0.3.0): single LLM call produces full book outline (parts × chapters)
+- **Scaffolding** (v0.4.0): N chapters in parallel (default concurrency 5), each generates abstract / key_concepts / learning_objectives / suggested_examples. Continue-on-error: failed chapters marked `status=failed` without aborting siblings. `RetryFailed` re-runs only failed chapters.
+
+Both stages are stateless per call. Caller (S6 `new` command) will wrap with RetryWrapper + FallbackWrapper.
 
 Remaining stages (deferred):
-- Scaffolding (parallel per-chapter, S4)
 - Grill (interactive stateful, S5)
 - Expand (agent loop + web search, S7)
 

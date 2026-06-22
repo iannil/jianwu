@@ -44,7 +44,7 @@ func ScaffoldAll(
 
 	// Collect all chapter inputs up-front.
 	type job struct {
-		key    string
+		key     string
 		partIdx int
 		chIdx   int
 		input   ChapterInput
@@ -67,7 +67,7 @@ func ScaffoldAll(
 				Language:     params.Language,
 			}
 			jobs = append(jobs, job{
-				key:    fmtKey(p.Index, c.Index),
+				key:     fmtKey(p.Index, c.Index),
 				partIdx: p.Index,
 				chIdx:   c.Index,
 				input:   input,

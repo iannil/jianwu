@@ -33,17 +33,17 @@ type ChapterOutput = book.OutlineChapter
 
 // promptData is the template context.
 type promptData struct {
-	Archetype      string
-	Samples        string
-	PartRole       string
-	PartTitle      string
-	ChapterTitle   string
-	Topic          string
-	Audience       string
-	Depth          string
-	Goal           string
-	Length         string
-	Language       string
+	Archetype    string
+	Samples      string
+	PartRole     string
+	PartTitle    string
+	ChapterTitle string
+	Topic        string
+	Audience     string
+	Depth        string
+	Goal         string
+	Length       string
+	Language     string
 }
 
 // buildPromptData assembles prompt data from a ChapterInput.
