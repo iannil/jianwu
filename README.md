@@ -68,6 +68,21 @@ Fallback policy: primary fails after retry → fallback model takes over.
 
 Both are abstracted behind small Go interfaces (`Chatter`, `Embedder`, `Searcher`, `Reader`) — engine layers (S3+) compose them.
 
+## Engine (v0.3.0)
+
+The 4-stage engine is being built slice by slice. v0.3.0 ships the **Outline** stage:
+
+- Input: archetype ID + grill parameters (topic, audience, depth, goal, length, language)
+- Output: complete `outline.json` with parts and chapters
+- Stateless single LLM call with structured output (JSON Schema enforced)
+- Prompt injects: archetype YAML, few-shot style samples, matching reference book outlines
+- Wrapped in RetryWrapper + FallbackWrapper for resilience
+
+Remaining stages (deferred):
+- Scaffolding (parallel per-chapter, S4)
+- Grill (interactive stateful, S5)
+- Expand (agent loop + web search, S7)
+
 ## License
 
 Code: AGPL-3.0 (see `LICENSE`).
