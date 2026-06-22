@@ -21,3 +21,4 @@ vendor/
 
 # Jianwu runtime (if user inits a workspace in this repo)
 .jianwu/
+/jianwu
