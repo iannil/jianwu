@@ -87,8 +87,12 @@ func deriveSlugFromTopic(topic string) string {
 	return book.Slugify(topic)
 }
 
-// chatterProviderHook allows tests to inject mock chatters without going through
-// the real factory. Production code uses the real factory via buildChatterProvider.
+// chatterProviderHook allows tests to inject mock chatters without going through the real factory.
+// WARNING: this is a package-global mutable var with no mutex protection. It is safe for
+// test binaries (single-process, no parallel test execution within the cli package) but
+// MUST NOT be mutated from production code or from concurrent tests. If a future change
+// needs runtime provider swapping, replace this with a field on a struct threaded through
+// RunE.
 var chatterProviderHook = func(cfg *config.Config, secrets *config.Secrets) (chatterProvider, error) {
 	return buildChatterProvider(cfg, secrets)
 }
@@ -199,8 +203,7 @@ func runNewFlowWithChatters(
 
 	// 6. Save book meta + outline
 	bookDir := filepath.Join(wsRoot, "books", slug)
-	cfg := &config.Config{} // Minimal config for writeBookMeta
-	if err := writeBookMeta(bookDir, slug, session, cfg); err != nil {
+	if err := writeBookMeta(bookDir, slug, session); err != nil {
 		return nil, session, &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
 	if err := book.SaveOutline(filepath.Join(bookDir, "outline.json"), outline); err != nil {
@@ -208,7 +211,7 @@ func runNewFlowWithChatters(
 	}
 
 	// 7. Scaffolding
-	scaffolding.ScaffoldAll(defaultCtx(), cp.scaffolding, outline, session.Answers["archetype"],
+	results := scaffolding.ScaffoldAll(defaultCtx(), cp.scaffolding, outline, session.Answers["archetype"],
 		scaffolding.ChapterParams{
 			Topic:    session.Answers["topic"],
 			Audience: session.Answers["audience"],
@@ -219,6 +222,15 @@ func runNewFlowWithChatters(
 		},
 		scaffolding.Options{},
 	)
+	failedCount := 0
+	for _, r := range results {
+		if r.Err != nil {
+			failedCount++
+		}
+	}
+	if failedCount > 0 {
+		fmt.Fprintf(prompt.Out, "warning: %d chapter(s) failed scaffolding; use `jianwu status <slug>` to see\n", failedCount)
+	}
 	// Save outline with scaffolded chapters
 	if err := book.SaveOutline(filepath.Join(bookDir, "outline.json"), outline); err != nil {
 		return outline, session, &InfoError{Err: err, Code: ExitCodeGeneric}
@@ -234,7 +246,7 @@ func runNewFlowWithChatters(
 }
 
 // writeBookMeta writes meta.json for the new book.
-func writeBookMeta(bookDir, slug string, session *grill.Session, cfg *config.Config) error {
+func writeBookMeta(bookDir, slug string, session *grill.Session) error {
 	if err := os.MkdirAll(bookDir, 0o755); err != nil {
 		return fmt.Errorf("mkdir book dir: %w", err)
 	}
