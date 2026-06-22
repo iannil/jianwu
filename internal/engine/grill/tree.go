@@ -2,15 +2,15 @@ package grill
 
 // Dimension is one node in the design tree.
 type Dimension struct {
-	ID          string   // e.g. "topic", "audience"
-	Name        string   // human-readable, e.g. "核心问题"
-	Description string   // one-line description of what this dimension captures
-	Question    string   // the question asked to the user
-	Options     []string // suggested options (LLM may add more in recommendations)
-	DependsOn   []string // dimension IDs that must be answered first
-	Trigger     Trigger  // when to ask (Always, or Conditional on a predicate)
-	Required    bool     // true = must answer; false = can skip with default
-	DefaultValue string  // used if user skips
+	ID           string   // e.g. "topic", "audience"
+	Name         string   // human-readable, e.g. "核心问题"
+	Description  string   // one-line description of what this dimension captures
+	Question     string   // the question asked to the user
+	Options      []string // suggested options (LLM may add more in recommendations)
+	DependsOn    []string // dimension IDs that must be answered first
+	Trigger      Trigger  // when to ask (Always, or Conditional on a predicate)
+	Required     bool     // true = must answer; false = can skip with default
+	DefaultValue string   // used if user skips
 }
 
 // Trigger decides whether a conditional dimension should be asked.
@@ -24,7 +24,7 @@ type TriggerKind int
 
 const (
 	TriggerAlways TriggerKind = iota // ask unconditionally
-	TriggerEquals                     // ask only if Dimension's answer == Value
+	TriggerEquals                    // ask only if Dimension's answer == Value
 )
 
 // Core dimensions per DESIGN.md §5.2 (6 dimensions).
@@ -66,18 +66,18 @@ func DefaultTree() *DesignTree {
 				DefaultValue: "understanding",
 			},
 			{
-				ID:           "archetype",
-				Name:         "结构原型",
-				Description:  "书的骨架来自哪个原型",
-				Question:     "这本书用哪种结构组织？",
-				Options:      []string{
+				ID:          "archetype",
+				Name:        "结构原型",
+				Description: "书的骨架来自哪个原型",
+				Question:    "这本书用哪种结构组织？",
+				Options: []string{
 					"ontology-epistemology-practice",
 					"diagnosis-decoding-breakthrough",
 					"foundations-application-practice",
 				},
-				DependsOn:   []string{"goal"},
-				Trigger:     Trigger{Kind: TriggerAlways},
-				Required:    true,
+				DependsOn:    []string{"goal"},
+				Trigger:      Trigger{Kind: TriggerAlways},
+				Required:     true,
 				DefaultValue: "ontology-epistemology-practice",
 			},
 			{
@@ -137,12 +137,12 @@ func DefaultTree() *DesignTree {
 				DefaultValue: "mixed",
 			},
 			{
-				ID:           "citation_style",
-				Name:         "引用风格",
-				Description:  "学术/通俗/无",
-				Question:     "引用风格？",
-				Options:      []string{"academic", "popular", "none"},
-				DependsOn:    []string{"audience"},
+				ID:          "citation_style",
+				Name:        "引用风格",
+				Description: "学术/通俗/无",
+				Question:    "引用风格？",
+				Options:     []string{"academic", "popular", "none"},
+				DependsOn:   []string{"audience"},
 				Trigger: Trigger{
 					Kind:      TriggerEquals,
 					Dimension: "audience",
