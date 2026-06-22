@@ -170,13 +170,17 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 
 **Secrets：** `~/.config/jianwu/secrets.yaml`（0600 权限强制）或 ENV（`GEMINI_API_KEY` / `GLM_API_KEY` / `BRAVE_API_KEY` / `SERPER_API_KEY` / `JINA_API_KEY`）。ENV > file 字段级覆盖。
 
-## 9. 已交付（v1.0.0）
+## 9. 已交付
 
-### ✅ CLI 命令
+### ✅ CLI 命令（v1.0.1）
 - `jianwu init [--bare] [path]`
 - `jianwu info`
 - `jianwu config get/set/list`
 - `jianwu new [--force]`
+- `jianwu expand <slug> <NN-MM> [--force]`（v1.0.1 新增）
+
+### ✅ CLI 命令（v1.0.0 范围）
+- 同上除去 `expand`
 
 ### ✅ 引擎库 API
 - `outline.Generate(ctx, chatter, Input) (*book.Outline, error)`
@@ -205,7 +209,7 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 > v1.0.0 ship 时实际范围是库 API + new CLI；以下切片把 v1.0 承诺（用户能从 CLI 跑出 zhurongshuo 风格章节）真正补齐。
 > v1.0.5 ship 后视为 v1.0 真正交付。详见 `docs/decisions/26-grill-decisions.md` § v1.0.x 完成度审计决策。
 
-- [ ] `jianwu expand <slug> <NN-MM>` CLI 命令（**v1.0.1**）
+- [x] `jianwu expand <slug> <NN-MM>` CLI 命令（**v1.0.1**，已交付 2026-06-23）
 - [ ] Expand prompt 注入 archetype + samples + adjacent + similar book（**v1.0.2**，从 v1.1.6 上移）—— 当前 prompt 是占位符
 - [ ] `jianwu review <slug> <NN-MM>` / `jianwu finalize <slug>` / `jianwu export <slug> --target md` / `jianwu status <slug>`（**v1.0.3**）
 - [ ] Fallback model wiring（**v1.0.4**）

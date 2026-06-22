@@ -20,19 +20,19 @@
 > 目标：把 v1.0 承诺（用户能从 CLI 跑出 zhurongshuo 风格的章节）真正补齐。
 > v1.0.5 ship 后视为 v1.0 真正交付。切片顺序按依赖（决策 Q21=A）。
 
-### v1.0.1 — Expand CLI（**进行中**）
+### v1.0.1 — Expand CLI（**已交付** 2026-06-23）
 
 **范围：** 加 `jianwu expand <slug> <NN-MM>` 命令，调 `expand.Generate`，写 `chapters/NN-MM.md`。
 
 **任务（详见 `docs/plans/2026-06-22-v1.0.1-expand-cli.md`）：**
-- [ ] `ProviderDeps` + `providerDepsHook` 在 `internal/cli/providers.go`（决策 Q20=B）
-- [ ] `internal/book/chapter.go`：ChapterFrontmatter + WriteChapter + ReadChapter（决策 Q2=B）
-- [ ] `buildToolRegistry` helper（v1.0.1 outlineFn 是 stub）
-- [ ] CLI 命令 `expand` 在 `internal/cli/expand.go`，含 `--force` 语义（决策 Q3=B）
-- [ ] 调 `expand.Generate`，写 chapter file（frontmatter + markdown）
-- [ ] 同时更新 `outline.json` 的 chapter status + citations + word_count + unverified_claims
-- [ ] E2E test 用 `providerDepsHook` 注入 mock
-- [ ] Live integration test（SKIP if no API keys）
+- [x] `ProviderDeps` + `providerDepsHook` 在 `internal/cli/providers.go`（决策 Q20=B）
+- [x] `internal/book/chapter.go`：ChapterFrontmatter + WriteChapter + ReadChapter（决策 Q2=B）
+- [x] `buildToolRegistry` helper（v1.0.1 outlineFn 是 stub）
+- [x] CLI 命令 `expand` 在 `internal/cli/expand.go`，含 `--force` 语义（决策 Q3=B）
+- [x] 调 `expand.Generate`，写 chapter file（frontmatter + markdown）
+- [x] 同时更新 `outline.json` 的 chapter status + citations + word_count + unverified_claims
+- [x] E2E test 用 `providerDepsHook` 注入 mock
+- [x] Live integration test（SKIP if no API keys）
 
 **验收：** `jianwu new` 之后 `jianwu expand <slug> 01-01` 能产出 `books/<slug>/chapters/01-01.md`。
 
