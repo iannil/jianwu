@@ -6,7 +6,7 @@ Library + CLI. Web SaaS wrapper is a separate repo (`mouqin`).
 
 ## Status
 
-**v1.0.0 — S7 (Expand complete)**: Full 5-stage engine working (Outline, Scaffolding, Grill, `new` command, Expand). CLI expand command pending v1.0.x patch. See `docs/superpowers/plans/` for roadmap.
+**v1.0.x (in progress)**: v1.0.0 shipped the library API + `jianwu new`; v1.0.x is bringing the CLI surface to match the v1.0 promise (expand / review / finalize / export / status commands + zhurongshuo-style prompt injection). See `docs/ROADMAP.md` for the v1.0.x plan and `docs/decisions/26-grill-decisions.md` § v1.0.x 完成度审计决策 for why.
 
 ## Install
 
