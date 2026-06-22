@@ -88,3 +88,78 @@
 - 模型升级（gemini-2.5 → 2.6）时的 deprecation 策略？
 
 这些是写代码时再敲的细节，不阻塞 v1.0.x。
+
+---
+
+## v1.0.x 完成度审计决策（2026-06-22，21 项）
+
+> v1.0.0 tag 后审计发现：CLI 缺 expand/review/finalize/export/status；expand 引擎 prompt 注入全是占位符。
+> 以下 21 项决策对齐 v1.0.x 切片的实施边界。完整推理在原始 grill-me transcript。
+
+### 范围重定
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| Q1 | v1.0.0 完成标准 | 用户能从 CLI 跑出至少一章节 = ship 门槛；当前 tag 过早 | v1.0.x 系列补齐到 v1.0.5 |
+| Q16 | Expand Prompt 注入 | 提到 v1.0.2 单独切片（原计划 v1.1.6） | **最关键缺口**：当前是 generic LLM 输出，非 zhurongshuo 风格 |
+| Q17 | v1.0.0 tag 处理 | 保留 + 文档说明"过早"（不重打 tag） | 工程上零成本 |
+| Q21 | 切片顺序 | 严格依赖序：CLI → 注入 → 状态机 → fallback → timeout → streaming 可选 | v1.0.5 = v1.0 promise fully delivered |
+
+### v1.0.1 Expand CLI
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| Q2 | chapter.md frontmatter | 中等 schema：title/part_id/chapter_id/status/word_count/generated_at/model/engine_version/citations/unverified_claims_count | 自包含到"光读文件就能审核" |
+| Q3 | 重复运行覆盖 | 默认拒绝；`--force` 覆盖；reviewed/final 需 `--force --force` | 与 `new --force` 一致 |
+| Q4 | `expand --all` | 不支持（v1.1 再加） | 防止并发烧钱烧注意力 |
+| Q5 | embedder 来源 | 与 chatter 同 provider；不支持时 fallback Gemini + warning | 配置最小惊讶 |
+| Q6 | 测试策略 | mock E2E + live integration（手动） | 不写 golden file（LLM 输出非确定） |
+| Q20 | E2E hook 覆盖 | `providerDepsHook` 单一结构体（预演 v1.1 重构） | 旧 chatterProviderHook 不动 |
+
+### v1.0.2 Expand Prompt 注入
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| - | 范围 | archetype YAML + style samples + similar book + adjacent chapters 真正注入 | 验收：zhurong 读后说"这是 zhurongshuo 风格" |
+
+### v1.0.3 状态机命令
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| Q7 | status 转换 | R1+F1+X1：只 expanded→reviewed；全书 reviewed 才 final；failed 拒绝 | 严格状态机 |
+| Q8 | export 目标 | 只 md 单文件（v1.0.3） | zhurongshuo/hugo/pdf 推 v1.1.4 |
+| Q9 | dry-run 范围 | finalize + export 加 | review/expand 不加 |
+
+### v1.0.4 Fallback Wiring
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| Q10 | fallback 粒度 | 全局单一 fallback | 简单；v1.1 再考虑按阶段 |
+
+### v1.0.5 LLM Timeout
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| Q12 | timeout 粒度 | 全局默认 + 阶段覆盖（expand 默认 600s） | 90s 全局默认 |
+
+### v1.0.6 Streaming（可选）
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| Q11 | streaming + caching | jianwu 不感知兼容性；只 draft 流式 | research/validate 是 JSON，流式无意义 |
+
+### 跨切
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| Q13 | 模型 deprecation | 锁版本；用户手动升级 | 可复现性优先 |
+| Q14 | chatterProviderHook 重构 | 推到 v1.1 | v1.0.x 不动现有 hook |
+| Q15 | 技术债打包 | B 为主 C 为辅：顺手清 + 需设计的推 v1.1 | 每 cleanup 单独 commit |
+| Q18 | config schema bump | v1.0.x 保持 "1"；v1.1 引入结构性变更才 bump | 可选字段不破坏兼容 |
+| Q19 | SDD 节奏 | 每切片走 SDD（小切片可 lite） | 维持 v1.0 工作流纪律 |
+
+### 原"没问过的开放问题"现状
+
+- ✅ **按阶段 fallback 策略**：Q10 决定全局单一，v1.1 再考虑
+- ✅ **流式 + caching 兼容**：Q11 决定 jianwu 不感知（SDK 自处理）
+- ✅ **模型 deprecation**：Q13 决定锁版本
