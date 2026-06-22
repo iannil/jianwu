@@ -52,9 +52,9 @@ func TestGenerateChainsIterations(t *testing.T) {
 	})
 
 	p := &mockChatter3Phases{
-		researchResp:  string(researchJSON),
-		draftResp:     draftMD,
-		validateResp:  string(validateJSON),
+		researchResp: string(researchJSON),
+		draftResp:    draftMD,
+		validateResp: string(validateJSON),
 	}
 	out, err := Generate(context.Background(), p, nil, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", Language: "zh",

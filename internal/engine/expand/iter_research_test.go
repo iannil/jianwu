@@ -11,7 +11,7 @@ import (
 
 func TestRunResearchParsesLLMResponse(t *testing.T) {
 	notes := ResearchNotes{
-		Findings: []Finding{{Query: "q", URL: "https://x", Title: "T", Snippet: "S", Note: "N"}},
+		Findings:   []Finding{{Query: "q", URL: "https://x", Title: "T", Snippet: "S", Note: "N"}},
 		Candidates: []string{"https://x"},
 	}
 	body, _ := json.Marshal(notes)

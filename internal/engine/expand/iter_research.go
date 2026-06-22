@@ -64,11 +64,11 @@ func RunResearch(
 		return notes, err
 	}
 	user, err := renderExpand("user_research", userBytes, map[string]any{
-		"Topic":        in.Topic,
-		"PartTitle":    in.PartTitle,
-		"ChapterTitle": in.ChapterTitle,
-		"Abstract":     in.Abstract,
-		"KeyConcepts":  strings.Join(in.KeyConcepts, ", "),
+		"Topic":         in.Topic,
+		"PartTitle":     in.PartTitle,
+		"ChapterTitle":  in.ChapterTitle,
+		"Abstract":      in.Abstract,
+		"KeyConcepts":   strings.Join(in.KeyConcepts, ", "),
 		"SearchResults": string(searchJSON),
 	})
 	if err != nil {
