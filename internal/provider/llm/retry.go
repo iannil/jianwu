@@ -40,7 +40,7 @@ func (clock) Wait(ctx context.Context, d time.Duration) error {
 
 // RetryWrapper decorates a Chatter with retry on transient errors.
 type RetryWrapper struct {
-	Inner  chatterEmbedder
+	Inner  ChatterEmbedder
 	Config RetryConfig
 	clock  interface {
 		Wait(ctx context.Context, d time.Duration) error

@@ -47,3 +47,23 @@ func NewEmbedder(ref config.ModelRef, secrets *config.Secrets) (llm.Embedder, er
 		return nil, fmt.Errorf("unknown LLM provider: %q", ref.Provider)
 	}
 }
+
+// NewProvider constructs a provider that implements both Chatter and Embedder.
+// This is useful when you need a single provider instance for both interfaces,
+// such as when wrapping with RetryWrapper which requires ChatterEmbedder.
+func NewProvider(ref config.ModelRef, secrets *config.Secrets) (llm.ChatterEmbedder, error) {
+	switch ref.Provider {
+	case "gemini":
+		if secrets.GeminiAPIKey == "" {
+			return nil, fmt.Errorf("gemini provider requires GEMINI_API_KEY")
+		}
+		return gemini.New(gemini.Config{APIKey: secrets.GeminiAPIKey})
+	case "glm":
+		if secrets.GLMAPIKey == "" {
+			return nil, fmt.Errorf("glm provider requires GLM_API_KEY")
+		}
+		return glm.New(glm.Config{APIKey: secrets.GLMAPIKey})
+	default:
+		return nil, fmt.Errorf("unknown LLM provider: %q", ref.Provider)
+	}
+}
