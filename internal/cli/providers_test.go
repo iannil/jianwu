@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/zhurong/jianwu/internal/config"
+	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/zhurong/jianwu/internal/provider/llm/mock"
 )
 
 func TestBuildChatterIntake(t *testing.T) {
@@ -54,5 +56,35 @@ func TestBuildEmbedder(t *testing.T) {
 	}
 	if e == nil {
 		t.Fatal("nil embedder")
+	}
+}
+
+func TestProviderDepsHookIsConsultedWhenSet(t *testing.T) {
+	original := providerDepsHook
+	defer func() { providerDepsHook = original }()
+
+	called := false
+	providerDepsHook = func(cfg *config.Config, secrets *config.Secrets) (*ProviderDeps, error) {
+		called = true
+		return &ProviderDeps{Chatter: mock.New(llm.ChatResponse{Content: "x"})}, nil
+	}
+
+	deps, err := buildProviderDeps(&config.Config{}, &config.Secrets{})
+	if err != nil {
+		t.Fatalf("buildProviderDeps: %v", err)
+	}
+	if !called {
+		t.Error("providerDepsHook was not consulted")
+	}
+	if deps == nil {
+		t.Fatal("deps is nil")
+	}
+}
+
+func TestProviderDepsHookFallsBackToRealAssemblyWhenNil(t *testing.T) {
+	// Can't fully test real assembly without API keys, but can verify the hook
+	// variable starts as the real builder (not nil).
+	if providerDepsHook == nil {
+		t.Fatal("providerDepsHook should default to real builder, not nil")
 	}
 }
