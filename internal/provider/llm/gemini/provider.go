@@ -2,6 +2,7 @@ package gemini
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/zhurong/jianwu/internal/provider/llm"
@@ -102,10 +103,60 @@ func (p *Provider) Embed(ctx context.Context, req llm.EmbedRequest) (*llm.EmbedR
 }
 
 // schemaFromRaw populates a genai.Schema from a JSON Schema byte slice.
-// For S2 we only support a minimal subset (type, properties). Full JSON Schema
-// translation will land in S3 (outline) when structured outputs are first used.
 func schemaFromRaw(raw []byte, s *genai.Schema) error {
-	// Minimal: treat as a free-form object. Full impl deferred to S3.
-	s.Type = "OBJECT"
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return fmt.Errorf("parse JSON Schema: %w", err)
+	}
+	return populateSchema(m, s)
+}
+
+// populateSchema recursively translates JSON Schema to genai.Schema.
+func populateSchema(m map[string]any, s *genai.Schema) error {
+	if t, ok := m["type"].(string); ok {
+		switch t {
+		case "object":
+			s.Type = "OBJECT"
+		case "string":
+			s.Type = "STRING"
+		case "number":
+			s.Type = "NUMBER"
+		case "integer":
+			s.Type = "INTEGER"
+		case "boolean":
+			s.Type = "BOOLEAN"
+		case "array":
+			s.Type = "ARRAY"
+		}
+	}
+	if desc, ok := m["description"].(string); ok {
+		s.Description = desc
+	}
+	if req, ok := m["required"].([]any); ok {
+		for _, r := range req {
+			if str, ok := r.(string); ok {
+				s.Required = append(s.Required, str)
+			}
+		}
+	}
+	if props, ok := m["properties"].(map[string]any); ok {
+		s.Properties = make(map[string]*genai.Schema, len(props))
+		for k, v := range props {
+			if vm, ok := v.(map[string]any); ok {
+				child := &genai.Schema{}
+				if err := populateSchema(vm, child); err != nil {
+					return err
+				}
+				s.Properties[k] = child
+			}
+		}
+	}
+	if items, ok := m["items"].(map[string]any); ok {
+		child := &genai.Schema{}
+		if err := populateSchema(items, child); err != nil {
+			return err
+		}
+		s.Items = child
+	}
 	return nil
 }

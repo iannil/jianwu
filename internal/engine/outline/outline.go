@@ -79,6 +79,9 @@ func (in Input) validate() error {
 	if in.Length == "" {
 		missing = append(missing, "length")
 	}
+	if in.Language == "" {
+		missing = append(missing, "language")
+	}
 	if len(missing) > 0 {
 		return fmt.Errorf("missing required fields: %s", strings.Join(missing, ", "))
 	}
@@ -178,6 +181,21 @@ func yamlMarshalArchetype(a *archetypes.Archetype) (string, error) {
 	b.WriteString("name_zh: " + a.Name.Zh + "\n")
 	b.WriteString("name_en: " + a.Name.En + "\n")
 	b.WriteString("description: " + a.Description + "\n")
+	if len(a.WhenToUse.Goals) > 0 || len(a.WhenToUse.TopicTypes) > 0 || len(a.WhenToUse.AudienceFit) > 0 {
+		b.WriteString("\nwhen_to_use:\n")
+		if len(a.WhenToUse.Goals) > 0 {
+			b.WriteString("  goals: [" + strings.Join(a.WhenToUse.Goals, ", ") + "]\n")
+		}
+		if len(a.WhenToUse.TopicTypes) > 0 {
+			b.WriteString("  topic_types: [" + strings.Join(a.WhenToUse.TopicTypes, ", ") + "]\n")
+		}
+		if len(a.WhenToUse.AudienceFit) > 0 {
+			b.WriteString("  audience_fit: [" + strings.Join(a.WhenToUse.AudienceFit, ", ") + "]\n")
+		}
+		if len(a.WhenToUse.NotRecommendedFor) > 0 {
+			b.WriteString("  not_recommended_for: [" + strings.Join(a.WhenToUse.NotRecommendedFor, ", ") + "]\n")
+		}
+	}
 	b.WriteString("\nparts:\n")
 	for _, p := range a.Parts {
 		b.WriteString("  - role: " + p.Role + "\n")

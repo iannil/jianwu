@@ -76,7 +76,7 @@ The 4-stage engine is being built slice by slice. v0.3.0 ships the **Outline** s
 - Output: complete `outline.json` with parts and chapters
 - Stateless single LLM call with structured output (JSON Schema enforced)
 - Prompt injects: archetype YAML, few-shot style samples, matching reference book outlines
-- Wrapped in RetryWrapper + FallbackWrapper for resilience
+- Designed to be wrapped by caller (S6 `new` will wrap with RetryWrapper + FallbackWrapper)
 
 Remaining stages (deferred):
 - Scaffolding (parallel per-chapter, S4)

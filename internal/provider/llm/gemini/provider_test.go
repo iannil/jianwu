@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zhurong/jianwu/internal/provider/llm"
+	"google.golang.org/genai"
 )
 
 // Tests against the real SDK would require a live API key, so we test only
@@ -61,4 +62,36 @@ func TestProviderChatWithLiveKey(t *testing.T) {
 // apiKeyFromEnv reads the Gemini API key from environment (for tests).
 func apiKeyFromEnv() string {
 	return os.Getenv("GEMINI_API_KEY")
+}
+
+// TestSchemaFromRawTranslatesBasicObject verifies that schemaFromRaw
+// correctly translates a simple JSON Schema into genai.Schema.
+func TestSchemaFromRawTranslatesBasicObject(t *testing.T) {
+	raw := []byte(`{
+		"type": "object",
+		"properties": {
+			"foo": {"type": "string"},
+			"bar": {"type": "number"}
+		},
+		"required": ["foo"]
+	}`)
+	s := &genai.Schema{}
+	if err := schemaFromRaw(raw, s); err != nil {
+		t.Fatalf("schemaFromRaw: %v", err)
+	}
+	if s.Type != "OBJECT" {
+		t.Errorf("type: got %q, want OBJECT", s.Type)
+	}
+	if len(s.Properties) != 2 {
+		t.Fatalf("properties count: got %d, want 2", len(s.Properties))
+	}
+	if s.Properties["foo"].Type != "STRING" {
+		t.Errorf("foo type: got %q, want STRING", s.Properties["foo"].Type)
+	}
+	if s.Properties["bar"].Type != "NUMBER" {
+		t.Errorf("bar type: got %q, want NUMBER", s.Properties["bar"].Type)
+	}
+	if len(s.Required) != 1 || s.Required[0] != "foo" {
+		t.Errorf("required: got %v, want [foo]", s.Required)
+	}
 }

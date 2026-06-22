@@ -84,6 +84,6 @@ func TestGenerateRejectsMalformedJSON(t *testing.T) {
 	var syntaxErr *json.SyntaxError
 	if !errors.As(err, &syntaxErr) && !strings.Contains(err.Error(), "parse outline JSON") {
 		// The wrap message includes "parse outline JSON" so callers can detect it.
-		t.Logf("got error: %v", err)
+		t.Errorf("error should mention 'parse outline JSON', got: %v", err)
 	}
 }
