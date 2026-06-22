@@ -6,9 +6,7 @@ Library + CLI. Web SaaS wrapper is a separate repo (`mouqin`).
 
 ## Status
 
-**v0.1.0 — S1 (Foundation)**: workspace + config + CLI shell working.
-LLM provider abstractions, engine, and LLM-driven commands come in
-later slices (S2-S8). See `docs/superpowers/plans/` for the roadmap.
+**v1.0.0 — S7 (Expand complete)**: Full 5-stage engine working (Outline, Scaffolding, Grill, `new` command, Expand). CLI expand command pending v1.0.x patch. See `docs/superpowers/plans/` for roadmap.
 
 ## Install
 
@@ -68,32 +66,25 @@ Fallback policy: primary fails after retry → fallback model takes over.
 
 Both are abstracted behind small Go interfaces (`Chatter`, `Embedder`, `Searcher`, `Reader`) — engine layers (S3+) compose them.
 
-## Engine (v0.6.0)
+## Engine (v1.0.0)
 
-The 4-stage engine is being built slice by slice. v0.6.0 ships **Outline + Scaffolding + Grill + `new` command**:
+jianwu v1.0.0 ships the full 5-stage engine:
 
 - **Outline** (v0.3.0): single LLM call produces full book outline
-- **Scaffolding** (v0.4.0): N chapters in parallel (concurrency 5), continue-on-error
+- **Scaffolding** (v0.4.0): N chapters in parallel, continue-on-error
 - **Grill** (v0.5.0): stateful interactive Q&A with 12-dimension design tree
-- **`jianwu new`** (v0.6.0): full end-to-end flow — chains grill → outline → scaffolding. Resume-aware. Slug conflict detection with `--force`. Retry + fallback wrapping via config-driven models.
+- **`jianwu new`** (v0.6.0): full flow command (grill → outline → scaffolding)
+- **Expand** (v1.0.0): per-chapter agent — 3 iterations (research → draft → validate), web search grounding, citation tracking with `[^N]` footnotes, LLM self-reports unverified claims
 
-### Quick start (v0.6.0)
+### v1.0 status
 
-```bash
-jianwu init my-library
-cd my-library
-export GEMINI_API_KEY=...
-export GLM_API_KEY=...
-jianwu new
-# ... answer grill questions ...
-# Book scaffold generated in books/<slug>/
-```
+The full闭环 works: `jianwu new` produces a scaffolded book; chapters can be expanded with grounded citations. Not yet implemented: `expand`/`review`/`finalize`/`export` CLI commands (currently the expand engine is library-only).
 
-If a previous `jianwu new` was interrupted, the next run detects the incomplete session and offers to resume.
-
-Remaining stages (deferred):
-- Expand (agent loop + web search, S7)
-- review / finalize / export (S8)
+Remaining work for v1.1:
+- CLI commands for expand / review / finalize / export
+- Fallback model wiring (Config carries primary only today)
+- Streaming output for long-running stages
+- Real timeouts on LLM calls
 
 ## License
 
