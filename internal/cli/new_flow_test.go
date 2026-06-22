@@ -149,18 +149,18 @@ func TestRunNewFlowWithChattersHappyPath(t *testing.T) {
 	// Return proper values for each dimension in order: topic, audience, goal, archetype, depth, length, language, scope, example_type, visualization, timeliness, citation_style
 	intakeChatter := &countingChatter{
 		responses: []llm.ChatResponse{
-			{Content: "Time Reality\nThe nature of time"},                            // topic
-			{Content: "scholar\nAcademic researchers"},                               // audience
-			{Content: "understanding\nDeep comprehension"},                           // goal
-			{Content: "ontology-epistemology-practice\nPhilosophical structure"},     // archetype
-			{Content: "advanced\nExpert level"},                                      // depth
-			{Content: "medium\nStandard length"},                                     // length
-			{Content: "zh\nChinese language"},                                        // language
-			{Content: "single\nSingle volume"},                                      // scope
-			{Content: "case\nCase studies"},                                          // example_type
-			{Content: "tables\nTables and charts"},                                  // visualization
-			{Content: "timeless\nEternal relevance"},                                // timeliness
-			{Content: "academic\nAcademic citations"},                               // citation_style (triggered by scholar)
+			{Content: "Time Reality\nThe nature of time"},                        // topic
+			{Content: "scholar\nAcademic researchers"},                           // audience
+			{Content: "understanding\nDeep comprehension"},                       // goal
+			{Content: "ontology-epistemology-practice\nPhilosophical structure"}, // archetype
+			{Content: "advanced\nExpert level"},                                  // depth
+			{Content: "medium\nStandard length"},                                 // length
+			{Content: "zh\nChinese language"},                                    // language
+			{Content: "single\nSingle volume"},                                   // scope
+			{Content: "case\nCase studies"},                                      // example_type
+			{Content: "tables\nTables and charts"},                               // visualization
+			{Content: "timeless\nEternal relevance"},                             // timeliness
+			{Content: "academic\nAcademic citations"},                            // citation_style (triggered by scholar)
 		},
 	}
 

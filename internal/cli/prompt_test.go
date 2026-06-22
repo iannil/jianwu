@@ -12,9 +12,9 @@ func TestTerminalPromptAskAcceptsEmpty(t *testing.T) {
 	var out bytes.Buffer
 	p := &TerminalPrompt{In: strings.NewReader("\n"), Out: &out}
 	dim := grill.Dimension{
-		Name:        "受众",
-		Question:    "目标读者是谁？",
-		Options:     []string{"scholar", "educated-general"},
+		Name:         "受众",
+		Question:     "目标读者是谁？",
+		Options:      []string{"scholar", "educated-general"},
 		DefaultValue: "educated-general",
 	}
 	answer, err := p.Ask(dim, "scholar\n\nBecause topic is advanced.")

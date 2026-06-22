@@ -68,18 +68,32 @@ Fallback policy: primary fails after retry → fallback model takes over.
 
 Both are abstracted behind small Go interfaces (`Chatter`, `Embedder`, `Searcher`, `Reader`) — engine layers (S3+) compose them.
 
-## Engine (v0.5.0)
+## Engine (v0.6.0)
 
-The 4-stage engine is being built slice by slice. v0.5.0 ships **Outline + Scaffolding + Grill**:
+The 4-stage engine is being built slice by slice. v0.6.0 ships **Outline + Scaffolding + Grill + `new` command**:
 
-- **Outline** (v0.3.0): single LLM call produces full book outline (parts × chapters)
-- **Scaffolding** (v0.4.0): N chapters in parallel (concurrency 5), each generates abstract / key_concepts / learning_objectives / suggested_examples. Continue-on-error.
-- **Grill** (v0.5.0): stateful interactive Q&A walking a 12-dimension design tree (6 core + 6 conditional). LLM generates per-dimension recommendations. Session persisted to `.jianwu/sessions/<id>.json`. Resume-aware. Completed sessions archived to `books/<slug>/.session.json` as audit log.
+- **Outline** (v0.3.0): single LLM call produces full book outline
+- **Scaffolding** (v0.4.0): N chapters in parallel (concurrency 5), continue-on-error
+- **Grill** (v0.5.0): stateful interactive Q&A with 12-dimension design tree
+- **`jianwu new`** (v0.6.0): full end-to-end flow — chains grill → outline → scaffolding. Resume-aware. Slug conflict detection with `--force`. Retry + fallback wrapping via config-driven models.
 
-All three stages ready for S6 `new` command to chain into a full grill→outline→scaffolding flow.
+### Quick start (v0.6.0)
+
+```bash
+jianwu init my-library
+cd my-library
+export GEMINI_API_KEY=...
+export GLM_API_KEY=...
+jianwu new
+# ... answer grill questions ...
+# Book scaffold generated in books/<slug>/
+```
+
+If a previous `jianwu new` was interrupted, the next run detects the incomplete session and offers to resume.
 
 Remaining stages (deferred):
 - Expand (agent loop + web search, S7)
+- review / finalize / export (S8)
 
 ## License
 
