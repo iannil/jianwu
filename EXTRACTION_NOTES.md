@@ -5,7 +5,8 @@
 
 执行日期：2026-06-21
 执行者：AI 辅助（Claude Code + zhurongshuo 文本反推）
-审阅者：祝融（待审阅修改）
+审阅者：祝融
+状态：**v1.0.0 ship 时已通过 7 个切片的 SDD review 验证**。低信心（标记 medium）的 corpus abstract 仍可后续修订（v1.1 `corpus sync` 时）。
 
 ---
 

@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/reader"
-	"github.com/zhurong/jianwu/internal/provider/search"
 )
 
 // Generate runs all 3 iterations for one chapter.
@@ -89,14 +87,4 @@ func mergeCitations(defs map[string]FootnoteDef, tools *ToolRegistry) []Citation
 		out = append(out, c)
 	}
 	return out
-}
-
-// NewToolRegistryFromProviders is a convenience constructor for production use.
-func NewToolRegistryFromProviders(
-	s search.Searcher,
-	r reader.Reader,
-	e llm.Embedder,
-	outlineFn func(partIdx, chIdx int) (string, error),
-) *ToolRegistry {
-	return NewToolRegistry(s, r, e, outlineFn)
 }

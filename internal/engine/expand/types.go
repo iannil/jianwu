@@ -44,14 +44,13 @@ type ExpandOutput struct {
 // Citation is one footnote reference, structured.
 // Per Q14.A1 — double-write: also exists as [^N] in Markdown.
 type Citation struct {
-	ID              string // "1", "2", ...
-	URL             string
-	Title           string
-	AccessedAt      time.Time
-	Snippet         string
-	UsedInParagraph string // paragraph identifier (e.g. "p3")
-	SearchProvider  string // "brave", "serper"
-	ReaderProvider  string // "jina"
+	ID             string // "1", "2", ...
+	URL            string
+	Title          string
+	AccessedAt     time.Time
+	Snippet        string
+	SearchProvider string // "brave", "serper"
+	ReaderProvider string // "jina"
 }
 
 // Claim is a factual statement the LLM self-reported.
@@ -59,11 +58,6 @@ type Citation struct {
 type Claim struct {
 	Text        string `json:"text"`
 	HasCitation bool   `json:"has_citation"`
-}
-
-// ResearchPlan is what iter 1 produces: queries to search.
-type ResearchPlan struct {
-	Queries []string `json:"queries"`
 }
 
 // ResearchNotes is what iter 1 produces after tool calls: digested findings.

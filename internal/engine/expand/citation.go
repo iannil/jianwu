@@ -61,7 +61,6 @@ func CountWords(markdown string) int {
 	body = strings.ReplaceAll(body, ")", " ")
 
 	var count int
-	var inChinese bool
 	var currentWord []rune
 	for _, r := range body {
 		if r >= 0x4E00 && r <= 0x9FFF { // CJK Unified Ideograph
@@ -70,18 +69,14 @@ func CountWords(markdown string) int {
 				currentWord = currentWord[:0]
 			}
 			count++
-			inChinese = true
 		} else if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
 			currentWord = append(currentWord, r)
-			inChinese = false
 		} else {
 			if len(currentWord) > 0 {
 				count++
 				currentWord = currentWord[:0]
 			}
-			if !inChinese {
-				// punctuation/whitespace; do nothing
-			}
+			// punctuation/whitespace; do nothing
 		}
 	}
 	if len(currentWord) > 0 {
