@@ -12,7 +12,7 @@ jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + C
 - **当前版本**：v1.0.1（2026-06-23 ship 了 expand CLI；v1.0.0 tag 范围过早，v1.0.x 系列补齐到 v1.0.5 后视为真正交付）
 - **可用 CLI 入口**：`jianwu init` / `info` / `config get/set/list` / `new` / `expand <slug> <NN-MM>`（grill → outline → scaffolding → 单章 expand 闭环）
 - **库 API**：`internal/engine/{outline,scaffolding,grill,expand}` 4 个引擎阶段独立可调
-- **CLI 缺口（v1.0.x 补）**：review+finalize+export+status (v1.0.3)
+- **CLI（v1.0.3 已交付）**：review / finalize / export --target md / status —— 全状态机闭环可用
 - **质量缺口（v1.0.2 已修）**：expand draft/validate prompt 现已真正注入 archetype + 完整风格规约 + 风格样例 + 相邻章节；占位符已清除。剩余人读验收：跑一章真实 expand 由祝融确认风格。
 - **质量基线**：23 个包测试全绿，`go vet` / `gofmt -l` 全清
 
@@ -211,7 +211,7 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 
 - [x] `jianwu expand <slug> <NN-MM>` CLI 命令（**v1.0.1**，已交付 2026-06-23）
 - [x] Expand prompt 注入 archetype + samples + guide + adjacent chapters（**v1.0.2**，已交付）—— similar book 切出独立切片（embedding 检索增强，依赖 Embedder）
-- [ ] `jianwu review <slug> <NN-MM>` / `jianwu finalize <slug>` / `jianwu export <slug> --target md` / `jianwu status <slug>`（**v1.0.3**）
+- [x] `jianwu review <slug> <NN-MM>` / `jianwu finalize <slug>` / `jianwu export <slug> --target md` / `jianwu status <slug>`（**v1.0.3**，已交付）
 - [ ] Fallback model wiring（**v1.0.4**）
 - [ ] LLM 调用超时（**v1.0.5**）
 - [ ] Streaming 输出（**v1.0.6**，可选 polish）
@@ -356,6 +356,8 @@ jianwu expand <slug> 01-01
 - gofmt 在 opus final review 时发现一处需要清理（commit `da47501`）
 - final review 发现 3 个 Important issues（ROADMAP 重复段、--force --force 测试缺失、dead code）— 都是 reviewer 兜底，per-task reviewer 没抓到
 
-**下一个切片（v1.0.3）：** 状态机命令 — `jianwu review / finalize / export --target md / status`。
+**下一个切片（v1.0.4）：** Fallback model wiring — config 配置的备用模型在主模型失败时自动接管。
 
-> v1.0.2（Expand Prompt 注入）已交付：archetype + 完整风格规约 + 风格样例 + 相邻章节真正注入 draft/validate prompt，对齐 outline 引擎既有模式；similar book 切出独立切片。决策见 `docs/decisions/26-grill-decisions.md` § v1.0.2（Q1/Q4-Q11）；计划见 `docs/plans/2026-06-23-v1.0.2-prompt-injection.md`。
+> v1.0.3（状态机命令）已交付：review / finalize / export --target md / status 四命令，纯状态/文件操作（不调 LLM）。outline.json 为状态真相源、镜像同步章节 .md frontmatter；严格状态机 expanded→reviewed→final；export 全局重编号脚注、缺正文章节占位。决策见 `docs/decisions/26-grill-decisions.md` § v1.0.3（审计 Q7/Q8/Q9 + 实施 Q1-Q11）；计划见 `docs/plans/2026-06-23-v1.0.3-state-machine-commands.md`。
+>
+> v1.0.2（Expand Prompt 注入）已交付：archetype + 完整风格规约 + 风格样例 + 相邻章节真正注入 draft/validate prompt，对齐 outline 引擎既有模式；similar book 切出独立切片。决策见 § v1.0.2（Q1/Q4-Q11）；计划见 `docs/plans/2026-06-23-v1.0.2-prompt-injection.md`。
