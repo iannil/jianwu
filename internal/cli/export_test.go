@@ -63,6 +63,21 @@ func TestExport_PlaceholderForMissingChapter(t *testing.T) {
 	}
 }
 
+func TestExport_RejectsCorruptChapter(t *testing.T) {
+	tmp := writeBookWithChapters(t, "demo", book.StatusExpanded)
+	bookDir := filepath.Join(tmp, "books", "demo")
+	// Overwrite a present chapter with malformed content (no frontmatter delimiter).
+	if err := os.WriteFile(book.ChapterPath(bookDir, 1, 1), []byte("no frontmatter here"), 0o644); err != nil {
+		t.Fatalf("write corrupt chapter: %v", err)
+	}
+	chdir(t, tmp)
+	cmd := &cobra.Command{}
+	cmd.SetOut(&strings.Builder{})
+	if err := runExport(cmd, []string{"demo"}, "md", false); err == nil {
+		t.Fatal("expected error for corrupt (present-but-malformed) chapter, got nil")
+	}
+}
+
 func TestExport_DryRunNoFile(t *testing.T) {
 	tmp := writeBookWithChapters(t, "demo", book.StatusFinal)
 	chdir(t, tmp)

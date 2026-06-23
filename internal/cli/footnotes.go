@@ -6,6 +6,7 @@ import (
 	"regexp"
 )
 
+// NOTE: this also matches any literal [^...] in prose (e.g. a regex char-class in a code span); acceptable for current chapter content.
 var footnoteTokenRe = regexp.MustCompile(`\[\^([^\]]+)\]`)
 
 // renumberFootnotes remaps every [^id] token in body to a global sequential number

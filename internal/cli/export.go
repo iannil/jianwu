@@ -61,9 +61,12 @@ func runExport(cmd *cobra.Command, args []string, target string, dryRun bool) er
 			fmt.Fprintf(&b, "### %s\n\n", c.Title)
 			_, body, rerr := book.ReadChapter(book.ChapterPath(bc.BookDir, p.Index, c.Index))
 			if rerr != nil {
-				b.WriteString("> （本章尚未展开）\n\n")
-				missing++
-				continue
+				if os.IsNotExist(rerr) {
+					b.WriteString("> （本章尚未展开）\n\n")
+					missing++
+					continue
+				}
+				return &InfoError{Err: fmt.Errorf("read chapter %02d-%02d: %w", p.Index, c.Index, rerr), Code: ExitCodeGeneric}
 			}
 			renumbered, next := renumberFootnotes(body, counter)
 			counter = next
@@ -75,7 +78,7 @@ func runExport(cmd *cobra.Command, args []string, target string, dryRun bool) er
 
 	outPath := filepath.Join(bc.BookDir, "export", slug+".md")
 	if dryRun {
-		fmt.Fprintf(out, "[dry-run] would write %s (%d chapter(s) with prose, %d placeholder(s))\n", outPath, present, missing)
+		fmt.Fprintf(out, "[dry-run] would write %s (%d chapter(s), %d placeholder(s))\n", outPath, present, missing)
 		return nil
 	}
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
@@ -84,6 +87,6 @@ func runExport(cmd *cobra.Command, args []string, target string, dryRun bool) er
 	if err := os.WriteFile(outPath, []byte(b.String()), 0o644); err != nil {
 		return &InfoError{Err: fmt.Errorf("write export: %w", err), Code: ExitCodeGeneric}
 	}
-	fmt.Fprintf(out, "✓ Exported %s (%d chapters, %d placeholders)\n", outPath, present, missing)
+	fmt.Fprintf(out, "✓ Exported %s (%d chapter(s), %d placeholder(s))\n", outPath, present, missing)
 	return nil
 }
