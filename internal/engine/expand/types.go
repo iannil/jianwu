@@ -38,7 +38,6 @@ type ExpandOutput struct {
 	UnverifiedClaims []Claim
 	WordCount        int
 	Research         ResearchNotes
-	Draft            string // pre-validation draft (for debugging)
 }
 
 // Citation is one footnote reference, structured.

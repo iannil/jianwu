@@ -55,7 +55,6 @@ func Generate(
 		UnverifiedClaims: unverified,
 		WordCount:        CountWords(finalMD),
 		Research:         notes,
-		Draft:            draft,
 	}, nil
 }
 

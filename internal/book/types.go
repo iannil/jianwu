@@ -85,14 +85,13 @@ type Tokens struct {
 }
 
 type Citation struct {
-	ID              string    `json:"id"`
-	URL             string    `json:"url"`
-	Title           string    `json:"title,omitempty"`
-	AccessedAt      time.Time `json:"accessed_at,omitempty"`
-	Snippet         string    `json:"snippet,omitempty"`
-	UsedInParagraph string    `json:"used_in_paragraph,omitempty"`
-	SearchProvider  string    `json:"search_provider,omitempty"`
-	ReaderProvider  string    `json:"reader_provider,omitempty"`
+	ID             string    `json:"id"`
+	URL            string    `json:"url"`
+	Title          string    `json:"title,omitempty"`
+	AccessedAt     time.Time `json:"accessed_at,omitempty"`
+	Snippet        string    `json:"snippet,omitempty"`
+	SearchProvider string    `json:"search_provider,omitempty"`
+	ReaderProvider string    `json:"reader_provider,omitempty"`
 }
 
 // Chapter status constants.

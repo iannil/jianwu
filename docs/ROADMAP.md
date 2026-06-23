@@ -150,7 +150,7 @@
 
 - [ ] 把 `cli.chatterProviderHook` + `cli.providerDepsHook` 重构为 CLI struct field
 - [ ] 迁移所有现有 E2E 测试到 struct 注入模式
-- [ ] 决定 `book.Citation.UsedInParagraph` / `expand.ExpandOutput.Draft` 字段去留
+- ~~决定 `book.Citation.UsedInParagraph` / `expand.ExpandOutput.Draft` 字段去留~~ — v1.0.1-post 已删除
 
 ---
 
