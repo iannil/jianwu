@@ -130,6 +130,14 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
 		WebSearchEnabled: true,
 	}
 
+	// Adjacent chapters (same Part) for coherence; nil at Part boundaries (Q5).
+	if prev, perr := findChapter(outline, partIdx, chIdx-1); perr == nil {
+		expandIn.PreviousChapter = prev
+	}
+	if next, nerr := findChapter(outline, partIdx, chIdx+1); nerr == nil {
+		expandIn.NextChapter = next
+	}
+
 	// Run expand.
 	fmt.Fprintf(out, "Expanding %s/%s...\n", slug, addr)
 	result, err := expand.Generate(defaultCtx(), deps.Chatter, registry, expandIn)

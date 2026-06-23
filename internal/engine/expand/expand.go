@@ -15,6 +15,12 @@ func Generate(
 	tools *ToolRegistry,
 	in ExpandInput,
 ) (*ExpandOutput, error) {
+	// Resolve injection material once; archetype-miss fails fast (Q1, Q9).
+	dc, err := loadDraftContext(in.ArchetypeID)
+	if err != nil {
+		return nil, fmt.Errorf("load draft context: %w", err)
+	}
+
 	// Iter 1: research
 	notes, err := RunResearch(ctx, chatter, tools, in)
 	if err != nil {
@@ -22,8 +28,7 @@ func Generate(
 	}
 
 	// Iter 2: draft
-	// TODO(Task 3): replace DraftContext{} placeholder with real loaded context.
-	draft, err := RunDraft(ctx, chatter, in, DraftContext{}, notes)
+	draft, err := RunDraft(ctx, chatter, in, dc, notes)
 	if err != nil {
 		return nil, fmt.Errorf("iter 2 draft: %w", err)
 	}

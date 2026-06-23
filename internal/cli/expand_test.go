@@ -347,6 +347,7 @@ func TestExpandRunAllowWithDoubleForce(t *testing.T) {
 	}
 	meta := &book.Meta{
 		ID: "x", Slug: "test-book", Title: "Test", Status: book.BookStatusDraft,
+		Archetype:  "ontology-epistemology-practice",
 		Parameters: book.Parameters{Audience: "scholar", Depth: "advanced", Goal: "understanding", Length: "short"},
 	}
 	if err := book.SaveMeta(filepath.Join(bookDir, "meta.json"), meta); err != nil {

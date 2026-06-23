@@ -65,7 +65,8 @@ func TestGenerateChainsIterations(t *testing.T) {
 		validateResp: string(validateJSON),
 	}
 	out, err := Generate(context.Background(), p, nil, ExpandInput{
-		Topic: "T", ChapterTitle: "C", Abstract: "A", Language: "zh",
+		ArchetypeID: "ontology-epistemology-practice",
+		Topic:       "T", ChapterTitle: "C", Abstract: "A", Language: "zh",
 		KeyConcepts: []string{"k"},
 	})
 	if err != nil {
@@ -91,10 +92,19 @@ func TestGenerateChainsIterations(t *testing.T) {
 func TestGeneratePropagatesIter1Error(t *testing.T) {
 	p := mock.NewError(errors.New("iter1 fail"))
 	_, err := Generate(context.Background(), p, nil, ExpandInput{
-		Topic: "T", ChapterTitle: "C", Abstract: "A",
+		ArchetypeID: "ontology-epistemology-practice",
+		Topic:       "T", ChapterTitle: "C", Abstract: "A",
 	})
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestGenerate_BadArchetypeFailsFast(t *testing.T) {
+	in := ExpandInput{ArchetypeID: "nonexistent-archetype", ChapterTitle: "c"}
+	_, err := Generate(context.Background(), &mockChatter3Phases{}, nil, in)
+	if err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("expected archetype 'not found' before any LLM call, got: %v", err)
 	}
 }
 
