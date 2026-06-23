@@ -34,7 +34,7 @@ func Generate(
 	}
 
 	// Iter 3: validate
-	validated, err := RunValidate(ctx, chatter, draft, notes)
+	validated, err := RunValidate(ctx, chatter, draft, notes, dc.StyleGuide)
 	if err != nil {
 		return nil, fmt.Errorf("iter 3 validate: %w", err)
 	}

@@ -15,22 +15,12 @@ func RunValidate(
 	chatter llm.Chatter,
 	draft string,
 	notes ResearchNotes,
+	styleGuide string,
 ) (ValidationResult, error) {
-	sysBytes, _ := loadTemplate("system_validate")
-	userBytes, _ := loadTemplate("user_validate")
-	sys, err := renderExpand("system_validate", sysBytes, map[string]any{})
+	sys, user, err := buildValidatePrompts(draft, notes, styleGuide)
 	if err != nil {
 		return ValidationResult{}, err
 	}
-	notesJSON, _ := jsonMarshalNotes(notes)
-	user, err := renderExpand("user_validate", userBytes, map[string]any{
-		"Draft":         draft,
-		"ResearchNotes": notesJSON,
-	})
-	if err != nil {
-		return ValidationResult{}, err
-	}
-
 	schema, _ := JSONSchemaValidation()
 	resp, err := chatter.Chat(ctx, llm.ChatRequest{
 		Messages: []llm.Message{
@@ -47,4 +37,25 @@ func RunValidate(
 		return ValidationResult{}, fmt.Errorf("parse validation result: %w (content: %s)", err, truncate(resp.Content, 500))
 	}
 	return result, nil
+}
+
+// buildValidatePrompts renders the validate system + user prompts. Pure, unit-testable (Q10).
+func buildValidatePrompts(draft string, notes ResearchNotes, styleGuide string) (string, string, error) {
+	sysBytes, _ := loadTemplate("system_validate")
+	sys, err := renderExpand("system_validate", sysBytes, map[string]any{
+		"StyleGuide": styleGuide,
+	})
+	if err != nil {
+		return "", "", err
+	}
+	notesJSON, _ := jsonMarshalNotes(notes)
+	userBytes, _ := loadTemplate("user_validate")
+	user, err := renderExpand("user_validate", userBytes, map[string]any{
+		"Draft":         draft,
+		"ResearchNotes": notesJSON,
+	})
+	if err != nil {
+		return "", "", err
+	}
+	return sys, user, nil
 }
