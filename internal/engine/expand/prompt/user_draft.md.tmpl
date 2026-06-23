@@ -6,11 +6,15 @@
 章节：{{.ChapterTitle}}
 abstract: {{.Abstract}}
 key_concepts: {{.KeyConcepts}}
-
+{{if .PrevContext}}
+相邻章节（保持连贯：勿重复上一章已立概念，为下一章留接口）：
+{{.PrevContext}}
+{{end}}{{if .NextContext}}{{.NextContext}}
+{{end}}
 研究笔记：
 {{.ResearchNotes}}
 
 候选 URL（脚注必须从这里选）：
 {{.Candidates}}
 
-按 schema 输出。
+直接输出正文 markdown，结尾附脚注。

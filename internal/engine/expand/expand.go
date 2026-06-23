@@ -22,7 +22,8 @@ func Generate(
 	}
 
 	// Iter 2: draft
-	draft, err := RunDraft(ctx, chatter, in, notes)
+	// TODO(Task 3): replace DraftContext{} placeholder with real loaded context.
+	draft, err := RunDraft(ctx, chatter, in, DraftContext{}, notes)
 	if err != nil {
 		return nil, fmt.Errorf("iter 2 draft: %w", err)
 	}

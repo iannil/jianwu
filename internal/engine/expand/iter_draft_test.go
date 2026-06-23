@@ -2,8 +2,10 @@ package expand
 
 import (
 	"context"
+	"strings"
 	"testing"
 
+	"github.com/zhurong/jianwu/internal/book"
 	"github.com/zhurong/jianwu/internal/provider/llm"
 	"github.com/zhurong/jianwu/internal/provider/llm/mock"
 )
@@ -12,7 +14,7 @@ func TestRunDraftReturnsMarkdown(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: "# Heading\n\nBody[^1].\n\n[^1]: [X](https://x)"})
 	out, err := RunDraft(context.Background(), p, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", Language: "zh",
-	}, ResearchNotes{Candidates: []string{"https://x"}})
+	}, DraftContext{}, ResearchNotes{Candidates: []string{"https://x"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,7 +27,7 @@ func TestRunDraftWithDefaultLanguage(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: "# Test\n\nContent."})
 	out, err := RunDraft(context.Background(), p, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", Language: "",
-	}, ResearchNotes{})
+	}, DraftContext{}, ResearchNotes{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +40,7 @@ func TestRunDraftWithLengthHints(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: "# Long\n\nContent."})
 	out, err := RunDraft(context.Background(), p, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", Language: "en", Length: "long",
-	}, ResearchNotes{})
+	}, DraftContext{}, ResearchNotes{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,5 +128,58 @@ func TestJsonMarshalNotes(t *testing.T) {
 	}
 	if got == "" {
 		t.Error("empty JSON")
+	}
+}
+
+func TestBuildDraftPrompts_InjectsMaterial(t *testing.T) {
+	in := ExpandInput{
+		Language:     "zh",
+		Length:       "medium",
+		Topic:        "测试主题",
+		ChapterTitle: "测试章节",
+		Abstract:     "本章摘要",
+		KeyConcepts:  []string{"概念甲", "概念乙"},
+		PreviousChapter: &book.OutlineChapter{
+			Title: "前章标题", Abstract: "前章摘要", KeyConcepts: []string{"前概念"},
+		},
+		NextChapter: &book.OutlineChapter{
+			Title: "后章标题", Abstract: "后章摘要", KeyConcepts: []string{"后概念"},
+		},
+	}
+	dc := DraftContext{
+		ArchetypeText: "id: test-arch\nparts:\n",
+		SampleText:    "SAMPLE-MARKER",
+		StyleGuide:    "GUIDE-MARKER",
+	}
+	sys, user, err := buildDraftPrompts(in, dc, ResearchNotes{Candidates: []string{"https://x"}})
+	if err != nil {
+		t.Fatalf("buildDraftPrompts: %v", err)
+	}
+	for _, want := range []string{"id: test-arch", "SAMPLE-MARKER", "GUIDE-MARKER"} {
+		if !strings.Contains(sys, want) {
+			t.Errorf("system prompt missing %q", want)
+		}
+	}
+	if strings.Contains(sys, "loaded at orchestrator level") {
+		t.Error("system prompt still contains old placeholder")
+	}
+	for _, want := range []string{"前章标题", "前章摘要", "前概念", "后章标题"} {
+		if !strings.Contains(user, want) {
+			t.Errorf("user prompt missing adjacent material %q", want)
+		}
+	}
+	if strings.Contains(user, "按 schema 输出") {
+		t.Error("user prompt still contains stale 'schema' instruction")
+	}
+}
+
+func TestBuildDraftPrompts_OmitsNilAdjacent(t *testing.T) {
+	in := ExpandInput{Language: "zh", Length: "medium", ChapterTitle: "c"}
+	_, user, err := buildDraftPrompts(in, DraftContext{}, ResearchNotes{})
+	if err != nil {
+		t.Fatalf("buildDraftPrompts: %v", err)
+	}
+	if strings.Contains(user, "相邻章节") {
+		t.Error("nil adjacent should omit the 相邻章节 section")
 	}
 }
