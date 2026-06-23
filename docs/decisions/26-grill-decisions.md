@@ -118,9 +118,23 @@
 
 ### v1.0.2 Expand Prompt 注入
 
+**范围收敛**：原 scope 把 archetype + samples + similar book + adjacent 四件打包。grill 发现 similar-book 是死方法（`LookupSimilarBook` 从未被调用、需 embedder + 语料内容加载），与另三个静态注入不是一个量级 → **切出 v1.0.2**。v1.0.2 锁定为「四个静态注入」中的三个静态项（archetype + style guide/samples + adjacent），全程零新网络依赖、可用 mock chatter 测。验收：祝融读后说"这是 zhurongshuo 风格"。
+
+复用既有先例：**outline 引擎已有可跑、已测的注入模式**（`outline.go:buildPromptData`：解析 archetypeID → 整份 YAML + verbatim samples，archetype-miss 硬失败、sample-miss 降级）。v1.0.2 expand 对齐这套，避免双轨。
+
 | # | 维度 | 决定 | 影响 |
 |---|---|---|---|
-| - | 范围 | archetype YAML + style samples + similar book + adjacent chapters 真正注入 | 验收：zhurong 读后说"这是 zhurongshuo 风格" |
+| Q1 | 注入架构 | `Generate` 一次性 load archetype+samples+guide，经 `DraftContext` 共享给 draft+validate（非每 iter 自 load） | 单一 load 点；engine 给定 ID 自洽；CLI 保持薄 |
+| Q4 | 风格规约 | 完整 `style-guide.md` 注入，删 system_draft/system_validate 的 inline 缩写规则（guide 成唯一风格真相源） | guide 的反例集/硬规则/自检清单是 samples 给不了的；~3K token 吃缓存 |
+| Q5 | 相邻章节 | prev/next 的 Title+Abstract+KeyConcepts 进 `user_draft`，nil（首/末/跨 Part）省略该段 | KeyConcepts 给概念交接硬边界（别重定义上章、铺垫下章） |
+| Q6 | similar book | 切出 v1.0.2 单独切片；删死方法 `ReadAdjacentChapter`（被 Q5 取代），留 `LookupSimilarBook`。将来仿 outline 的 `CorpusOutlines` 走 archetype-match，不必 embedding | 保持 v1.0.2 零网络依赖 |
+| Q7 | 迭代覆盖 | guide→draft+validate 双投；samples+archetype→draft only；research 不动 | guide 是"写"和"查"共享真相源（零漂移）；samples 是 write-only few-shot |
+| Q8 | system/user 切分 | system=guide+samples+archetype（Q11 后全书稳定→跨全章单段缓存）；user=本章上下文+相邻章 | 按语义切，不为缓存扭曲布局（Q11 后缓存自然最优） |
+| Q9 | 失败模式 | load-error/archetype-miss/guide 硬失败（wrap）；sample-miss 降级 `(no samples for this archetype)` | 对齐 outline；archetype 静默退回 generic 正是在修的 v1.0.1 病，必须 loud。embed 读错误不写额外防御 |
+| Q10 | 测试契约 | 抽纯函数 `buildDraftPrompts` + 拼装契约断言（含/不含旧占位符 + nil 省略 + Q9 两例）；人读=验收不进 CI | LLM 输出非确定不写 golden file；可测表面是"prompt 拼没拼进素材" |
+| Q11 | 对齐 outline | expand 用整份 archetype YAML + verbatim samples（取代早期 Part-裁剪/剥头草案） | 一致性 + 少写代码（无 Part 定位器/header 剥离器）；whole-YAML 噪声在缓存下成本近零；章节级精修留到验收暴露问题再做 |
+
+**顺手清（各自单独 commit，memory Q15 风格）**：① 删 `ReadAdjacentChapter` + `ToolRegistry.Outline` 字段 + `NewToolRegistry` 对应参数；② 修 `user_draft.tmpl` 尾部陈旧文案"按 schema 输出"（draft 是 free-form markdown，无 schema）。
 
 ### v1.0.3 状态机命令
 
