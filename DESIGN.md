@@ -701,6 +701,8 @@ jianwu migrate                              # workspace schema 升级
 1. 写一次性脚本 `scripts/extract-archetypes.go`，读 zhurongshuo 的：
    - `data/books.yaml` + `data/practices.yaml`
    - 所有书的 `content/books/*/*/part-*/**` 和 `content/practices/*/**`
+
+   > 注：此脚本从未实现；实际用 Claude Code 直接萃取（见 EXTRACTION_NOTES.md §2.6）。`scripts/` 目录已于 v1.0.1-post 删除。
 2. 把所有 part_titles + 章节标题 + 部分章节摘要喂给 LLM，要求：
    - 归纳出 3 个最常用结构原型
    - 每原型含：id/name.{zh,en}/description/when_to_use/parts[]（含 role/title_template/guidance/typical_chapters/chapter_role_hints）/examples[]

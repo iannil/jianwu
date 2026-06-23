@@ -131,7 +131,7 @@ internal/
 
 ### 2.6 Extraction 系统提示词（DESIGN.md 第 13.1 节）
 
-按 DESIGN.md 计划，应该写一个 `scripts/extract-archetypes.go` 脚本，读 zhurongshuo 数据喂 LLM 萃取。实际我没写这个脚本，而是直接用 Claude Code 读 zhurongshuo 文本萃取。
+按 DESIGN.md 计划，应该写一个 `scripts/extract-archetypes.go` 脚本，读 zhurongshuo 数据喂 LLM 萃取。实际我没写这个脚本，而是直接用 Claude Code 读 zhurongshuo 文本萃取（`scripts/` 目录已于 v1.0.1-post 删除）。
 
 理由：
 - 一次性脚本对单次萃取是过度工程
