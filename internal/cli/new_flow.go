@@ -88,11 +88,14 @@ func deriveSlugFromTopic(topic string) string {
 }
 
 // chatterProviderHook allows tests to inject mock chatters without going through the real factory.
-// WARNING: this is a package-global mutable var with no mutex protection. It is safe for
-// test binaries (single-process, no parallel test execution within the cli package) but
-// MUST NOT be mutated from production code or from concurrent tests. If a future change
-// needs runtime provider swapping, replace this with a field on a struct threaded through
-// RunE.
+//
+// Deprecated: chatterProviderHook (and providerDepsHook) are test-only
+// package-global mutable vars. Both will be refactored into a CLI struct
+// field in v1.1.6 (see docs/ROADMAP.md §v1.1.6). Do not add new production
+// reads of either var. New test setups should prefer providerDepsHook
+// (the struct-bundle pattern introduced in v1.0.1) over chatterProviderHook
+// (the single-provider pattern legacy from v1.0.0). WARNING: package-global
+// mutable var, no mutex — test binaries only, no concurrent mutation.
 var chatterProviderHook = func(cfg *config.Config, secrets *config.Secrets) (chatterProvider, error) {
 	return buildChatterProvider(cfg, secrets)
 }

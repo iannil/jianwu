@@ -69,8 +69,15 @@ type ProviderDeps struct {
 }
 
 // providerDepsHook allows tests to inject mock provider bundles without going
-// through the real factory. WARNING: package-global mutable var, same rules as
-// chatterProviderHook — test binaries only, no concurrent mutation.
+// through the real factory.
+//
+// Deprecated: providerDepsHook (and chatterProviderHook) are test-only
+// package-global mutable vars. Both will be refactored into a CLI struct
+// field in v1.1.6 (see docs/ROADMAP.md §v1.1.6). Do not add new production
+// reads of either var. New test setups should prefer providerDepsHook
+// (the struct-bundle pattern) over chatterProviderHook (the single-provider
+// pattern). WARNING: package-global mutable var, no mutex — test binaries
+// only, no concurrent mutation.
 var providerDepsHook = func(cfg *config.Config, secrets *config.Secrets) (*ProviderDeps, error) {
 	return buildProviderDepsReal(cfg, secrets)
 }
