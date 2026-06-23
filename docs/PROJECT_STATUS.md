@@ -239,12 +239,10 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 - `cli.providerDepsHook`（v1.0.1 新增）同款 test-only 全局可变 var，预演 v1.1 重构方向（决策 Q20=B）
 - 三个 factory 包（`llmfactory` / `searchfactory` / `readerfactory`）独立存在只为打破 import cycle——是 Go 标准做法但显得啰嗦
 
-### 代码层（minor，可清理）
-- `cli.new.go` 的 `_ = session` 是预期行为（CLI 摘要不用 session），注释已说明（v1.0.1-post 计划重构）
-
 ### 代码层（已清理，留作记录）
 - ~~`book.Citation.UsedInParagraph` 字段从未填充~~ — 已删除（v1.0.1-post，无 schema 兼容压力）
 - ~~`expand.types.ExpandOutput.Draft` 字段保留 pre-validation draft 用于 debug~~ — 已删除（v1.0.1-post，从未读）
+- ~~`cli.new.go` 的 `_ = session` 是预期行为~~ — 已重构（v1.0.1-post，`runNewFlow` 不再返回 session，CLI 路径与测试路径分离）
 
 ### 代码层（已清理，留作记录）
 - ~~`expand.ResearchPlan` struct 从未使用~~ — 实际从未定义（误记）

@@ -98,20 +98,23 @@ var chatterProviderHook = func(cfg *config.Config, secrets *config.Secrets) (cha
 }
 
 // runNewFlow executes the full grill → outline → scaffolding pipeline.
-// Returns the final outline and the session (archived) or an error wrapped as *InfoError.
-// This is the public version that builds chatters from config then delegates.
+// Returns the final outline or an error wrapped as *InfoError.
+// CLI-path wrapper: builds chatters from config then delegates to
+// runNewFlowWithChatters (which tests call directly when they need
+// the session for assertions).
 func runNewFlow(
 	wsRoot string,
 	cfg *config.Config,
 	secrets *config.Secrets,
 	prompt *TerminalPrompt,
 	force bool,
-) (*book.Outline, *grill.Session, error) {
+) (*book.Outline, error) {
 	cp, err := chatterProviderHook(cfg, secrets)
 	if err != nil {
-		return nil, nil, &InfoError{Err: err, Code: ExitCodeLLMProvider}
+		return nil, &InfoError{Err: err, Code: ExitCodeLLMProvider}
 	}
-	return runNewFlowWithChatters(wsRoot, prompt, force, cp)
+	outline, _, err := runNewFlowWithChatters(wsRoot, prompt, force, cp)
+	return outline, err
 }
 
 // buildChatterProvider constructs chatters for all three stages.

@@ -35,7 +35,7 @@ Use --force to overwrite an existing book with the same slug.`,
 			fmt.Fprintf(out, "jianwu new — starting grill flow\n")
 			fmt.Fprintf(out, "Workspace: %s\n", wsRoot)
 
-			outline, session, err := runNewFlow(wsRoot, ws.Config, secrets, prompt, force)
+			outline, err := runNewFlow(wsRoot, ws.Config, secrets, prompt, force)
 			if err != nil {
 				return err
 			}
@@ -61,7 +61,6 @@ Use --force to overwrite an existing book with the same slug.`,
 				fmt.Fprintf(out, "\nRun `jianwu status <slug>` to see failed chapters.\n")
 				fmt.Fprintf(out, "Run `jianwu scaffolding <slug> --retry-failed` to retry them.\n")
 			}
-			_ = session // session is returned for caller use (e.g. audit); CLI summary uses outline only
 			return nil
 		},
 	}
