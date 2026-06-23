@@ -173,6 +173,26 @@ func TestBuildDraftPrompts_InjectsMaterial(t *testing.T) {
 	}
 }
 
+func TestBuildDraftPrompts_FirstChapterShowsHeader(t *testing.T) {
+	in := ExpandInput{
+		Language:     "zh",
+		Length:       "medium",
+		ChapterTitle: "测试章节",
+		NextChapter: &book.OutlineChapter{
+			Title: "后章标题", Abstract: "后章摘要", KeyConcepts: []string{"后概念"},
+		},
+	}
+	_, user, err := buildDraftPrompts(in, DraftContext{}, ResearchNotes{})
+	if err != nil {
+		t.Fatalf("buildDraftPrompts: %v", err)
+	}
+	for _, want := range []string{"相邻章节", "后章标题"} {
+		if !strings.Contains(user, want) {
+			t.Errorf("first-chapter user prompt missing %q", want)
+		}
+	}
+}
+
 func TestBuildDraftPrompts_OmitsNilAdjacent(t *testing.T) {
 	in := ExpandInput{Language: "zh", Length: "medium", ChapterTitle: "c"}
 	_, user, err := buildDraftPrompts(in, DraftContext{}, ResearchNotes{})

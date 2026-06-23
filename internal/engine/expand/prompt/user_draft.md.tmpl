@@ -6,9 +6,9 @@
 章节：{{.ChapterTitle}}
 abstract: {{.Abstract}}
 key_concepts: {{.KeyConcepts}}
-{{if .PrevContext}}
+{{if or .PrevContext .NextContext}}
 相邻章节（保持连贯：勿重复上一章已立概念，为下一章留接口）：
-{{.PrevContext}}
+{{end}}{{if .PrevContext}}{{.PrevContext}}
 {{end}}{{if .NextContext}}{{.NextContext}}
 {{end}}
 研究笔记：
