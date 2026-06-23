@@ -138,11 +138,29 @@
 
 ### v1.0.3 状态机命令
 
+**审计决策（v1.0.x 审计轮，开发前）：**
+
 | # | 维度 | 决定 | 影响 |
 |---|---|---|---|
 | Q7 | status 转换 | R1+F1+X1：只 expanded→reviewed；全书 reviewed 才 final；failed 拒绝 | 严格状态机 |
 | Q8 | export 目标 | 只 md 单文件（v1.0.3） | zhurongshuo/hugo/pdf 推 v1.1.4 |
 | Q9 | dry-run 范围 | finalize + export 加 | review/expand 不加 |
+
+**实施决策（2026-06-23 grill，11 项）：** 命令 `review` / `finalize` / `export` / `status`，均纯状态/文件操作（不调 LLM），解析路径统一 `FindWorkspace(".")`→`books/<slug>`→`LoadMeta`+`LoadOutline`。
+
+| # | 维度 | 决定 | 影响 |
+|---|---|---|---|
+| Q1 | 状态真相源 | outline.json 为查询真相源；review/finalize 写 outline.json 并镜像同步章节 .md frontmatter（read-modify-write 保留正文）；对齐 expand 既有双写 | 全书操作一次 LoadOutline 扫完；单个 .md 自描述诚实 |
+| Q2 | ReviewedBy | OS 用户名（`os/user.Current().Username`），不加 `--by` flag | 填上已有字段、不为单作者投机加 flag（YAGNI） |
+| Q3 | review 守卫 | 必须 `expanded`，其余（scaffolded/reviewed/final/failed）全拒并报当前状态；无重复 review、无 force、无内容门槛 | 唯一合法源 expanded；重审走重跑 expand（会重置回 expanded） |
+| Q4 | finalize 语义 | 全部 reviewed→final（镜像 frontmatter）＋ `Meta.Status="final"`（新增 `BookStatusFinal` 常量），原子写 | 让章节 `final` 枚举可达闭环；finalize 是 final 唯一写者，不发散 |
+| Q5 | finalize 前置 + DRY | 扫 outline 收集非 reviewed 章节，有则拒绝列出；空书/已 final 拒绝。**不抽**共享状态机助手，各命令内联守卫 | 2 调用点形状不同，YAGNI（Q14/Q15 风格） |
+| Q6 | export 前置 | 不门控 final，任意状态可导出；缺正文章节插占位（`> （本章尚未展开）`）不静默丢；输出头标书状态 | 支持定稿前预览整本草稿，避免盲终稿 |
+| Q7' | export 格式 | (1) 脚注**全局重新编号**（全书递增序号，每章正文后跟该章注释块）；(2) 标题页+`##`Part+`###`章三级结构，无 TOC；(3) 输出到 `books/<slug>/export/<slug>.md`，无 `--out` flag | 解决多章拼接 `[^N]` 全局冲突；阅读体验像书 |
+| Q8' | status 命令 | slug 必填、单本书；纯文本：头部(书名/状态)+按 Part 树(逐章 status + word count/unverified)+汇总计数+下一步提示；无全书仪表盘、无 `--json` | 与其它 slug-scoped 命令一致；info≠status |
+| Q9' | dry-run 行为 | 跑完整校验+算出将做什么并打印，**不写任何文件**；通过/失败结果与真跑一致（既预演又预检） | finalize/export 均如此 |
+| Q10 | 测试契约 | `t.TempDir()` 造真实 book 的端到端行为测试 + 文件系统状态断言；不 mock、不 golden；断言结构/子串（含脚注全局唯一、镜像同步、守卫退出码、dry-run 零写入） | 命令不调 LLM 故完全确定可测 |
+| Q11 | 命令装配 | 抽 `loadBook(slug)` 共享解析器（5 调用点，含改造 expand）+ `mirrorChapterStatus(...)` frontmatter 镜像助手（review/finalize 共用）；一命令一文件（review/finalize/export/status.go），root.go 注册 4 个 | 消除重复解析 + 易错的 read-modify-write |
 
 ### v1.0.4 Fallback Wiring
 
