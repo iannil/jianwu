@@ -239,12 +239,12 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 - `cli.providerDepsHook`（v1.0.1 新增）同款 test-only 全局可变 var，预演 v1.1 重构方向（决策 Q20=B）
 - 三个 factory 包（`llmfactory` / `searchfactory` / `readerfactory`）独立存在只为打破 import cycle——是 Go 标准做法但显得啰嗦
 
-### 代码层（已清理，留作记录）
-- ~~`book.Citation.UsedInParagraph` 字段从未填充~~ — 已删除（v1.0.1-post，无 schema 兼容压力）
-- ~~`expand.types.ExpandOutput.Draft` 字段保留 pre-validation draft 用于 debug~~ — 已删除（v1.0.1-post，从未读）
-- ~~`cli.new.go` 的 `_ = session` 是预期行为~~ — 已重构（v1.0.1-post，`runNewFlow` 不再返回 session，CLI 路径与测试路径分离）
+### 代码层（v1.0.1-post 已清理）
+- ~~`book.Citation.UsedInParagraph` 字段从未填充~~ — 已删除（无 schema 兼容压力，从未填充）
+- ~~`expand.types.ExpandOutput.Draft` 字段保留 pre-validation draft 用于 debug~~ — 已删除（从未读）
+- ~~`cli.new.go` 的 `_ = session` 是预期行为~~ — 已重构（`runNewFlow` 不再返回 session，CLI 路径与测试路径分离）
 
-### 代码层（已清理，留作记录）
+### 代码层（v1.0.0 误记，留作记录）
 - ~~`expand.ResearchPlan` struct 从未使用~~ — 实际从未定义（误记）
 - ~~`expand.NewToolRegistryFromProviders` 是 alias~~ — 实际从未定义（误记）
 - ~~`expand.citation.go` 的 `inChinese` 空 if~~ — 实际不存在（误记）
@@ -316,7 +316,9 @@ jianwu new
 # ... 答 12 个 grill 问题（接受推荐用回车）...
 # 自动产出 books/<slug>/{meta.json, outline.json}
 
-# 扩展单章（v1.0.x 才有 CLI，目前只能写 Go 代码调 expand.Generate）
+# 扩展单章（v1.0.1+）
+jianwu expand <slug> 01-01
+# 产出 books/<slug>/chapters/01-01.md + 更新 outline.json 状态
 ```
 
 ## 16. 文档索引
