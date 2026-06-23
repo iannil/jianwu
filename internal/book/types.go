@@ -106,4 +106,5 @@ const (
 // Book status constants (mirrors Meta.Status).
 const (
 	BookStatusDraft = "draft"
+	BookStatusFinal = "final"
 )

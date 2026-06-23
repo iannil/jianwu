@@ -47,25 +47,19 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
 		return &InfoError{Err: err, Code: ExitCodeUsage}
 	}
 
-	wsRoot, err := workspace.FindWorkspace(".")
+	bc, err := loadBook(slug)
 	if err != nil {
-		return &InfoError{Err: err, Code: ExitCodeWorkspaceNotFound}
+		return err
 	}
-	ws, err := workspace.Load(wsRoot)
+	ws, err := workspace.Load(bc.WSRoot)
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
 	secrets, _ := config.LoadSecrets()
 
-	bookDir := filepath.Join(wsRoot, "books", slug)
-	meta, err := book.LoadMeta(filepath.Join(bookDir, "meta.json"))
-	if err != nil {
-		return &InfoError{Err: fmt.Errorf("load meta for %q: %w", slug, err), Code: ExitCodeGeneric}
-	}
-	outline, err := book.LoadOutline(filepath.Join(bookDir, "outline.json"))
-	if err != nil {
-		return &InfoError{Err: fmt.Errorf("load outline for %q: %w", slug, err), Code: ExitCodeGeneric}
-	}
+	bookDir := bc.BookDir
+	meta := bc.Meta
+	outline := bc.Outline
 
 	// Find the chapter.
 	ch, err := findChapter(outline, partIdx, chIdx)
