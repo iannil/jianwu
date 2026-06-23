@@ -58,12 +58,8 @@ func runExport(cmd *cobra.Command, args []string, target string, dryRun bool) er
 		}
 		for ci := range p.Chapters {
 			c := p.Chapters[ci]
-			fm, body, rerr := book.ReadChapter(book.ChapterPath(bc.BookDir, p.Index, c.Index))
-			title := c.Title
-			if rerr == nil && fm != nil && fm.Title != "" {
-				title = fm.Title
-			}
-			fmt.Fprintf(&b, "### %s\n\n", title)
+			fmt.Fprintf(&b, "### %s\n\n", c.Title)
+			_, body, rerr := book.ReadChapter(book.ChapterPath(bc.BookDir, p.Index, c.Index))
 			if rerr != nil {
 				b.WriteString("> （本章尚未展开）\n\n")
 				missing++

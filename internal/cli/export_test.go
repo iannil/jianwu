@@ -17,6 +17,11 @@ func TestExport_AssemblesWithGlobalFootnotes(t *testing.T) {
 	// Overwrite chapter bodies with per-chapter [^1] footnotes to test global renumber.
 	_, _ = book.WriteChapter(bookDir, 1, 1, book.ChapterFrontmatter{Title: "第一章", PartIndex: 1, ChapterIndex: 1, Status: book.StatusFinal}, "甲[^1]。\n\n[^1]: 来源甲")
 	_, _ = book.WriteChapter(bookDir, 1, 2, book.ChapterFrontmatter{Title: "第二章", PartIndex: 1, ChapterIndex: 2, Status: book.StatusFinal}, "乙[^1]。\n\n[^1]: 来源乙")
+	// Give chapters distinct outline titles (export headings come from the outline).
+	o, _ := book.LoadOutline(filepath.Join(bookDir, "outline.json"))
+	o.Parts[0].Chapters[0].Title = "第一章"
+	o.Parts[0].Chapters[1].Title = "第二章"
+	_ = book.SaveOutline(filepath.Join(bookDir, "outline.json"), o)
 	chdir(t, tmp)
 
 	cmd := &cobra.Command{}
