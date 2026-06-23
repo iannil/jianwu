@@ -13,7 +13,7 @@ jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + C
 - **可用 CLI 入口**：`jianwu init` / `info` / `config get/set/list` / `new` / `expand <slug> <NN-MM>`（grill → outline → scaffolding → 单章 expand 闭环）
 - **库 API**：`internal/engine/{outline,scaffolding,grill,expand}` 4 个引擎阶段独立可调
 - **CLI 缺口（v1.0.x 补）**：review+finalize+export+status (v1.0.3)
-- **质量缺口**：expand prompt 注入全是占位符（v1.0.2 修）—— 当前 expand 输出是 generic LLM markdown，不是 zhurongshuo 风格
+- **质量缺口（v1.0.2 已修）**：expand draft/validate prompt 现已真正注入 archetype + 完整风格规约 + 风格样例 + 相邻章节；占位符已清除。剩余人读验收：跑一章真实 expand 由祝融确认风格。
 - **质量基线**：23 个包测试全绿，`go vet` / `gofmt -l` 全清
 
 ---
@@ -210,7 +210,7 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 > v1.0.5 ship 后视为 v1.0 真正交付。详见 `docs/decisions/26-grill-decisions.md` § v1.0.x 完成度审计决策。
 
 - [x] `jianwu expand <slug> <NN-MM>` CLI 命令（**v1.0.1**，已交付 2026-06-23）
-- [ ] Expand prompt 注入 archetype + samples + adjacent + similar book（**v1.0.2**，从 v1.1.6 上移）—— 当前 prompt 是占位符
+- [x] Expand prompt 注入 archetype + samples + guide + adjacent chapters（**v1.0.2**，已交付）—— similar book 切出独立切片（embedding 检索增强，依赖 Embedder）
 - [ ] `jianwu review <slug> <NN-MM>` / `jianwu finalize <slug>` / `jianwu export <slug> --target md` / `jianwu status <slug>`（**v1.0.3**）
 - [ ] Fallback model wiring（**v1.0.4**）
 - [ ] LLM 调用超时（**v1.0.5**）
@@ -356,4 +356,6 @@ jianwu expand <slug> 01-01
 - gofmt 在 opus final review 时发现一处需要清理（commit `da47501`）
 - final review 发现 3 个 Important issues（ROADMAP 重复段、--force --force 测试缺失、dead code）— 都是 reviewer 兜底，per-task reviewer 没抓到
 
-**下一个切片（v1.0.2）：** Expand Prompt 注入 — 把 archetype YAML + style samples + adjacent chapters + similar book 真正注入 prompts。这是 v1.0.0 承诺"配得上 zhurongshuo 同书架"的核心缺口。
+**下一个切片（v1.0.3）：** 状态机命令 — `jianwu review / finalize / export --target md / status`。
+
+> v1.0.2（Expand Prompt 注入）已交付：archetype + 完整风格规约 + 风格样例 + 相邻章节真正注入 draft/validate prompt，对齐 outline 引擎既有模式；similar book 切出独立切片。决策见 `docs/decisions/26-grill-decisions.md` § v1.0.2（Q1/Q4-Q11）；计划见 `docs/plans/2026-06-23-v1.0.2-prompt-injection.md`。
