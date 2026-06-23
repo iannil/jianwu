@@ -25,7 +25,7 @@ func TestSlugifyAsciiTitle(t *testing.T) {
 
 func TestSlugifyChineseTitleReturnsPinyinOrHash(t *testing.T) {
 	// Chinese titles cannot be safely slugified without a transliteration lib.
-	// For v1.0 we accept a deterministic hash fallback.
+	// For v0.1 we accept a deterministic hash fallback.
 	got := Slugify("时间的实在")
 	if got == "" {
 		t.Error("Slugify of Chinese returned empty")

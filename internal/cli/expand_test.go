@@ -229,7 +229,7 @@ func TestExpandRunRefusesWithoutForce(t *testing.T) {
 	existingFM := book.ChapterFrontmatter{
 		Title: "Existing", PartIndex: 1, ChapterIndex: 1,
 		Status: book.StatusExpanded, WordCount: 100,
-		GeneratedAt: time.Now().UTC(), Model: "glm-4.6", EngineVersion: "v1.0.1",
+		GeneratedAt: time.Now().UTC(), Model: "glm-4.6", EngineVersion: "v0.1.1",
 	}
 	if _, err := book.WriteChapter(bookDir, 1, 1, existingFM, "old content"); err != nil {
 		t.Fatal(err)
@@ -286,7 +286,7 @@ func TestExpandRunRefusesReviewedEvenWithForce(t *testing.T) {
 	existingFM := book.ChapterFrontmatter{
 		Title: "Reviewed", PartIndex: 1, ChapterIndex: 1,
 		Status: book.StatusReviewed, WordCount: 100,
-		GeneratedAt: time.Now().UTC(), Model: "glm-4.6", EngineVersion: "v1.0.1",
+		GeneratedAt: time.Now().UTC(), Model: "glm-4.6", EngineVersion: "v0.1.1",
 	}
 	if _, err := book.WriteChapter(bookDir, 1, 1, existingFM, "reviewed content"); err != nil {
 		t.Fatal(err)
@@ -340,7 +340,7 @@ func TestExpandRunAllowWithDoubleForce(t *testing.T) {
 	existingFM := book.ChapterFrontmatter{
 		Title: "Reviewed", PartIndex: 1, ChapterIndex: 1,
 		Status: book.StatusReviewed, WordCount: 100,
-		GeneratedAt: time.Now().UTC(), Model: "glm-4.6", EngineVersion: "v1.0.1",
+		GeneratedAt: time.Now().UTC(), Model: "glm-4.6", EngineVersion: "v0.1.1",
 	}
 	if _, err := book.WriteChapter(bookDir, 1, 1, existingFM, "old reviewed content"); err != nil {
 		t.Fatal(err)

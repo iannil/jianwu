@@ -199,7 +199,7 @@ func flattenConfig(cfg any) []string {
 				walk(key, f)
 			}
 		case reflect.Slice:
-			// Skip slices (lists) for v1.0 list output
+			// Skip slices (lists) for v0.1 list output
 		default:
 			if !v.IsZero() {
 				out = append(out, fmt.Sprintf("%s = %v", prefix, v.Interface()))

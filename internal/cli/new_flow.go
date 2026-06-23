@@ -91,10 +91,10 @@ func deriveSlugFromTopic(topic string) string {
 //
 // Deprecated: chatterProviderHook (and providerDepsHook) are test-only
 // package-global mutable vars. Both will be refactored into a CLI struct
-// field in v1.1.6 (see docs/ROADMAP.md §v1.1.6). Do not add new production
+// field in v0.2.6 (see docs/ROADMAP.md §v0.2.6). Do not add new production
 // reads of either var. New test setups should prefer providerDepsHook
-// (the struct-bundle pattern introduced in v1.0.1) over chatterProviderHook
-// (the single-provider pattern legacy from v1.0.0). WARNING: package-global
+// (the struct-bundle pattern introduced in v0.1.1) over chatterProviderHook
+// (the single-provider pattern legacy from v0.1.0). WARNING: package-global
 // mutable var, no mutex — test binaries only, no concurrent mutation.
 var chatterProviderHook = func(cfg *config.Config, secrets *config.Secrets) (chatterProvider, error) {
 	return buildChatterProvider(cfg, secrets)

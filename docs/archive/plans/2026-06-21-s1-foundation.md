@@ -3463,7 +3463,7 @@ git commit -m "test(cli): e2e happy path init→info→config set→get→list"
 - Modify: `README.md`
 - Modify: `internal/cli/version.go` (set Version to `0.1.0`)
 
-**Goal:** Bring README up to a "v0.1.0-s1" level, document what works and what's deferred.
+**Goal:** Bring README up to a "v0.0.1-s1" level, document what works and what's deferred.
 
 - [ ] **Step 1: Bump version**
 
@@ -3489,7 +3489,7 @@ Library + CLI. Web SaaS wrapper is a separate repo (`mouqin`).
 
 ## Status
 
-**v0.1.0 — S1 (Foundation)**: workspace + config + CLI shell working.
+**v0.0.1 — S1 (Foundation)**: workspace + config + CLI shell working.
 LLM provider abstractions, engine, and LLM-driven commands come in
 later slices (S2-S8). See `docs/superpowers/plans/` for the roadmap.
 
@@ -3554,8 +3554,8 @@ Expected: zero failures, zero warnings.
 
 ```bash
 git add README.md internal/cli/version.go
-git commit -m "docs: v0.1.0 README + version bump (S1 complete)"
-git tag v0.1.0
+git commit -m "docs: v0.0.1 README + version bump (S1 complete)"
+git tag v0.0.1
 ```
 
 ---

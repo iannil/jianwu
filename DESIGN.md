@@ -4,7 +4,7 @@
 > 库 + CLI 部分。Web SaaS 包装层是独立仓库 `mouqin`。
 
 最后更新：2026-06-22
-状态：**v1.0.0 已交付**（tag 在 master）。当前文档反映 v1.0 锁定时的设计，实施进展以 `docs/PROJECT_STATUS.md` 为准。
+状态：**v0.1.0 已交付**（tag 在 master）。当前文档反映 v0.1 锁定时的设计，实施进展以 `docs/PROJECT_STATUS.md` 为准。
 
 ---
 
@@ -18,8 +18,8 @@
 
 | 仓库 | 角色 | 阶段 |
 |---|---|---|
-| `jianwu` | 核心引擎（库 + CLI），本仓库 | v1 优先 |
-| `mouqin` | Web SaaS，包装 jianwu 库对外服务 | v2 |
+| `jianwu` | 核心引擎（库 + CLI），本仓库 | v0.1 优先 |
+| `mouqin` | Web SaaS，包装 jianwu 库对外服务 | v1.0 |
 
 库优先：所有核心逻辑写在 `jianwu` 库里，CLI 和 Web 都包同一个库。
 
@@ -29,7 +29,7 @@
 
 - zhurongshuo 提供：方法论参考、参考语料、底层思想
 - zhurongshuo 不提供：产品形态、文件格式、元数据 schema、部署目标
-- 任何"输出到 zhurongshuo"是适配器层（`jianwu export --target zhurongshuo`），在 v1.1 实现
+- 任何"输出到 zhurongshuo"是适配器层（`jianwu export --target zhurongshuo`），在 v0.2 实现
 
 **独立性检验**：如果 zhurongshuo 仓库明天消失，jianwu 仍能正常运行、用所有原型、完成全流程；只是不能 sync 更新参考语料。
 
@@ -51,15 +51,15 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  mouqin (Web SaaS, v2)                                      │
+│  mouqin (Web SaaS, v1.0)                                      │
 │  包装 jianwu 库，对外服务                                    │
 └─────────────────────────────────────────────────────────────┘
                           │ 包同一个库
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  jianwu (库 + CLI, v1)                                      │
+│  jianwu (库 + CLI, v0.1)                                      │
 │                                                              │
-│  ┌─ CLI 命令（v1.0）                                        │
+│  ┌─ CLI 命令（v0.1）                                        │
 │  │  init / new / list / show / status                       │
 │  │  expand / review / finalize / config / info              │
 │  │                                                          │
@@ -290,7 +290,7 @@ type Provider interface {
 }
 ```
 
-v1 实现：`gemini.Provider` + `glm.Provider`。
+v0.1 实现：`gemini.Provider` + `glm.Provider`。
 
 模型映射在配置文件里，按阶段独立：
 
@@ -355,7 +355,7 @@ type SearchOpts struct {
 }
 ```
 
-v1 实现：
+v0.1 实现：
 - Brave Search API（主，2000 queries/mo 免费）
 - Serper.dev（备，2500 注册免费 credits）
 - Jina Reader（URL 内容，1M tokens/mo 免费）
@@ -416,9 +416,9 @@ metadata:
   author: jianwu+human
 ```
 
-### 6.2 v1.0 原型列表
+### 6.2 v0.1 原型列表
 
-先做 3 个（v1.0）：
+先做 3 个（v0.1）：
 
 | # | ID | 中文名 | 适用场景 |
 |---|---|---|---|
@@ -426,7 +426,7 @@ metadata:
 | 2 | `diagnosis-decoding-breakthrough` | 诊断-解码-破局型 | 问题解决/批判分析 |
 | 3 | `foundations-application-practice` | 基础-应用-实战型 | 技术/教学 |
 
-v1.0.x 增量补：
+v0.1.x 增量补：
 
 | # | ID | 中文名 | 适用场景 |
 |---|---|---|---|
@@ -434,7 +434,7 @@ v1.0.x 增量补：
 | 5 | `theory-dynamics-history-present` | 理论-动力-历史-当下型 | 历史/文明/演化 |
 | 6 | `mindset-method-practice` | 心法-方法-实战型 | 技能/心法传授 |
 
-v2 留：
+v1.0 留：
 
 | # | ID | 中文名 | 适用场景 |
 |---|---|---|---|
@@ -456,7 +456,7 @@ v2 留：
 | 层 | 位置 | 内容 |
 |---|---|---|
 | 内置最小 | `internal/corpus/builtin/`（embed） | 每原型 1-2 本代表书的 outline 摘要 + few-shot 样例段落 |
-| 扩展集 | `~/.local/share/jianwu/corpus/` | 通过 `jianwu corpus sync` 同步（v1.1） |
+| 扩展集 | `~/.local/share/jianwu/corpus/` | 通过 `jianwu corpus sync` 同步（v0.2） |
 | Embedding 索引 | `~/.local/share/jianwu/corpus/index/` | 用于相似检索 |
 
 加载顺序：扩展集 > 内置。
@@ -469,11 +469,11 @@ v2 留：
 - 元数据（slug / archetype / audience / depth）
 - source 归因（`source: zhurongshuo`, `source_url: ...`）
 
-### 7.3 v1.0 范围
+### 7.3 v0.1 范围
 
 仅内置最小语料，不做 `corpus sync`。`lookup_similar_book` 工具基于 embedding 在内置语料上跑。
 
-### 7.4 v1.1+
+### 7.4 v0.2+
 
 ```
 jianwu corpus list                  # 列出当前可用语料
@@ -496,7 +496,7 @@ jianwu corpus reindex               # 重建 embedding 索引
 - 软偏好（倾向但不强制）：长句优于短句堆叠、术语首次出现给定义
 - 反例（zhurongshuo 不写的样子）
 
-v1.0：AI 基于 zhurongshuo 现有文本反推萃取 → 用户审阅修改。
+v0.1：AI 基于 zhurongshuo 现有文本反推萃取 → 用户审阅修改。
 
 ### 8.2 Few-shot 样例段落
 
@@ -509,7 +509,7 @@ v1.0：AI 基于 zhurongshuo 现有文本反推萃取 → 用户审阅修改。
 - **强制引用**：展开阶段每个事实性陈述必须有 `[source: URL/书名]`，无引用标 `unverified_claims++`
 - **Citation 用 `[^N]` 脚注语法**：每条含 id/url/title/accessed_at/snippet/used_in_paragraph/search_provider/reader_provider
 - **人工签发**：status workflow `scaffolded → expanded → reviewed → final`
-- **自动事实复核**（v1.1）：claims 抽取 + 验证 agent，接口在 `outline.json` 的 `claims[]` 字段已预留
+- **自动事实复核**（v0.2）：claims 抽取 + 验证 agent，接口在 `outline.json` 的 `claims[]` 字段已预留
 
 ### 8.4 章节级质量信号字段
 
@@ -585,7 +585,7 @@ jina_api_key: ...
 
 ## 10. CLI 命令
 
-### 10.1 v1.0 命令集
+### 10.1 v0.1 命令集
 
 ```
 jianwu init [path]                          # 初始化 workspace
@@ -608,7 +608,7 @@ jianwu finalize <slug>                      # 全书 reviewed 后转 final
 jianwu export <slug> --target md --out <path>   # 仅 markdown 合并导出
 ```
 
-### 10.2 v1.1 增补
+### 10.2 v0.2 增补
 
 ```
 jianwu rewrite <slug> <NN-MM>               # 重写已展开章节
@@ -625,7 +625,7 @@ jianwu migrate                              # workspace schema 升级
 
 ---
 
-## 11. v1.0 MVP 范围
+## 11. v0.1 MVP 范围
 
 ### 11.1 必做
 
@@ -634,7 +634,7 @@ jianwu migrate                              # workspace schema 升级
 - Book 查看：`list` / `show` / `status`
 - 章节展开：`expand`（单章，web search + 引用）
 - 状态工作流：`review` / `finalize`
-- 原型库：3 个 v1 原型（先做最常用）
+- 原型库：3 个 v0.1 原型（先做最常用）
 - Provider：Gemini + GLM 两个实现
 - 参考语料：内置最小
 - 风格：style-guide + few-shot 样例
@@ -643,7 +643,7 @@ jianwu migrate                              # workspace schema 升级
 - 引用追踪：citations + unverified_claims
 - 导出：仅 markdown 合并
 
-### 11.2 砍到 v1.1
+### 11.2 砍到 v0.2
 
 - 章节迭代命令（rewrite / add-chapter / move-chapter）
 - corpus sync 扩展语料
@@ -660,11 +660,11 @@ jianwu migrate                              # workspace schema 升级
 
 ## 12. 路线图
 
-### v1.0 — 私人引擎（当前）
+### v0.1 — 私人引擎（当前）
 
 最小可用完整闭环。仅祝融自用。
 
-### v1.1 — 让 v1.0 真正好用
+### v0.2 — 让 v0.1 真正好用
 
 - 章节迭代命令
 - 语料扩展（corpus sync）
@@ -674,7 +674,7 @@ jianwu migrate                              # workspace schema 升级
 - 多 export target
 - 后 3 个原型
 
-### v2 — mouqin SaaS 化
+### v1.0 — mouqin SaaS 化
 
 - mouqin web app（前后端）
 - 多用户 / 鉴权 / 账单
@@ -683,7 +683,7 @@ jianwu migrate                              # workspace schema 升级
 - 多 book 卷管理
 - 协作功能（评论、共享 workspace）
 
-### v3+ — 长期
+### v2+ — 长期
 
 - 本地模型支持（Qwen3 / Ollama）
 - 第三方原型库市场
@@ -702,7 +702,7 @@ jianwu migrate                              # workspace schema 升级
    - `data/books.yaml` + `data/practices.yaml`
    - 所有书的 `content/books/*/*/part-*/**` 和 `content/practices/*/**`
 
-   > 注：此脚本从未实现；实际用 Claude Code 直接萃取（见 EXTRACTION_NOTES.md §2.6）。`scripts/` 目录已于 v1.0.1-post 删除。
+   > 注：此脚本从未实现；实际用 Claude Code 直接萃取（见 EXTRACTION_NOTES.md §2.6）。`scripts/` 目录已于 v0.1.1-post 删除。
 2. 把所有 part_titles + 章节标题 + 部分章节摘要喂给 LLM，要求：
    - 归纳出 3 个最常用结构原型
    - 每原型含：id/name.{zh,en}/description/when_to_use/parts[]（含 role/title_template/guidance/typical_chapters/chapter_role_hints）/examples[]
@@ -743,14 +743,14 @@ jianwu migrate                              # workspace schema 升级
 
 ### 14.1 受众与定位
 
-1. 受众：C — 先做祝融私人引擎（v1），后续开放为公开 SaaS（v2）。引擎优先。
+1. 受众：C — 先做祝融私人引擎（v0.1），后续开放为公开 SaaS（v1.0）。引擎优先。
 
 ### 14.2 输出与粒度
 
 2. 输出粒度：D — 默认"大纲+脚手架"，可对单章触发"展开成稿"。
 3. 知识源：D — 可插拔；脚手架阶段用参数化知识，展开阶段默认开 web search 锚定。
 4. 结构来源：D — jianwu 自己的原型库，初始用 zhurongshuo 25+ 本书萃取 seed。
-5. 生成单位：D — v1 只做单本。
+5. 生成单位：D — v0.1 只做单本。
 6. 内容类型：C — 单类型"book" + length(short/medium/long)。
 
 ### 14.3 交互与流程
@@ -778,23 +778,23 @@ jianwu migrate                              # workspace schema 升级
 ### 14.6 原型库
 
 20. 原型库 schema：D — schema_version 字段版本化。
-21. v1 原型库：6 个（v1.0 先做 3，v1.0.x 补 3）。
+21. v0.1 原型库：6 个（v0.1 先做 3，v0.1.x 补 3）。
 22. 原型库存储：B — 内置 + 用户覆盖。
 23. 原型库萃取：B + D — AI 辅助 + 先 3 个。
 
 ### 14.7 质量与风格
 
-24. 事实可信度：D — v1 做"强制引用" + 人工签发；自动事实复核留 v1.1。
+24. 事实可信度：D — v0.1 做"强制引用" + 人工签发；自动事实复核留 v0.2。
 25. 风格：D — 风格规约 + few-shot 样例。
 26. 风格规约：AI 基于 zhurongshuo 反推萃取 + 用户审阅。
 27. Citation 用 `[^N]` 脚注语法。
-28. 章节质量信号字段：status / word_count / citations_count / unverified_claims / coherence_score(v1=null) / expanded_with / reviewed_at/by。
+28. 章节质量信号字段：status / word_count / citations_count / unverified_claims / coherence_score(v0.1=null) / expanded_with / reviewed_at/by。
 
 ### 14.8 参考语料
 
 29. 参考语料管理：D — 分层（内置最小 + sync 扩展）。
 30. 萃取物范围：outline 摘要 + few-shot 段落 + 元数据，不含全文。
-31. 相似检索：v1 就做 embedding。
+31. 相似检索：v0.1 就做 embedding。
 32. corpus 子命令集：list / sync / show / stats / reindex。
 33. 独立性检验：zhurongshuo 消失时 jianwu 仍能正常运行。
 
@@ -815,13 +815,13 @@ jianwu migrate                              # workspace schema 升级
 
 ### 14.11 MVP 范围
 
-43. v1.0 切分：核心闭环（new→expand→review→finalize）；多 export target / 自动复核 / corpus sync / 章节迭代命令都砍到 v1.1。
-44. v1.0 成功标准：从 0 跑通完整闭环，输出质量配得上 zhurongshuo 同书架。
+43. v0.1 切分：核心闭环（new→expand→review→finalize）；多 export target / 自动复核 / corpus sync / 章节迭代命令都砍到 v0.2。
+44. v0.1 成功标准：从 0 跑通完整闭环，输出质量配得上 zhurongshuo 同书架。
 
 ### 14.12 路线图
 
-45. v1.1：章节迭代、corpus sync、embedding 检索、自动复核、多 export target、后 3 原型。
-46. v2：mouqin SaaS；v3+：本地模型、第三方原型库、翻译流水线、plugin system。
+45. v0.2：章节迭代、corpus sync、embedding 检索、自动复核、多 export target、后 3 原型。
+46. v1.0：mouqin SaaS；v2+：本地模型、第三方原型库、翻译流水线、plugin system。
 
 ---
 

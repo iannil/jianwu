@@ -25,7 +25,7 @@ Exportable at any status; the output header notes whether the book is draft or f
 			return runExport(cmd, args, target, dryRun)
 		},
 	}
-	cmd.Flags().StringVar(&target, "target", "md", "export target (only \"md\" supported in v1.0.3)")
+	cmd.Flags().StringVar(&target, "target", "md", "export target (only \"md\" supported in v0.1.3)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "report what would be written without writing")
 	return cmd
 }

@@ -36,7 +36,7 @@ internal/cli ──────────┬─→ internal/engine/{outline, s
 
 把 factory 放到平级的 `llmfactory` 包，就能 import `llm` + `llm/gemini` + `llm/glm` 三者。
 
-## 数据流（v1.0 `jianwu new` 全流程）
+## 数据流（v0.1 `jianwu new` 全流程）
 
 ```
 [jianwu new]
@@ -74,7 +74,7 @@ internal/cli ──────────┬─→ internal/engine/{outline, s
     └─ repo.Archive(session, slug)  ← 移到 books/<slug>/.session.json（audit log）
 ```
 
-## 数据流（v1.0.x `jianwu expand` — 待实现）
+## 数据流（v0.1.x `jianwu expand` — 待实现）
 
 ```
 [jianwu expand <slug> <NN-MM>]
@@ -121,7 +121,7 @@ type Chatter interface {
 type Embedder interface {
     Embed(ctx context.Context, req EmbedRequest) (*EmbedResponse, error)
 }
-// Streamer / Tooler 接口预留（v1.0.4 流式 / v1.0.x 工具调用）
+// Streamer / Tooler 接口预留（v0.1.4 流式 / v0.1.x 工具调用）
 
 // internal/provider/search/interface.go
 type Searcher interface {

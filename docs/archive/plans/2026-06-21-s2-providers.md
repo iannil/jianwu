@@ -2616,7 +2616,7 @@ git commit -m "feat(provider): search + reader factories"
 
 ---
 
-## Task 13: README Update + v0.2.0 Tag
+## Task 13: README Update + v0.0.2 Tag
 
 **Files:**
 - Modify: `README.md`
@@ -2638,7 +2638,7 @@ Append a Provider section to README.md (after the Configuration section):
 
 ```markdown
 
-## Providers (v0.2.0)
+## Providers (v0.0.2)
 
 LLM:
 - **Gemini** via official `google.golang.org/genai` SDK (gemini-2.5-pro, gemini-2.5-flash, text-embedding-004)
@@ -2671,8 +2671,8 @@ All should be clean.
 
 ```bash
 git add README.md internal/cli/version.go
-git commit -m "docs: v0.2.0 README + version bump (S2 complete)"
-git tag v0.2.0
+git commit -m "docs: v0.0.2 README + version bump (S2 complete)"
+git tag v0.0.2
 ```
 
 ---

@@ -1115,7 +1115,7 @@ git commit -m "test(cli): e2e new command with mocked chatters via hook"
 
 ---
 
-## Task 6: README + Version Bump + v0.6.0
+## Task 6: README + Version Bump + v0.0.6
 
 **Files:**
 - Modify: `README.md`
@@ -1137,16 +1137,16 @@ Replace Engine section with:
 
 ```markdown
 
-## Engine (v0.6.0)
+## Engine (v0.0.6)
 
-The 4-stage engine is being built slice by slice. v0.6.0 ships **Outline + Scaffolding + Grill + `new` command**:
+The 4-stage engine is being built slice by slice. v0.0.6 ships **Outline + Scaffolding + Grill + `new` command**:
 
-- **Outline** (v0.3.0): single LLM call produces full book outline
-- **Scaffolding** (v0.4.0): N chapters in parallel (concurrency 5), continue-on-error
-- **Grill** (v0.5.0): stateful interactive Q&A with 12-dimension design tree
-- **`jianwu new`** (v0.6.0): full end-to-end flow — chains grill → outline → scaffolding. Resume-aware. Slug conflict detection with `--force`. Retry + fallback wrapping via config-driven models.
+- **Outline** (v0.0.3): single LLM call produces full book outline
+- **Scaffolding** (v0.0.4): N chapters in parallel (concurrency 5), continue-on-error
+- **Grill** (v0.0.5): stateful interactive Q&A with 12-dimension design tree
+- **`jianwu new`** (v0.0.6): full end-to-end flow — chains grill → outline → scaffolding. Resume-aware. Slug conflict detection with `--force`. Retry + fallback wrapping via config-driven models.
 
-### Quick start (v0.6.0)
+### Quick start (v0.0.6)
 
 ```bash
 jianwu init my-library
@@ -1172,8 +1172,8 @@ go test ./...
 go vet ./...
 find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l
 git add README.md internal/cli/version.go
-git commit -m "docs: v0.6.0 README + version bump (S6 new command complete)"
-git tag v0.6.0
+git commit -m "docs: v0.0.6 README + version bump (S6 new command complete)"
+git tag v0.0.6
 ```
 
 ---
@@ -1188,7 +1188,7 @@ git tag v0.6.0
 - Q21.A3 (slug conflict + --force): Task 2
 
 **Deferrals:**
-- Fallback wrapper not wired (Config doesn't yet carry fallback ModelRef). S6.1 or v0.6.x can extend Config.Models[stage] with a Fallback field and wrap with FallbackWrapper in buildChatter. For v0.6.0, only RetryWrapper is wired.
+- Fallback wrapper not wired (Config doesn't yet carry fallback ModelRef). S6.1 or v0.6.x can extend Config.Models[stage] with a Fallback field and wrap with FallbackWrapper in buildChatter. For v0.0.6, only RetryWrapper is wired.
 - No streaming output (terminal sees final result, not tokens-as-they-arrive)
 - No timeout on LLM calls (user can Ctrl+C)
 - chatterProviderHook is test infrastructure that lives in production code — slightly smelly but standard for Go CLI testing

@@ -20,7 +20,7 @@ func TestWriteAndReadChapterRoundtrip(t *testing.T) {
 		WordCount:             3421,
 		GeneratedAt:           time.Date(2026, 6, 22, 19, 30, 0, 0, time.UTC),
 		Model:                 "glm-4.6",
-		EngineVersion:         "v1.0.1",
+		EngineVersion:         "v0.1.1",
 		UnverifiedClaimsCount: 3,
 		Citations: []ChapterCitation{
 			{ID: "1", URL: "https://example.com/a", Title: "Example A", Site: "example.com"},

@@ -1,12 +1,12 @@
-# 萃取记录：从 zhurongshuo 萃取 jianwu v1.0 内容资产
+# 萃取记录：从 zhurongshuo 萃取 jianwu v0.1 内容资产
 
-> 本文档记录 v1.0 前置工作（DESIGN.md 第 13 节）的执行情况，
+> 本文档记录 v0.1 前置工作（DESIGN.md 第 13 节）的执行情况，
 > 便于祝融审阅修改时知道每个文件的依据和信心程度。
 
 执行日期：2026-06-21
 执行者：AI 辅助（Claude Code + zhurongshuo 文本反推）
 审阅者：祝融
-状态：**v1.0.0 ship 时已通过 7 个切片的 SDD review 验证**。低信心（标记 medium）的 corpus abstract 仍可后续修订（v1.1 `corpus sync` 时）。
+状态：**v0.1.0 ship 时已通过 7 个切片的 SDD review 验证**。低信心（标记 medium）的 corpus abstract 仍可后续修订（v0.2 `corpus sync` 时）。
 
 ---
 
@@ -131,7 +131,7 @@ internal/
 
 ### 2.6 Extraction 系统提示词（DESIGN.md 第 13.1 节）
 
-按 DESIGN.md 计划，应该写一个 `scripts/extract-archetypes.go` 脚本，读 zhurongshuo 数据喂 LLM 萃取。实际我没写这个脚本，而是直接用 Claude Code 读 zhurongshuo 文本萃取（`scripts/` 目录已于 v1.0.1-post 删除）。
+按 DESIGN.md 计划，应该写一个 `scripts/extract-archetypes.go` 脚本，读 zhurongshuo 数据喂 LLM 萃取。实际我没写这个脚本，而是直接用 Claude Code 读 zhurongshuo 文本萃取（`scripts/` 目录已于 v0.1.1-post 删除）。
 
 理由：
 - 一次性脚本对单次萃取是过度工程
@@ -142,11 +142,11 @@ internal/
 
 ---
 
-## 三、已知缺口（v1.0 不阻塞，v1.0.x 可补）
+## 三、已知缺口（v0.1 不阻塞，v0.1.x 可补）
 
 ### 3.1 后 3 个原型
 
-DESIGN.md 计划 v1.0 做 3 个，v1.0.x 补 3 个：
+DESIGN.md 计划 v0.1 做 3 个，v0.1.x 补 3 个：
 
 - `micro-meso-macro`（微观-中观-宏观型）
 - `theory-dynamics-history-present`（理论-动力-历史-当下型）
@@ -174,9 +174,9 @@ DESIGN.md 第 7.3 节提到 `~/.local/share/jianwu/corpus/index/` 存 embedding 
 ## 四、审阅建议的工作流
 
 1. **先快速浏览所有文件**（10 分钟），找出明显不对的地方
-2. **重点审阅 2.1（原型 schema）和 2.4（few-shot 样例）**——这两个直接影响 v1.0 的生成质量
+2. **重点审阅 2.1（原型 schema）和 2.4（few-shot 样例）**——这两个直接影响 v0.1 的生成质量
 3. **修订时直接编辑文件**——所有文件都是普通文本，结构清晰
-4. **修订完成后**，告知我（或 commit 一份"v1.0 资产定稿"），可以进入下一阶段（C：搭 jianwu Go 项目骨架）
+4. **修订完成后**，告知我（或 commit 一份"v0.1 资产定稿"），可以进入下一阶段（C：搭 jianwu Go 项目骨架）
 
 ---
 
@@ -184,7 +184,7 @@ DESIGN.md 第 7.3 节提到 `~/.local/share/jianwu/corpus/index/` 存 embedding 
 
 ```
 /Users/rong.zhu/Code/jianwu/
-├── DESIGN.md                                        # 设计文档（v1.0 锁定）
+├── DESIGN.md                                        # 设计文档（v0.1 锁定）
 ├── EXTRACTION_NOTES.md                              # 本文件
 └── internal/
     ├── archetypes/

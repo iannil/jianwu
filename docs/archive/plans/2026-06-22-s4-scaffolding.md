@@ -1111,16 +1111,16 @@ var Version = "0.4.0"
 
 - [ ] **Step 2: Update README Engine section**
 
-Replace the v0.3.0 Engine section with:
+Replace the v0.0.3 Engine section with:
 
 ```markdown
 
-## Engine (v0.4.0)
+## Engine (v0.0.4)
 
-The 4-stage engine is being built slice by slice. v0.4.0 ships **Outline + Scaffolding**:
+The 4-stage engine is being built slice by slice. v0.0.4 ships **Outline + Scaffolding**:
 
-- **Outline** (v0.3.0): single LLM call produces full book outline (parts × chapters)
-- **Scaffolding** (v0.4.0): N chapters in parallel (default concurrency 5), each generates abstract / key_concepts / learning_objectives / suggested_examples. Continue-on-error: failed chapters marked `status=failed` without aborting siblings. `RetryFailed` re-runs only failed chapters.
+- **Outline** (v0.0.3): single LLM call produces full book outline (parts × chapters)
+- **Scaffolding** (v0.0.4): N chapters in parallel (default concurrency 5), each generates abstract / key_concepts / learning_objectives / suggested_examples. Continue-on-error: failed chapters marked `status=failed` without aborting siblings. `RetryFailed` re-runs only failed chapters.
 
 Both stages are stateless per call. Caller (S6 `new` command) will wrap with RetryWrapper + FallbackWrapper.
 
@@ -1141,8 +1141,8 @@ find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l
 
 ```bash
 git add README.md internal/cli/version.go
-git commit -m "docs: v0.4.0 README + version bump (S4 scaffolding complete)"
-git tag v0.4.0
+git commit -m "docs: v0.0.4 README + version bump (S4 scaffolding complete)"
+git tag v0.0.4
 ```
 
 ---
@@ -1160,7 +1160,7 @@ git tag v0.4.0
 - No CLI command for scaffolding (S6 `new` will chain grill → outline → scaffolding)
 - No retry/fallback wrapping inside scaffolding package (caller wraps)
 - Prompt templates are v1
-- RetryFailed merges results back via a filtered-outline round-trip — works but slightly awkward; could be cleaner if ScaffoldAll took a "skip if not failed" filter, but the current shape is fine for v0.4.0
+- RetryFailed merges results back via a filtered-outline round-trip — works but slightly awkward; could be cleaner if ScaffoldAll took a "skip if not failed" filter, but the current shape is fine for v0.0.4
 
 **Placeholder scan:** clean. RetryFailed has an "Important design note" in the brief that presents the awkward first version then the cleaner second version — implementer should use the SECOND (cleaner) version.
 

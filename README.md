@@ -6,7 +6,7 @@ Library + CLI. Web SaaS wrapper is a separate repo (`mouqin`).
 
 ## Status
 
-**v1.0.x (in progress)**: v1.0.0 shipped the library API + `jianwu new`; v1.0.x is bringing the CLI surface to match the v1.0 promise (expand / review / finalize / export / status commands + zhurongshuo-style prompt injection). See `docs/ROADMAP.md` for the v1.0.x plan and `docs/decisions/26-grill-decisions.md` § v1.0.x 完成度审计决策 for why.
+**v0.1.x (in progress)**: v0.1.0 shipped the library API + `jianwu new`; v0.1.x is bringing the CLI surface to match the v0.1 promise (expand / review / finalize / export / status commands + zhurongshuo-style prompt injection). See `docs/ROADMAP.md` for the v0.1.x plan and `docs/decisions/26-grill-decisions.md` § v0.1.x 完成度审计决策 for why.
 
 ## Install
 
@@ -66,26 +66,26 @@ Fallback policy: primary fails after retry → fallback model takes over.
 
 Both are abstracted behind small Go interfaces (`Chatter`, `Embedder`, `Searcher`, `Reader`) — engine layers (S3+) compose them.
 
-## Engine (v1.0.0)
+## Engine (v0.1.0)
 
-jianwu v1.0.0 ships the full 4-stage engine + the `new` command:
+jianwu v0.1.0 ships the full 4-stage engine + the `new` command:
 
 - **Outline** (v0.3.0): single LLM call produces full book outline
 - **Scaffolding** (v0.4.0): N chapters in parallel, continue-on-error
 - **Grill** (v0.5.0): stateful interactive Q&A with 12-dimension design tree
-- **Expand** (v1.0.0): per-chapter 3-iteration agent (research → draft → validate), web search grounding, [^N] citation tracking
+- **Expand** (v0.1.0): per-chapter 3-iteration agent (research → draft → validate), web search grounding, [^N] citation tracking
 - **`jianwu new`** (v0.6.0): command chaining grill → outline → scaffolding
 
-### v1.0 status
+### v0.1 status
 
-`jianwu new` produces a scaffolded book; `jianwu expand <slug> <NN-MM>` (shipped v1.0.1, 2026-06-23) produces one chapter's markdown + citations + outline.json status update.
+`jianwu new` produces a scaffolded book; `jianwu expand <slug> <NN-MM>` (shipped v0.1.1, 2026-06-23) produces one chapter's markdown + citations + outline.json status update.
 
-Remaining work for v1.0.x (per `docs/ROADMAP.md`):
-- Expand prompt injection (archetype YAML + style samples + adjacent chapters) — v1.0.2, currently produces generic LLM markdown, not zhurongshuo style
-- review / finalize / export / status CLI commands — v1.0.3
-- Fallback model wiring — v1.0.4
-- Real timeouts on LLM calls — v1.0.5
-- Streaming output for long-running stages — v1.0.6 (optional)
+Remaining work for v0.1.x (per `docs/ROADMAP.md`):
+- Expand prompt injection (archetype YAML + style samples + adjacent chapters) — v0.1.2, currently produces generic LLM markdown, not zhurongshuo style
+- review / finalize / export / status CLI commands — v0.1.3
+- Fallback model wiring — v0.1.4
+- Real timeouts on LLM calls — v0.1.5
+- Streaming output for long-running stages — v0.1.6 (optional)
 
 ## License
 

@@ -29,7 +29,7 @@ func Load(wsRoot string) (*Workspace, error) {
 	schema := strings.TrimSpace(string(schemaBytes))
 	if schema != CurrentSchemaVersion {
 		return nil, fmt.Errorf(
-			"workspace schema_version %q does not match supported version %q: run `jianwu migrate` (planned for v1.1)",
+			"workspace schema_version %q does not match supported version %q: run `jianwu migrate` (planned for v0.2)",
 			schema, CurrentSchemaVersion,
 		)
 	}

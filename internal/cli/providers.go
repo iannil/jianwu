@@ -58,7 +58,7 @@ func stageModel(cfg *config.Config, stage string) (config.ModelRef, error) {
 
 // ProviderDeps bundles the providers needed by expand CLI (and future commands
 // that need search/reader/embedder in addition to chatter). Per Q20=B this is a
-// single struct rather than 4 separate hooks, prefiguring the v1.1 refactor of
+// single struct rather than 4 separate hooks, prefiguring the v0.2 refactor of
 // chatterProviderHook into a CLI struct field.
 type ProviderDeps struct {
 	Chatter  llm.Chatter
@@ -72,7 +72,7 @@ type ProviderDeps struct {
 //
 // Deprecated: providerDepsHook (and chatterProviderHook) are test-only
 // package-global mutable vars. Both will be refactored into a CLI struct
-// field in v1.1.6 (see docs/ROADMAP.md §v1.1.6). Do not add new production
+// field in v0.2.6 (see docs/ROADMAP.md §v0.2.6). Do not add new production
 // reads of either var. New test setups should prefer providerDepsHook
 // (the struct-bundle pattern) over chatterProviderHook (the single-provider
 // pattern). WARNING: package-global mutable var, no mutex — test binaries
