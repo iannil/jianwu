@@ -1,7 +1,7 @@
 # jianwu 项目状态
 
 > 本文档对 LLM 友好——任何接手后续迭代的 agent 读这一份就能理解项目当前形态、什么能用、什么没做、怎么扩展。
-> 最后更新：2026-06-22（v1.0.0 已 ship）
+> 最后更新：2026-06-23（v1.0.1 已 ship expand CLI；v1.0.1-post 清理切片）
 
 ---
 
@@ -9,10 +9,10 @@
 
 jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。
 
-- **当前版本**：v1.0.0（已 tag，但范围过早；v1.0.x 系列补齐到 v1.0.5 后视为真正交付）
-- **可用 CLI 入口**：`jianwu init` / `info` / `config get/set/list` / `new`（完整 grill → outline → scaffolding 闭环）
+- **当前版本**：v1.0.1（2026-06-23 ship 了 expand CLI；v1.0.0 tag 范围过早，v1.0.x 系列补齐到 v1.0.5 后视为真正交付）
+- **可用 CLI 入口**：`jianwu init` / `info` / `config get/set/list` / `new` / `expand <slug> <NN-MM>`（grill → outline → scaffolding → 单章 expand 闭环）
 - **库 API**：`internal/engine/{outline,scaffolding,grill,expand}` 4 个引擎阶段独立可调
-- **CLI 缺口（v1.0.x 补）**：`expand` (v1.0.1) / review+finalize+export+status (v1.0.3)
+- **CLI 缺口（v1.0.x 补）**：review+finalize+export+status (v1.0.3)
 - **质量缺口**：expand prompt 注入全是占位符（v1.0.2 修）—— 当前 expand 输出是 generic LLM markdown，不是 zhurongshuo 风格
 - **质量基线**：23 个包测试全绿，`go vet` / `gofmt -l` 全清
 
@@ -325,10 +325,33 @@ jianwu new
 |---|---|
 | `README.md` | 用户视角介绍 + 安装 + 快速上手 |
 | `docs/PROJECT_STATUS.md`（本文档） | LLM 友好的当前状态全景 |
-| `docs/architecture/overview.md` | 架构图 + 数据流（待写） |
-| `docs/decisions/26-grill-decisions.md` | 26 项核心决策记录 |
+| `docs/architecture/overview.md` | 架构图 + 数据流 |
+| `docs/decisions/26-grill-decisions.md` | 26 项核心决策 + v1.0.x 21 项审计决策 |
 | `docs/ROADMAP.md` | v1.0.x → v2 路线图 |
-| `docs/archive/plans/*.md` | 7 个已完成切片的 SDD plan（归档参考） |
+| `docs/plans/*.md` | 当前切片的 SDD plan（v1.0.1+；ship 后保留作参考） |
+| `docs/archive/plans/*.md` | v1.0.0 的 7 个历史切片 SDD plan（S1-S7） |
 | `DESIGN.md` | 原始设计文档（v1.0 锁定版，部分状态需更新） |
 | `EXTRACTION_NOTES.md` | zhurongshuo 资产萃取记录 |
 | `LICENSE` | AGPL-3.0 |
+
+---
+
+## 17. v1.0.1 ship 复盘（2026-06-23）
+
+**做了什么：** 把 expand 引擎从库 API 接到 CLI，加了 `jianwu expand <slug> <NN-MM>` 命令。8 个 task 走完 SDD（plan → 每 task implementer + reviewer → opus whole-branch review → 1 个 fix commit）。
+
+**关键发现（来自 v1.0.0 后审计）：**
+- v1.0.0 tag 过早（承诺"用户能跑出章节"但 CLI 不支持 expand）— Q1=B 重新定义 ship 标准
+- expand prompts 全是占位符（`iter_draft.go:25-26`）— LLM 收到 `"(archetype loaded at orchestrator level)"` 字面字符串，产出 generic markdown 不是 zhurongshuo 风格 — Q16=C 把 prompt 注入从 v1.1.6 提到 v1.0.2
+
+**什么有效：**
+- SDD 纪律（Q19=A）保持：每 task fresh subagent + reviewer + opus final review
+- TDD 顺序在所有 7 个代码 task 都成立（RED → GREEN → commit）
+- 决策先行：21 项 grill 决策（Q1-Q21）写进 `docs/decisions/26-grill-decisions.md` 后才动代码
+
+**什么没效 / 需要改进：**
+- v1.0.0 ship 时没 grill 这些决策 — 导致 ship 后才发现"承诺未达成"
+- gofmt 在 opus final review 时发现一处需要清理（commit `da47501`）
+- final review 发现 3 个 Important issues（ROADMAP 重复段、--force --force 测试缺失、dead code）— 都是 reviewer 兜底，per-task reviewer 没抓到
+
+**下一个切片（v1.0.2）：** Expand Prompt 注入 — 把 archetype YAML + style samples + adjacent chapters + similar book 真正注入 prompts。这是 v1.0.0 承诺"配得上 zhurongshuo 同书架"的核心缺口。
