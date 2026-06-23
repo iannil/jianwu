@@ -61,7 +61,7 @@ func TestWebSearchCapExpires(t *testing.T) {
 			{Title: "Test", URL: "https://example.com", Snippet: "A result"},
 		},
 	}
-	registry := NewToolRegistry(stubSearch, &stubReader{}, &stubEmbedder{}, nil)
+	registry := NewToolRegistry(stubSearch, &stubReader{}, &stubEmbedder{})
 
 	ctx := context.Background()
 
@@ -91,7 +91,7 @@ func TestReadURLCapExpires(t *testing.T) {
 			Markdown: "Test content",
 		},
 	}
-	registry := NewToolRegistry(&stubSearcher{}, stubRdr, &stubEmbedder{}, nil)
+	registry := NewToolRegistry(&stubSearcher{}, stubRdr, &stubEmbedder{})
 
 	ctx := context.Background()
 
@@ -121,7 +121,7 @@ func TestReadURLRegistersCitation(t *testing.T) {
 			Markdown: "This is a test article with some content",
 		},
 	}
-	registry := NewToolRegistry(&stubSearcher{}, stubRdr, &stubEmbedder{}, nil)
+	registry := NewToolRegistry(&stubSearcher{}, stubRdr, &stubEmbedder{})
 
 	ctx := context.Background()
 	url := "https://example.com/test"
@@ -169,7 +169,7 @@ func TestSearchAndRegisterAddsCitations(t *testing.T) {
 			},
 		},
 	}
-	registry := NewToolRegistry(stubSearch, &stubReader{}, &stubEmbedder{}, nil)
+	registry := NewToolRegistry(stubSearch, &stubReader{}, &stubEmbedder{})
 
 	ctx := context.Background()
 
@@ -234,7 +234,7 @@ func TestSearchAndRegisterDoesNotDuplicate(t *testing.T) {
 			},
 		},
 	}
-	registry := NewToolRegistry(stubSearch, &stubReader{}, &stubEmbedder{}, nil)
+	registry := NewToolRegistry(stubSearch, &stubReader{}, &stubEmbedder{})
 
 	ctx := context.Background()
 
@@ -262,44 +262,11 @@ func TestSearchAndRegisterDoesNotDuplicate(t *testing.T) {
 	}
 }
 
-func TestReadAdjacentChapter(t *testing.T) {
-	calls := 0
-	outlineFn := func(partIdx, chIdx int) (string, error) {
-		calls++
-		return "adjacent chapter content", nil
-	}
-	registry := NewToolRegistry(&stubSearcher{}, &stubReader{}, &stubEmbedder{}, outlineFn)
-
-	content, err := registry.ReadAdjacentChapter(1, 2)
-	if err != nil {
-		t.Fatalf("ReadAdjacentChapter should succeed, got error: %v", err)
-	}
-	if content != "adjacent chapter content" {
-		t.Errorf("Expected 'adjacent chapter content', got '%s'", content)
-	}
-	if calls != 1 {
-		t.Fatalf("Expected outline callback to be called once, got %d calls", calls)
-	}
-}
-
-func TestReadAdjacentChapterWithoutOutline(t *testing.T) {
-	registry := NewToolRegistry(&stubSearcher{}, &stubReader{}, &stubEmbedder{}, nil)
-
-	_, err := registry.ReadAdjacentChapter(1, 2)
-	if err == nil {
-		t.Fatal("ReadAdjacentChapter should fail when outline is nil")
-	}
-	expectedErr := "outline function not provided"
-	if err.Error() != expectedErr {
-		t.Errorf("Expected error '%s', got '%s'", expectedErr, err.Error())
-	}
-}
-
 func TestSearchAndRegisterPropagatesSearchErrors(t *testing.T) {
 	stubSearch := &stubSearcher{
 		err: errors.New("search service unavailable"),
 	}
-	registry := NewToolRegistry(stubSearch, &stubReader{}, &stubEmbedder{}, nil)
+	registry := NewToolRegistry(stubSearch, &stubReader{}, &stubEmbedder{})
 
 	ctx := context.Background()
 
@@ -322,7 +289,7 @@ func TestReadURLPropagatesReaderErrors(t *testing.T) {
 	stubRdr := &stubReader{
 		err: errors.New("network error"),
 	}
-	registry := NewToolRegistry(&stubSearcher{}, stubRdr, &stubEmbedder{}, nil)
+	registry := NewToolRegistry(&stubSearcher{}, stubRdr, &stubEmbedder{})
 
 	ctx := context.Background()
 

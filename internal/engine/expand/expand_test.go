@@ -126,7 +126,7 @@ func TestTruncateUTF8(t *testing.T) {
 func TestLookupSimilarBookCapExpires(t *testing.T) {
 	// stubEmbedder returns empty embeddings
 	stubEmbedder := mockChatter3Phases{}
-	reg := NewToolRegistry(nil, nil, &stubEmbedder, nil)
+	reg := NewToolRegistry(nil, nil, &stubEmbedder)
 
 	// 1st call should succeed
 	_, err1 := reg.LookupSimilarBook(context.Background(), "test")

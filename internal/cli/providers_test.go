@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/book"
 	"github.com/zhurong/jianwu/internal/config"
 	"github.com/zhurong/jianwu/internal/provider/llm"
 	"github.com/zhurong/jianwu/internal/provider/llm/mock"
@@ -100,13 +99,7 @@ func TestBuildToolRegistryAssemblesAllProviders(t *testing.T) {
 		Reader:   &stubReader{},
 		Embedder: &stubEmbedder{},
 	}
-	outline := &book.Outline{
-		Parts: []book.OutlinePart{
-			{Index: 1, Chapters: []book.OutlineChapter{{Index: 1, Title: "C1"}}},
-		},
-	}
-
-	registry, err := buildToolRegistry(deps, outline)
+	registry, err := buildToolRegistry(deps)
 	if err != nil {
 		t.Fatalf("buildToolRegistry: %v", err)
 	}

@@ -17,7 +17,6 @@ type ToolRegistry struct {
 	Searcher search.Searcher
 	Reader   reader.Reader
 	Embedder llm.Embedder
-	Outline  func(partIdx, chIdx int) (string, error) // returns adjacent chapter prose
 
 	mu sync.Mutex
 	// Per-chapter call counters
@@ -34,13 +33,11 @@ func NewToolRegistry(
 	s search.Searcher,
 	r reader.Reader,
 	e llm.Embedder,
-	outlineFn func(partIdx, chIdx int) (string, error),
 ) *ToolRegistry {
 	return &ToolRegistry{
 		Searcher:  s,
 		Reader:    r,
 		Embedder:  e,
-		Outline:   outlineFn,
 		citations: map[string]Citation{},
 	}
 }
@@ -83,14 +80,6 @@ func (t *ToolRegistry) ReadURL(ctx context.Context, url string) (reader.Content,
 	}
 	t.mu.Unlock()
 	return content, nil
-}
-
-// ReadAdjacentChapter retrieves prose from an adjacent chapter for coherence.
-func (t *ToolRegistry) ReadAdjacentChapter(partIdx, chIdx int) (string, error) {
-	if t.Outline == nil {
-		return "", fmt.Errorf("outline function not provided")
-	}
-	return t.Outline(partIdx, chIdx)
 }
 
 // Citations returns a snapshot of recorded citations.
