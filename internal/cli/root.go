@@ -51,6 +51,7 @@ into human-readable, well-structured books.`,
 	cmd.AddCommand(newConfigCmd())
 	cmd.AddCommand(newNewCmd())
 	cmd.AddCommand(newExpandCmd())
+	cmd.AddCommand(newReviewCmd())
 
 	return cmd
 }
