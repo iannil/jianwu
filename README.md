@@ -11,7 +11,7 @@ Library + CLI. Web SaaS wrapper is a separate repo (`mouqin`).
 ## Install
 
 ```bash
-go install github.com/zhurong/jianwu/cmd/jianwu@latest
+go install github.com/iannil/jianwu/cmd/jianwu@latest
 ```
 
 ## Quick start
@@ -78,13 +78,14 @@ jianwu v1.0.0 ships the full 4-stage engine + the `new` command:
 
 ### v1.0 status
 
-`jianwu new` produces a scaffolded book end-to-end. The Expand engine is library-only in v1.0.0 — a CLI command (`jianwu expand <slug> <NN-MM>`) is pending v1.0.x.
+`jianwu new` produces a scaffolded book; `jianwu expand <slug> <NN-MM>` (shipped v1.0.1, 2026-06-23) produces one chapter's markdown + citations + outline.json status update.
 
-Remaining work for v1.0.x:
-- CLI command for expand (`jianwu expand <slug> <NN-MM>`)
-- Fallback model wiring (Config carries primary only today)
-- Streaming output for long-running stages
-- Real timeouts on LLM calls
+Remaining work for v1.0.x (per `docs/ROADMAP.md`):
+- Expand prompt injection (archetype YAML + style samples + adjacent chapters) — v1.0.2, currently produces generic LLM markdown, not zhurongshuo style
+- review / finalize / export / status CLI commands — v1.0.3
+- Fallback model wiring — v1.0.4
+- Real timeouts on LLM calls — v1.0.5
+- Streaming output for long-running stages — v1.0.6 (optional)
 
 ## License
 
