@@ -20,7 +20,7 @@ jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + C
 
 ## 1. 项目目标
 
-> **简物（jiàn wù）**—— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
+> **肩吾 **—— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
 
 用户给出主题，AI 走完 grill 问诊 → outline 生成 → scaffolding 脚手架 → expand 成稿（带 web search 引用）的全流程，产出"配得上 zhurongshuo 同书架"的中文非虚构图书。
 
