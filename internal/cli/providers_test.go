@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/llm/mock"
-	"github.com/zhurong/jianwu/internal/provider/reader"
-	"github.com/zhurong/jianwu/internal/provider/search"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/mock"
+	"github.com/iannil/jianwu/internal/provider/reader"
+	"github.com/iannil/jianwu/internal/provider/search"
 )
 
 func TestBuildChatterIntake(t *testing.T) {

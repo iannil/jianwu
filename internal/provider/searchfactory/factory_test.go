@@ -3,7 +3,7 @@ package searchfactory
 import (
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/config"
 )
 
 func TestNewBrave(t *testing.T) {

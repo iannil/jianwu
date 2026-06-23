@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // RunDraft executes iteration 2: LLM writes chapter prose with [^N] footnotes.

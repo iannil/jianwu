@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/iannil/jianwu/internal/book"
 	"github.com/spf13/cobra"
-	"github.com/zhurong/jianwu/internal/book"
 )
 
 func TestReview_ExpandedToReviewed(t *testing.T) {

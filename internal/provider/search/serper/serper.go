@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/zhurong/jianwu/internal/provider/search"
+	"github.com/iannil/jianwu/internal/provider/search"
 )
 
 const DefaultBaseURL = "https://google.serper.dev/search"

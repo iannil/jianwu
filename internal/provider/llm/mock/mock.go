@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // Provider is a scripted Chatter + Embedder for tests.

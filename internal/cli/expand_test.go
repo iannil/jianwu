@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 func TestParseChapterAddrValid(t *testing.T) {

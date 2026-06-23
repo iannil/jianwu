@@ -3,7 +3,7 @@ package llmfactory
 import (
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/config"
 )
 
 func TestNewChatterGemini(t *testing.T) {

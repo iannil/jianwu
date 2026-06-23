@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/provider/reader"
+	"github.com/iannil/jianwu/internal/provider/reader"
 )
 
 func TestReadSuccess(t *testing.T) {

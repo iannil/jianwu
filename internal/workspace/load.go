@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/zhurong/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/config"
 )
 
 // Workspace is a loaded workspace root + its resolved config.

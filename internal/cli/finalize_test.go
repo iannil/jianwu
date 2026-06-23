@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/iannil/jianwu/internal/book"
 	"github.com/spf13/cobra"
-	"github.com/zhurong/jianwu/internal/book"
 )
 
 func writeBookWithChapters(t *testing.T, slug string, statuses ...string) string {

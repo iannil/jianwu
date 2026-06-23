@@ -4,8 +4,8 @@ package cli
 import (
 	"fmt"
 
+	"github.com/iannil/jianwu/internal/book"
 	"github.com/spf13/cobra"
-	"github.com/zhurong/jianwu/internal/book"
 )
 
 func newStatusCmd() *cobra.Command {

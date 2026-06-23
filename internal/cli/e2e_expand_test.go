@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // TestE2EExpandCommandWithMocks runs the full `jianwu expand` CLI surface

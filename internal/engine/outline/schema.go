@@ -3,8 +3,8 @@ package outline
 import (
 	"encoding/json"
 
+	"github.com/iannil/jianwu/internal/book"
 	"github.com/invopop/jsonschema"
-	"github.com/zhurong/jianwu/internal/book"
 )
 
 // JSONSchema generates a JSON Schema describing the expected outline structure.

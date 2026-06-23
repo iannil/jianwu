@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // DefaultBaseURL is the GLM (智谱 BigModel) endpoint.

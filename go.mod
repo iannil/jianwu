@@ -1,4 +1,4 @@
-module github.com/zhurong/jianwu
+module github.com/iannil/jianwu
 
 go 1.25.0
 

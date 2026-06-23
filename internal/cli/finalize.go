@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/iannil/jianwu/internal/book"
 	"github.com/spf13/cobra"
-	"github.com/zhurong/jianwu/internal/book"
 )
 
 func newFinalizeCmd() *cobra.Command {

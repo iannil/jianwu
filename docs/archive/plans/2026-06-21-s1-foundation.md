@@ -4,14 +4,14 @@
 
 **Goal:** Build the workspace + config + CLI shell foundation for jianwu (no LLM, no engine), producing working `jianwu init`/`info`/`config get/set/list` commands.
 
-**Architecture:** Go module at `github.com/zhurong/jianwu`. Standard `cmd/`+`internal/` layout. Cobra CLI + custom 5-layer config resolver. Workspace marked by `.jianwu/` directory with walk-up detection (git-style). TDD throughout. All data assets already in `internal/{archetypes,style,corpus}` get an `embed.go` neighbor.
+**Architecture:** Go module at `github.com/iannil/jianwu`. Standard `cmd/`+`internal/` layout. Cobra CLI + custom 5-layer config resolver. Workspace marked by `.jianwu/` directory with walk-up detection (git-style). TDD throughout. All data assets already in `internal/{archetypes,style,corpus}` get an `embed.go` neighbor.
 
 **Tech Stack:** Go 1.22+, cobra v1.8+, yaml.v3, slog (stdlib).
 
 ## Global Constraints
 
 - Go version floor: 1.22 (for `log/slog`)
-- Module path: `github.com/zhurong/jianwu`
+- Module path: `github.com/iannil/jianwu`
 - License: AGPL-3.0 (code); embedded zhurongshuo data © zhurong / internal-use only
 - Test discipline: TDD (failing test → minimal impl → green → refactor)
 - Exit codes: `0` success, `1` generic error, `2` usage error, `3` workspace-not-found, `4` llm/provider error (unused in S1), `5` network error (unused in S1)
@@ -77,14 +77,14 @@
 - Create: `go.mod`, `LICENSE`, `.gitignore`, `README.md`
 
 **Interfaces:**
-- Produces: importable module `github.com/zhurong/jianwu`
+- Produces: importable module `github.com/iannil/jianwu`
 
 - [ ] **Step 1: Initialize go module**
 
 Run:
 ```bash
 cd /Users/rong.zhu/Code/@zhurong/jianwu
-go mod init github.com/zhurong/jianwu
+go mod init github.com/iannil/jianwu
 ```
 
 Expected: `go.mod` created with module path and `go 1.26` (or current toolchain).
@@ -94,7 +94,7 @@ Expected: `go.mod` created with module path and `go 1.26` (or current toolchain)
 Edit `go.mod` to read exactly:
 
 ```
-module github.com/zhurong/jianwu
+module github.com/iannil/jianwu
 
 go 1.22
 ```
@@ -154,7 +154,7 @@ vendor/
 ```markdown
 # jianwu
 
-> 简物（jiàn wù）—— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
+> 肩吾 —— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
 
 Library + CLI. Web SaaS wrapper is a separate repo (`mouqin`).
 
@@ -1669,7 +1669,7 @@ import (
     "path/filepath"
     "strings"
 
-    "github.com/zhurong/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/config"
 )
 
 // Workspace is a loaded workspace root + its resolved config.
@@ -2428,7 +2428,7 @@ func NewRootCmd() *cobra.Command {
     cmd := &cobra.Command{
         Use:   "jianwu",
         Short: "Structure AI's training knowledge into human-readable books.",
-        Long: `jianwu (简物) - Library + CLI for turning AI's training knowledge
+        Long: `jianwu (肩吾) - Library + CLI for turning AI's training knowledge
 into human-readable, well-structured books.`,
         SilenceErrors: true,
         SilenceUsage:  true,
@@ -2532,7 +2532,7 @@ import (
     "fmt"
     "os"
 
-    "github.com/zhurong/jianwu/internal/cli"
+    "github.com/iannil/jianwu/internal/cli"
 )
 
 func main() {
@@ -2658,7 +2658,7 @@ import (
 
     "github.com/spf13/cobra"
 
-    "github.com/zhurong/jianwu/internal/workspace"
+    "github.com/iannil/jianwu/internal/workspace"
 )
 
 func newInitCmd() *cobra.Command {
@@ -2822,8 +2822,8 @@ import (
 
     "github.com/spf13/cobra"
 
-    "github.com/zhurong/jianwu/internal/config"
-    "github.com/zhurong/jianwu/internal/workspace"
+    "github.com/iannil/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/workspace"
 )
 
 // InfoError wraps an error with a suggested exit code.
@@ -2903,7 +2903,7 @@ import (
     "fmt"
     "os"
 
-    "github.com/zhurong/jianwu/internal/cli"
+    "github.com/iannil/jianwu/internal/cli"
 )
 
 func main() {
@@ -3097,7 +3097,7 @@ import (
     "github.com/spf13/cobra"
     "gopkg.in/yaml.v3"
 
-    "github.com/zhurong/jianwu/internal/workspace"
+    "github.com/iannil/jianwu/internal/workspace"
 )
 
 func newConfigCmd() *cobra.Command {
@@ -3483,7 +3483,7 @@ var Version = "0.1.0"
 ```markdown
 # jianwu
 
-> 简物（jiàn wù）—— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
+> 肩吾 —— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
 
 Library + CLI. Web SaaS wrapper is a separate repo (`mouqin`).
 
@@ -3496,7 +3496,7 @@ later slices (S2-S8). See `docs/superpowers/plans/` for the roadmap.
 ## Install
 
 ```bash
-go install github.com/zhurong/jianwu/cmd/jianwu@latest
+go install github.com/iannil/jianwu/cmd/jianwu@latest
 ```
 
 ## Quick start

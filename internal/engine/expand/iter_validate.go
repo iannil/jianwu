@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // RunValidate executes iteration 3: LLM self-checks and revises the draft.

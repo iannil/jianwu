@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // Recommend asks the LLM for a recommendation on one dimension.

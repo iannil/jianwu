@@ -6,8 +6,8 @@ import (
 	"math"
 	"sort"
 
-	"github.com/zhurong/jianwu/internal/corpus"
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/corpus"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // LookupSimilarBooks embeds the query and all builtin corpus chunks,

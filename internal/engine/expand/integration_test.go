@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/llm/gemini"
-	"github.com/zhurong/jianwu/internal/provider/llm/glm"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/gemini"
+	"github.com/iannil/jianwu/internal/provider/llm/glm"
 )
 
 func TestGenerateLiveGemini(t *testing.T) {

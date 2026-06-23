@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/engine/grill"
-	"github.com/zhurong/jianwu/internal/engine/outline"
-	"github.com/zhurong/jianwu/internal/engine/scaffolding"
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/engine/grill"
+	"github.com/iannil/jianwu/internal/engine/outline"
+	"github.com/iannil/jianwu/internal/engine/scaffolding"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // checkSlugConflict returns nil if the slug is available; an error if a book exists

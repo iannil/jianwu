@@ -3,10 +3,10 @@ package searchfactory
 import (
 	"fmt"
 
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/provider/search"
-	"github.com/zhurong/jianwu/internal/provider/search/brave"
-	"github.com/zhurong/jianwu/internal/provider/search/serper"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/provider/search"
+	"github.com/iannil/jianwu/internal/provider/search/brave"
+	"github.com/iannil/jianwu/internal/provider/search/serper"
 )
 
 // New constructs a Searcher by name. Names: "brave", "serper".

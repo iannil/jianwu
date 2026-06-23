@@ -3,9 +3,9 @@ package readerfactory
 import (
 	"fmt"
 
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/provider/reader"
-	"github.com/zhurong/jianwu/internal/provider/reader/jina"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/provider/reader"
+	"github.com/iannil/jianwu/internal/provider/reader/jina"
 )
 
 // New constructs a Reader by name. Names: "jina".

@@ -3,10 +3,10 @@ package llmfactory
 import (
 	"fmt"
 
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/llm/gemini"
-	"github.com/zhurong/jianwu/internal/provider/llm/glm"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/gemini"
+	"github.com/iannil/jianwu/internal/provider/llm/glm"
 )
 
 // NewChatter constructs a Chatter for the given provider/model.

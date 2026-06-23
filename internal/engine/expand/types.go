@@ -3,7 +3,7 @@ package expand
 import (
 	"time"
 
-	"github.com/zhurong/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/book"
 )
 
 // ExpandInput is the input for expanding one chapter.

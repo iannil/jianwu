@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/reader"
-	"github.com/zhurong/jianwu/internal/provider/search"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/reader"
+	"github.com/iannil/jianwu/internal/provider/search"
 )
 
 // stubSearcher implements search.Searcher for tests.

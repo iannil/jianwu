@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 func TestMockChatReturnsScriptedResponse(t *testing.T) {

@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Go version floor: 1.22 (S1 set this)
-- Module path: `github.com/zhurong/jianwu`
+- Module path: `github.com/iannil/jianwu`
 - License: AGPL-3.0 (code)
 - Test discipline: TDD throughout; LLM-driven code uses test-after with mocks
 - Exit codes: `4` = LLM/provider error, `5` = network error (defined in S1)
@@ -397,7 +397,7 @@ import (
     "errors"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm"
 )
 
 func TestMockChatReturnsScriptedResponse(t *testing.T) {
@@ -462,7 +462,7 @@ import (
     "context"
     "sync"
 
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // Provider is a scripted Chatter + Embedder for tests.
@@ -1109,7 +1109,7 @@ import (
     "strings"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm"
 )
 
 func TestProviderChatSuccess(t *testing.T) {
@@ -1275,7 +1275,7 @@ import (
     "fmt"
     "io"
 
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // DefaultBaseURL is the GLM (智谱 BigModel) endpoint.
@@ -1463,7 +1463,7 @@ import (
     "context"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // Tests against the real SDK would require a live API key, so we test only
@@ -1537,7 +1537,7 @@ import (
     "fmt"
     "os"
 
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm"
     "google.golang.org/genai"
 )
 
@@ -1720,7 +1720,7 @@ package llm
 import (
     "testing"
 
-    "github.com/zhurong/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/config"
 )
 
 func TestNewChatterGemini(t *testing.T) {
@@ -1764,9 +1764,9 @@ package llm
 import (
     "fmt"
 
-    "github.com/zhurong/jianwu/internal/config"
-    "github.com/zhurong/jianwu/internal/provider/llm/gemini"
-    "github.com/zhurong/jianwu/internal/provider/llm/glm"
+    "github.com/iannil/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/provider/llm/gemini"
+    "github.com/iannil/jianwu/internal/provider/llm/glm"
 )
 
 // NewChatter constructs a Chatter for the given provider/model.
@@ -1940,7 +1940,7 @@ import (
     "net/http/httptest"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/provider/search"
+    "github.com/iannil/jianwu/internal/provider/search"
 )
 
 func TestSearchSuccess(t *testing.T) {
@@ -2013,7 +2013,7 @@ import (
     "strconv"
     "time"
 
-    "github.com/zhurong/jianwu/internal/provider/search"
+    "github.com/iannil/jianwu/internal/provider/search"
 )
 
 const DefaultBaseURL = "https://api.search.brave.com/res/v1/web/search"
@@ -2149,7 +2149,7 @@ import (
     "net/http/httptest"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/provider/search"
+    "github.com/iannil/jianwu/internal/provider/search"
 )
 
 func TestSearchSuccess(t *testing.T) {
@@ -2199,7 +2199,7 @@ import (
     "net/http"
     "time"
 
-    "github.com/zhurong/jianwu/internal/provider/search"
+    "github.com/iannil/jianwu/internal/provider/search"
 )
 
 const DefaultBaseURL = "https://google.serper.dev/search"
@@ -2385,7 +2385,7 @@ import (
     "net/url"
     "time"
 
-    "github.com/zhurong/jianwu/internal/provider/reader"
+    "github.com/iannil/jianwu/internal/provider/reader"
 )
 
 const DefaultBaseURL = "https://r.jina.ai"
@@ -2482,9 +2482,9 @@ package search
 import (
     "fmt"
 
-    "github.com/zhurong/jianwu/internal/config"
-    "github.com/zhurong/jianwu/internal/provider/search/brave"
-    "github.com/zhurong/jianwu/internal/provider/search/serper"
+    "github.com/iannil/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/provider/search/brave"
+    "github.com/iannil/jianwu/internal/provider/search/serper"
 )
 
 // New constructs a Searcher by name. Names: "brave", "serper".
@@ -2514,8 +2514,8 @@ package reader
 import (
     "fmt"
 
-    "github.com/zhurong/jianwu/internal/config"
-    "github.com/zhurong/jianwu/internal/provider/reader/jina"
+    "github.com/iannil/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/provider/reader/jina"
 )
 
 // New constructs a Reader by name. Names: "jina".
@@ -2539,7 +2539,7 @@ package search
 import (
     "testing"
 
-    "github.com/zhurong/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/config"
 )
 
 func TestNewBrave(t *testing.T) {
@@ -2578,7 +2578,7 @@ package reader
 import (
     "testing"
 
-    "github.com/zhurong/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/config"
 )
 
 func TestNewJina(t *testing.T) {

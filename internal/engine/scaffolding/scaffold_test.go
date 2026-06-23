@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/llm/mock"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/mock"
 )
 
 func TestScaffoldAllUpdatesOutline(t *testing.T) {

@@ -3,8 +3,8 @@ package outline
 import (
 	"fmt"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/corpus"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/corpus"
 )
 
 // Input carries everything the outline generator needs.

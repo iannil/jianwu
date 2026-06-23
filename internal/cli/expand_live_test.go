@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/book"
 )
 
 // TestExpandLive runs the expand command against real LLM/search/reader APIs.

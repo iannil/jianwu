@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/zhurong/jianwu/internal/workspace"
+	"github.com/iannil/jianwu/internal/workspace"
 )
 
 func newConfigCmd() *cobra.Command {

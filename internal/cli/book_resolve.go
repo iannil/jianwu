@@ -5,8 +5,8 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/workspace"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/workspace"
 )
 
 // bookCtx is the resolved on-disk context for one book.

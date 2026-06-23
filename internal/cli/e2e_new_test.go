@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/llm/mock"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/mock"
 )
 
 // TestE2ENewCommandWithMocks runs the full `jianwu new` CLI surface against

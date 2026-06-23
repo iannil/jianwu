@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/llm/gemini"
-	"github.com/zhurong/jianwu/internal/provider/llm/glm"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/gemini"
+	"github.com/iannil/jianwu/internal/provider/llm/glm"
 )
 
 func TestGenerateChapterLiveGemini(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/zhurong/jianwu/internal/cli"
+	"github.com/iannil/jianwu/internal/cli"
 )
 
 func main() {

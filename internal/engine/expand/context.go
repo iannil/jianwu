@@ -3,8 +3,8 @@ package expand
 import (
 	"fmt"
 
-	"github.com/zhurong/jianwu/internal/archetypes"
-	"github.com/zhurong/jianwu/internal/style"
+	"github.com/iannil/jianwu/internal/archetypes"
+	"github.com/iannil/jianwu/internal/style"
 )
 
 // DraftContext holds the resolved injection material for one book's archetype.

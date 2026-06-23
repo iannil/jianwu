@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/zhurong/jianwu/internal/provider/reader"
+	"github.com/iannil/jianwu/internal/provider/reader"
 )
 
 const DefaultBaseURL = "https://r.jina.ai"

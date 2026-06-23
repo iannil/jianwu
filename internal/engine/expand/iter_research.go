@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // RunResearch executes iteration 1: query web_search for chapter-derived queries,

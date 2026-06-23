@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm"
 	"google.golang.org/genai"
 )
 

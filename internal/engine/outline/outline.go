@@ -7,11 +7,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/zhurong/jianwu/internal/archetypes"
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/corpus"
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/style"
+	"github.com/iannil/jianwu/internal/archetypes"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/corpus"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/style"
 )
 
 // Generate produces an outline for the given input by calling the LLM.

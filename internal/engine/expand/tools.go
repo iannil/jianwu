@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/reader"
-	"github.com/zhurong/jianwu/internal/provider/search"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/reader"
+	"github.com/iannil/jianwu/internal/provider/search"
 )
 
 // ToolRegistry bundles the tools available to the expand iterations.

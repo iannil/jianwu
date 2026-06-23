@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/provider/llm"
 	"golang.org/x/sync/errgroup"
 )
 

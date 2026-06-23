@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/book"
 )
 
 func writeMinimalBook(t *testing.T, slug string) string {

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/llm/mock"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/mock"
 )
 
 // scriptedUI returns scripted answers in order.

@@ -28,7 +28,7 @@ func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "jianwu",
 		Short: "Structure AI's training knowledge into human-readable books.",
-		Long: `jianwu (简物) - Library + CLI for turning AI's training knowledge
+		Long: `jianwu (肩吾) - Library + CLI for turning AI's training knowledge
 into human-readable, well-structured books.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,

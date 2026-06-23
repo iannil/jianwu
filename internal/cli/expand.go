@@ -10,10 +10,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/engine/expand"
-	"github.com/zhurong/jianwu/internal/workspace"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/engine/expand"
+	"github.com/iannil/jianwu/internal/workspace"
 )
 
 func newExpandCmd() *cobra.Command {

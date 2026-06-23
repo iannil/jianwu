@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zhurong/jianwu/internal/engine/grill"
-	"github.com/zhurong/jianwu/internal/provider/llm"
-	"github.com/zhurong/jianwu/internal/provider/llm/mock"
-	"github.com/zhurong/jianwu/internal/workspace"
+	"github.com/iannil/jianwu/internal/engine/grill"
+	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/mock"
+	"github.com/iannil/jianwu/internal/workspace"
 )
 
 // countingChatter returns different responses on each call

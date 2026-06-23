@@ -7,8 +7,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // GenerateChapter produces a scaffold for one chapter via LLM call.

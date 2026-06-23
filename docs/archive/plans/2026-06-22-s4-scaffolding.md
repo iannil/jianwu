@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Go version floor: 1.22
-- Module path: `github.com/zhurong/jianwu`
+- Module path: `github.com/iannil/jianwu`
 - License: AGPL-3.0
 - TDD discipline (test-after for LLM-driven code)
 - Scaffolding is **stateless per chapter**: each chapter call takes (archetype, outline context, chapter meta) → returns enriched chapter
@@ -64,9 +64,9 @@ package scaffolding
 import (
     "fmt"
 
-    "github.com/zhurong/jianwu/internal/archetypes"
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/style"
+    "github.com/iannil/jianwu/internal/archetypes"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/style"
 )
 
 // ChapterInput is the input for generating one chapter's scaffold.
@@ -333,8 +333,8 @@ import (
     "strings"
     "text/template"
 
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // GenerateChapter produces a scaffold for one chapter via LLM call.
@@ -420,9 +420,9 @@ import (
     "context"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/provider/llm"
-    "github.com/zhurong/jianwu/internal/provider/llm/mock"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm/mock"
 )
 
 func TestGenerateChapterValidatesInput(t *testing.T) {
@@ -510,8 +510,8 @@ import (
     "fmt"
     "sync"
 
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/provider/llm"
     "golang.org/x/sync/errgroup"
 )
 
@@ -670,9 +670,9 @@ import (
     "errors"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/provider/llm"
-    "github.com/zhurong/jianwu/internal/provider/llm/mock"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm/mock"
 )
 
 func TestScaffoldAllUpdatesOutline(t *testing.T) {
@@ -764,8 +764,8 @@ package scaffolding
 import (
     "context"
 
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // RetryFailed re-runs GenerateChapter only for chapters whose status is book.StatusFailed.
@@ -922,9 +922,9 @@ import (
     "errors"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/provider/llm"
-    "github.com/zhurong/jianwu/internal/provider/llm/mock"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm/mock"
 )
 
 func TestRetryFailedOnlyTouchesFailedChapters(t *testing.T) {
@@ -1024,10 +1024,10 @@ import (
     "testing"
     "time"
 
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/provider/llm"
-    "github.com/zhurong/jianwu/internal/provider/llm/gemini"
-    "github.com/zhurong/jianwu/internal/provider/llm/glm"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm/gemini"
+    "github.com/iannil/jianwu/internal/provider/llm/glm"
 )
 
 func TestGenerateChapterLiveGemini(t *testing.T) {

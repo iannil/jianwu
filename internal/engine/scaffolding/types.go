@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zhurong/jianwu/internal/archetypes"
-	"github.com/zhurong/jianwu/internal/book"
-	"github.com/zhurong/jianwu/internal/style"
+	"github.com/iannil/jianwu/internal/archetypes"
+	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/style"
 )
 
 // ChapterInput is the input for generating one chapter's scaffold.

@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zhurong/jianwu/internal/config"
-	"github.com/zhurong/jianwu/internal/workspace"
+	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/workspace"
 )
 
 // InfoError wraps an error with a suggested exit code.

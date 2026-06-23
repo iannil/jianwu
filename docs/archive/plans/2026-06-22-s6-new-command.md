@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Go version floor: 1.22
-- Module path: `github.com/zhurong/jianwu`
+- Module path: `github.com/iannil/jianwu`
 - License: AGPL-3.0
 - TDD discipline (test-after for CLI/integration code)
 - `jianwu new` runs **all three engine stages** in sequence: grill → outline → scaffolding (per Q19.A "全自动+resume")
@@ -60,9 +60,9 @@ package cli
 import (
     "fmt"
 
-    "github.com/zhurong/jianwu/internal/config"
-    "github.com/zhurong/jianwu/internal/provider/llm"
-    "github.com/zhurong/jianwu/internal/provider/llmfactory"
+    "github.com/iannil/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llmfactory"
 )
 
 // buildChatter constructs a Chatter for the given stage, wrapped in Retry + Fallback per Q7.
@@ -119,7 +119,7 @@ package cli
 import (
     "testing"
 
-    "github.com/zhurong/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/config"
 )
 
 func TestBuildChatterIntake(t *testing.T) {
@@ -204,7 +204,7 @@ import (
     "io"
     "strings"
 
-    "github.com/zhurong/jianwu/internal/engine/grill"
+    "github.com/iannil/jianwu/internal/engine/grill"
 )
 
 // TerminalPrompt implements grill.UserInput via bufio.Scanner over stdin/stdout.
@@ -289,7 +289,7 @@ import (
     "strings"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/engine/grill"
+    "github.com/iannil/jianwu/internal/engine/grill"
 )
 
 func TestTerminalPromptAskAcceptsEmpty(t *testing.T) {
@@ -380,8 +380,8 @@ import (
     "os"
     "path/filepath"
 
-    "github.com/zhurong/jianwu/internal/book"
-    "github.com/zhurong/jianwu/internal/engine/grill"
+    "github.com/iannil/jianwu/internal/book"
+    "github.com/iannil/jianwu/internal/engine/grill"
 )
 
 // checkSlugConflict returns nil if the slug is available; an error if a book exists
@@ -469,7 +469,7 @@ import (
     "strings"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/engine/grill"
+    "github.com/iannil/jianwu/internal/engine/grill"
 )
 
 func TestCheckSlugConflictEmpty(t *testing.T) {
@@ -891,8 +891,8 @@ import (
 
     "github.com/spf13/cobra"
 
-    "github.com/zhurong/jianwu/internal/config"
-    "github.com/zhurong/jianwu/internal/workspace"
+    "github.com/iannil/jianwu/internal/config"
+    "github.com/iannil/jianwu/internal/workspace"
 )
 
 func newNewCmd() *cobra.Command {
@@ -995,8 +995,8 @@ import (
     "strings"
     "testing"
 
-    "github.com/zhurong/jianwu/internal/provider/llm"
-    "github.com/zhurong/jianwu/internal/provider/llm/mock"
+    "github.com/iannil/jianwu/internal/provider/llm"
+    "github.com/iannil/jianwu/internal/provider/llm/mock"
 )
 
 // TestE2ENewCommandWithMocks runs the full `jianwu new` CLI surface against
