@@ -3,6 +3,7 @@ package cli
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -96,7 +97,25 @@ func TestExport_RejectsNonMdTarget(t *testing.T) {
 	chdir(t, tmp)
 	cmd := &cobra.Command{}
 	cmd.SetOut(&strings.Builder{})
-	if err := runExport(cmd, []string{"demo"}, "pdf", false); err == nil {
-		t.Fatal("expected rejection for non-md target")
+	if err := runExport(cmd, []string{"demo"}, "docx", false); err == nil {
+		t.Fatal("expected rejection for unsupported target")
+	}
+}
+
+func TestExport_PDFRequiresPandoc(t *testing.T) {
+	// Only test the error case if pandoc is not actually installed.
+	if _, err := exec.LookPath("pandoc"); err == nil {
+		t.Skip("pandoc is installed; skipping pandoc-not-found test")
+	}
+	tmp := writeBookWithChapters(t, "demo", book.StatusExpanded)
+	chdir(t, tmp)
+	cmd := &cobra.Command{}
+	cmd.SetOut(&strings.Builder{})
+	err := runExport(cmd, []string{"demo"}, "pdf", false)
+	if err == nil {
+		t.Fatal("expected error when pandoc is not installed")
+	}
+	if !strings.Contains(err.Error(), "pandoc") {
+		t.Errorf("error should mention pandoc, got: %v", err)
 	}
 }

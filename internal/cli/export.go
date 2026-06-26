@@ -4,6 +4,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -22,6 +23,7 @@ func newExportCmd() *cobra.Command {
 Targets:
   md    — Single markdown file with Pandoc frontmatter (default)
   hugo  — Chapter-per-file Hugo content structure
+  pdf   — PDF via pandoc (requires pandoc + xelatex installed)
 
 Footnotes are renumbered globally across the book.
 Exportable at any status.`,
@@ -30,7 +32,7 @@ Exportable at any status.`,
 			return runExport(cmd, args, target, dryRun)
 		},
 	}
-	cmd.Flags().StringVar(&target, "target", "md", "export target: md (single file) or hugo (chapter-per-file)")
+	cmd.Flags().StringVar(&target, "target", "md", "export target: md (single file), hugo (chapter-per-file), or pdf (pandoc required)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "report what would be written without writing")
 	return cmd
 }
@@ -46,8 +48,10 @@ func runExport(cmd *cobra.Command, args []string, target string, dryRun bool) er
 		return exportMD(cmd, bc, dryRun)
 	case "hugo":
 		return exportHugo(cmd, bc, dryRun)
+	case "pdf":
+		return exportPDF(cmd, bc, dryRun)
 	default:
-		return &InfoError{Err: fmt.Errorf("unsupported export target %q; supported: md, hugo", target), Code: ExitCodeUsage}
+		return &InfoError{Err: fmt.Errorf("unsupported export target %q; supported: md, hugo, pdf", target), Code: ExitCodeUsage}
 	}
 }
 
@@ -197,6 +201,44 @@ func exportHugo(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
 	} else {
 		fmt.Fprintf(out, "✓ Exported %s\n", summary)
 	}
+	return nil
+}
+
+// exportPDF generates a PDF by first producing markdown, then running pandoc.
+func exportPDF(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
+	out := cmd.OutOrStdout()
+	pandocPath, err := exec.LookPath("pandoc")
+	if err != nil {
+		return &InfoError{
+			Err:  fmt.Errorf("pandoc not found: install pandoc (https://pandoc.org) and ensure it's in PATH"),
+			Code: ExitCodeUsage,
+		}
+	}
+
+	// Produce markdown first.
+	mdPath := filepath.Join(bc.BookDir, "export", bc.Meta.Slug+".md")
+	if err := exportMD(cmd, bc, dryRun); err != nil {
+		return err
+	}
+	if dryRun {
+		fmt.Fprintf(out, "[dry-run] would run: %s %s -o %s\n", pandocPath, mdPath, mdPath[:len(mdPath)-2]+"pdf")
+		return nil
+	}
+
+	pdfPath := mdPath[:len(mdPath)-2] + "pdf"
+	args := []string{
+		mdPath,
+		"--pdf-engine=xelatex",
+		"-o", pdfPath,
+	}
+	pandocCmd := exec.Command(pandocPath, args...)
+	if output, err := pandocCmd.CombinedOutput(); err != nil {
+		return &InfoError{
+			Err:  fmt.Errorf("pandoc failed: %v\noutput: %s", err, string(output)),
+			Code: ExitCodeGeneric,
+		}
+	}
+	fmt.Fprintf(out, "✓ Exported %s\n", pdfPath)
 	return nil
 }
 
