@@ -13,6 +13,7 @@ import (
 	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/engine/expand"
+	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/workspace"
 )
 
@@ -29,7 +30,7 @@ Use --force to overwrite an existing expanded chapter.
 Use --force twice (--force --force) to overwrite a reviewed or final chapter.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runExpand(cmd, args, forceCount)
+			return runExpand(cmd, args, forceCount, nil)
 		},
 	}
 	cmd.Flags().CountVarP(&forceCount, "force", "f", "overwrite existing chapter (use twice to override reviewed/final)")
@@ -37,7 +38,8 @@ Use --force twice (--force --force) to overwrite a reviewed or final chapter.`,
 }
 
 // runExpand is the testable core extracted from RunE.
-func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
+// If deps is nil, providers are built from workspace config.
+func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *ProviderDeps) error {
 	out := cmd.OutOrStdout()
 	slug := args[0]
 	addr := args[1]
@@ -55,7 +57,6 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
-	secrets, _ := config.LoadSecrets()
 
 	bookDir := bc.BookDir
 	meta := bc.Meta
@@ -95,12 +96,15 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
 		}
 	}
 
-	// Build providers + tool registry.
-	deps, err := buildProviderDeps(ws.Config, secrets)
-	if err != nil {
-		return &InfoError{Err: err, Code: ExitCodeLLMProvider}
+	// Build tool registry from provided deps.
+	if deps == nil {
+		secrets, _ := config.LoadSecrets()
+		deps, err = buildProviderDeps(ws.Config, secrets)
+		if err != nil {
+			return &InfoError{Err: err, Code: ExitCodeLLMProvider}
+		}
 	}
-	registry, err := buildToolRegistry(deps)
+	registry, err := buildToolRegistry(deps, ws.Config)
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
@@ -124,6 +128,15 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
 		WebSearchEnabled: true,
 	}
 
+	// Wire streaming if the chatter supports it and verbose mode is on.
+	gf := GlobalFlagsFrom(cmd)
+	if gf.Verbose {
+		if streamer, ok := deps.Chatter.(llm.Streamer); ok {
+			expandIn.Streamer = streamer
+			expandIn.StreamOutput = os.Stdout
+		}
+	}
+
 	// Adjacent chapters (same Part) for coherence; nil at Part boundaries (Q5).
 	if prev, perr := findChapter(outline, partIdx, chIdx-1); perr == nil {
 		expandIn.PreviousChapter = prev
@@ -134,7 +147,9 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int) error {
 
 	// Run expand.
 	fmt.Fprintf(out, "Expanding %s/%s...\n", slug, addr)
-	result, err := expand.Generate(defaultCtx(), deps.Chatter, registry, expandIn)
+	expandCtx, expandCancel := stageCtx(ws.Config, "expand")
+	result, err := expand.Generate(expandCtx, deps.Chatter, registry, expandIn)
+	expandCancel()
 	if err != nil {
 		return wrapLLMError(err)
 	}

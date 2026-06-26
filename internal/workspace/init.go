@@ -57,12 +57,21 @@ func defaultWorkspaceConfig() string {
 # Global config: ~/.config/jianwu/config.yaml (overrides here)
 schema_version: 1
 
+# Global LLM settings (per-stage overrides in models.<stage>.timeout)
+# llm:
+#   timeout: 90  # default per-chat timeout in seconds; 0 = no timeout
+
 models:
   intake:       { provider: glm,    model: glm-4.6 }
-  outline:      { provider: gemini, model: gemini-2.5-pro }
+  outline:
+    provider: gemini
+    model: gemini-2.5-pro
+    # fallback: { provider: glm, model: glm-4.6 }
   scaffolding:  { provider: gemini, model: gemini-2.5-flash }
   expand:       { provider: glm,    model: glm-4.6 }
-  # Fallback / retry policy: see global config.
+  # Per-stage fallback: uncomment fallback: under any stage to auto-switch
+  # when the primary provider fails (retries exhausted). To skip fallback for a
+  # stage, omit the field entirely. See docs/PROJECT_STATUS.md §v0.1.4.
 
 search:
   primary: brave

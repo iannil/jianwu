@@ -138,3 +138,52 @@ func TestScaffoldAllPartialFailure(t *testing.T) {
 		t.Errorf("C3 status: %q (want scaffolded — partial failure should not block siblings)", outline.Parts[0].Chapters[2].Status)
 	}
 }
+
+func TestScaffoldAllRespectsContextCancellation(t *testing.T) {
+	outline := &book.Outline{
+		Parts: []book.OutlinePart{
+			{Index: 1, Title: "P1", Role: "ontology", Chapters: []book.OutlineChapter{
+				{Index: 1, Title: "C1"},
+				{Index: 2, Title: "C2"},
+			}},
+		},
+	}
+	p := mock.New(llm.ChatResponse{Content: `{"abstract":"X"}`})
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // already cancelled
+
+	results := ScaffoldAll(ctx, p, outline, "ontology-epistemology-practice",
+		ChapterParams{Topic: "T", Audience: "scholar", Depth: "advanced", Goal: "understanding", Length: "long", Language: "zh"},
+		Options{Concurrency: 2})
+	if len(results) != 2 {
+		t.Fatalf("got %d results, want 2", len(results))
+	}
+	for key, r := range results {
+		if !errors.Is(r.Err, context.Canceled) {
+			t.Errorf("result[%q] Err = %v, want context.Canceled", key, r.Err)
+		}
+	}
+}
+
+func TestScaffoldAllDefaultConcurrency(t *testing.T) {
+	outline := &book.Outline{
+		Parts: []book.OutlinePart{
+			{Index: 1, Title: "P1", Role: "ontology", Chapters: []book.OutlineChapter{
+				{Index: 1, Title: "C1"},
+			}},
+		},
+	}
+	sample := `{"abstract":"X","key_concepts":["a"],"learning_objectives":["y"],"suggested_examples":["z"]}`
+	p := mock.New(llm.ChatResponse{Content: sample})
+
+	// Zero concurrency should default to 5 (no crash).
+	results := ScaffoldAll(context.Background(), p, outline, "ontology-epistemology-practice",
+		ChapterParams{Topic: "T", Audience: "scholar", Depth: "advanced", Goal: "understanding", Length: "long", Language: "zh"},
+		Options{Concurrency: 0})
+	if len(results) != 1 {
+		t.Fatalf("got %d results, want 1", len(results))
+	}
+	if outline.Parts[0].Chapters[0].Status != book.StatusScaffolded {
+		t.Errorf("status: %q (want scaffolded)", outline.Parts[0].Chapters[0].Status)
+	}
+}

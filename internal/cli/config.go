@@ -184,6 +184,9 @@ func flattenConfig(cfg any) []string {
 	var walk func(prefix string, v reflect.Value)
 	walk = func(prefix string, v reflect.Value) {
 		if v.Kind() == reflect.Pointer {
+			if v.IsNil() {
+				return // skip nil pointers (e.g. optional Fallback field)
+			}
 			v = v.Elem()
 		}
 		switch v.Kind() {

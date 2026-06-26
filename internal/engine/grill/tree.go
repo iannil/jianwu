@@ -1,5 +1,7 @@
 package grill
 
+import "fmt"
+
 // Dimension is one node in the design tree.
 type Dimension struct {
 	ID           string   // e.g. "topic", "audience"
@@ -11,6 +13,20 @@ type Dimension struct {
 	Trigger      Trigger  // when to ask (Always, or Conditional on a predicate)
 	Required     bool     // true = must answer; false = can skip with default
 	DefaultValue string   // used if user skips
+}
+
+// ValidateAnswer checks whether the given answer is a valid option for this
+// dimension. Dimensions with no Options (free-text, like topic) accept any value.
+func (d *Dimension) ValidateAnswer(answer string) bool {
+	if len(d.Options) == 0 {
+		return true // free-text dimension
+	}
+	for _, opt := range d.Options {
+		if opt == answer {
+			return true
+		}
+	}
+	return false
 }
 
 // Trigger decides whether a conditional dimension should be asked.
@@ -182,11 +198,75 @@ type DesignTree struct {
 	Dimensions []Dimension
 }
 
+// Validate checks the tree for structural errors: duplicate IDs, missing
+// dependency references, and cycles in DependsOn.
+func (t *DesignTree) Validate() error {
+	// Build ID set and check for duplicates.
+	ids := make(map[string]bool, len(t.Dimensions))
+	for _, d := range t.Dimensions {
+		if ids[d.ID] {
+			return fmt.Errorf("duplicate dimension id %q", d.ID)
+		}
+		ids[d.ID] = true
+	}
+	// Check each dimension's DependsOn references exist.
+	for _, d := range t.Dimensions {
+		for _, dep := range d.DependsOn {
+			if !ids[dep] {
+				return fmt.Errorf("dimension %q depends on unknown %q", d.ID, dep)
+			}
+		}
+	}
+	// Check for cycles in DependsOn graph using DFS.
+	// visited tracks nodes in the current DFS path (for cycle detection).
+	visited := make(map[string]bool, len(t.Dimensions))
+	allDone := make(map[string]bool, len(t.Dimensions))
+	var dfs func(id string) error
+	dfs = func(id string) error {
+		if allDone[id] {
+			return nil
+		}
+		if visited[id] {
+			return fmt.Errorf("cycle detected in DependsOn involving %q", id)
+		}
+		visited[id] = true
+		d := t.Find(id)
+		if d != nil {
+			for _, dep := range d.DependsOn {
+				if err := dfs(dep); err != nil {
+					return err
+				}
+			}
+		}
+		delete(visited, id)
+		allDone[id] = true
+		return nil
+	}
+	for _, d := range t.Dimensions {
+		if err := dfs(d.ID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Find returns the dimension with the given ID, or nil.
 func (t *DesignTree) Find(id string) *Dimension {
 	for i := range t.Dimensions {
 		if t.Dimensions[i].ID == id {
 			return &t.Dimensions[i]
+		}
+	}
+	return nil
+}
+
+// NextPending returns the first un-answered dimension in walk order,
+// or nil if every dimension reachable from the given answers has been answered.
+func (t *DesignTree) NextPending(answers map[string]string) *Dimension {
+	ordered := t.Walk(answers)
+	for i := range ordered {
+		if _, answered := answers[ordered[i].ID]; !answered {
+			return &ordered[i]
 		}
 	}
 	return nil

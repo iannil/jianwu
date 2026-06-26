@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/provider/llm/mock"
+	"github.com/iannil/jianwu/internal/workspace"
 )
 
 // TestE2ENewCommandWithMocks runs the full `jianwu new` CLI surface against
@@ -26,10 +26,9 @@ func TestE2ENewCommandWithMocks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Switch into the workspace.
-	oldWd, _ := os.Getwd()
-	defer os.Chdir(oldWd)
-	if err := os.Chdir(root); err != nil {
+	// Load workspace config.
+	ws, err := workspace.Load(root)
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -43,20 +42,18 @@ func TestE2ENewCommandWithMocks(t *testing.T) {
 		inputBuf.WriteString("\n")
 	}
 
-	// Inject mock chatters by monkey-patching buildChatterProvider.
-	// For testability we need to expose a hook. Add a package-level var:
-	//   var chatterProviderForTest = buildChatterProvider  (production default)
-	// Tests can override.
-	originalProvider := chatterProviderHook
-	defer func() { chatterProviderHook = originalProvider }()
+	// Redirect stdin for TerminalPrompt.
+	originalStdin := osStdin
+	defer func() { osStdin = originalStdin }()
+	osStdin = strings.NewReader(inputBuf.String())
 
+	// Build mock chatters directly.
 	outlineJSON := `{"parts":[{"index":1,"title":"P1","role":"ontology","chapters":[
             {"index":1,"title":"C1","status":"scaffolded"}
         ]}]}`
 
 	scaffoldJSON := `{"abstract":"X","key_concepts":["a"],"learning_objectives":["y"],"suggested_examples":["z"]}`
 
-	// Intake: scripted recommendations - return different values per dimension
 	intakeChatter := &countingChatter{
 		responses: []llm.ChatResponse{
 			{Content: "Time Reality\nThe nature of time"},                        // topic
@@ -74,27 +71,17 @@ func TestE2ENewCommandWithMocks(t *testing.T) {
 		},
 	}
 
-	chatterProviderHook = func(_ *config.Config, _ *config.Secrets) (chatterProvider, error) {
-		return chatterProvider{
-			intake:      intakeChatter,
-			outline:     mock.New(llm.ChatResponse{Content: outlineJSON}),
-			scaffolding: mock.New(llm.ChatResponse{Content: scaffoldJSON}),
-		}, nil
+	cp := chatterProvider{
+		intake:      intakeChatter,
+		outline:     mock.New(llm.ChatResponse{Content: outlineJSON}),
+		scaffolding: mock.New(llm.ChatResponse{Content: scaffoldJSON}),
 	}
 
-	// The cobra command's stdin needs to be set, but TerminalPrompt uses os.Stdin directly.
-	// For testing, we redirect osStdin (which is a package var).
-	originalStdin := osStdin
-	defer func() { osStdin = originalStdin }()
-	osStdin = strings.NewReader(inputBuf.String())
-
-	cmd := NewRootCmd()
-	cmd.SetOut(&bytes.Buffer{})
-	cmd.SetErr(&bytes.Buffer{})
-	cmd.SetArgs([]string{"new"})
-	err := cmd.Execute()
+	// Run the full new flow directly (bypass cobra).
+	prompt := NewTerminalPrompt(nil, os.Stdout)
+	_, _, err = runNewFlowWithChatters(root, ws.Config, prompt, false, cp)
 	if err != nil {
-		t.Fatalf("new command: %v", err)
+		t.Fatalf("runNewFlowWithChatters: %v", err)
 	}
 
 	// Verify book was created.

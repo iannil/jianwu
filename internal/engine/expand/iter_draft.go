@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // RunDraft executes iteration 2: LLM writes chapter prose with [^N] footnotes.
+// If in.Streamer is non-nil, uses streaming (tokens emitted via Streamer), otherwise falls back to Chatter.Chat.
 func RunDraft(
 	ctx context.Context,
 	chatter llm.Chatter,
@@ -21,12 +23,39 @@ func RunDraft(
 	if err != nil {
 		return "", err
 	}
-	resp, err := chatter.Chat(ctx, llm.ChatRequest{
+	req := llm.ChatRequest{
 		Messages: []llm.Message{
 			{Role: "system", Content: sys},
 			{Role: "user", Content: user},
 		},
-	})
+	}
+
+	// Streaming path: tokens arrive via channel, concatenated in-order.
+	if in.Streamer != nil {
+		ch, err := in.Streamer.Stream(ctx, req)
+		if err != nil {
+			return "", fmt.Errorf("draft stream: %w", err)
+		}
+		var sb strings.Builder
+		for chunk := range ch {
+			if chunk.Err != nil {
+				return "", fmt.Errorf("draft stream: %w", chunk.Err)
+			}
+			if chunk.Content != "" {
+				sb.WriteString(chunk.Content)
+				if in.StreamOutput != nil {
+					fmt.Fprint(in.StreamOutput, chunk.Content)
+				}
+			}
+			if chunk.Done {
+				break
+			}
+		}
+		return sb.String(), nil
+	}
+
+	// Synchronous path (fallback).
+	resp, err := chatter.Chat(ctx, req)
 	if err != nil {
 		return "", fmt.Errorf("draft llm chat: %w", err)
 	}

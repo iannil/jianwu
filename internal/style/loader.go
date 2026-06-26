@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+// Version is the current version of the embedded style resources.
+// Increment when style-guide.md or samples are updated.
+const Version = "1"
+
 // LoadGuide returns the full text of style-guide.md.
 func LoadGuide() (string, error) {
 	return string(guideFS), nil

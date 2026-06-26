@@ -35,7 +35,8 @@ func Load(wsRoot string) (*Config, error) {
 
 // overlayYAML reads path (if it exists) and merges non-zero fields into cfg.
 // Strategy: read file → unmarshal into a fresh Config → copy non-zero fields.
-// This is shallow-merge per top-level field; nested fields are replaced wholesale.
+// Merging is field-by-field for struct fields (mergeConfig, mergeModelRef)
+// and wholesale-replace for slices (Archetypes.Library, Style.Guide/Samples).
 func overlayYAML(cfg *Config, path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -53,12 +54,15 @@ func overlayYAML(cfg *Config, path string) error {
 }
 
 // mergeConfig copies non-zero fields from src into dst (in place).
-// Top-level fields are merged individually; sub-structs replace wholesale
-// when their presence is detected (heuristic: SchemaVersion != 0 for Config,
-// or non-empty Model field for ModelRef).
+// Each top-level Config field is checked individually; sub-structs like ModelRef
+// are merged field-by-field via mergeModelRef (not wholesale replaced).
+// Slices (Archetypes.Library, Style.Guide/Samples) are replaced wholesale.
 func mergeConfig(dst, src *Config) {
 	if src.SchemaVersion != 0 {
 		dst.SchemaVersion = src.SchemaVersion
+	}
+	if src.LLM.TimeoutSeconds != 0 {
+		dst.LLM.TimeoutSeconds = src.LLM.TimeoutSeconds
 	}
 	mergeModelRef(&dst.Models.Intake, &src.Models.Intake)
 	mergeModelRef(&dst.Models.Outline, &src.Models.Outline)
@@ -96,5 +100,13 @@ func mergeModelRef(dst, src *ModelRef) {
 	}
 	if src.Model != "" {
 		dst.Model = src.Model
+	}
+	if src.Fallback != nil {
+		if dst.Fallback == nil {
+			cp := *src.Fallback
+			dst.Fallback = &cp
+		} else {
+			mergeModelRef(dst.Fallback, src.Fallback)
+		}
 	}
 }

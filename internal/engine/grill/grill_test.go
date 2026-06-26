@@ -112,3 +112,40 @@ func TestRunUsesDefaultOnSkip(t *testing.T) {
 		t.Errorf("expected empty (default for topic), got %q", s.Answers["topic"])
 	}
 }
+
+func TestRunRespectsContextCancellation(t *testing.T) {
+	tree := DefaultTree()
+	s := NewSession()
+	p := mock.New(llm.ChatResponse{Content: "some-recommendation\n\nreason"})
+	ui := acceptingUI{}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // already cancelled
+
+	_, err := Run(ctx, p, tree, s, ui)
+	if err == nil {
+		t.Fatal("expected error from cancelled context, got nil")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("expected context.Canceled, got %v", err)
+	}
+}
+
+func TestExtractFirstLine(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"scholar\n\nreasoning here", "scholar"},
+		{"single-line", "single-line"},
+		{"multi\nline\nvalue", "multi"},
+		{"", ""},
+		{"\nleading newline", ""},
+	}
+	for _, tt := range tests {
+		got := extractFirstLine(tt.input)
+		if got != tt.want {
+			t.Errorf("extractFirstLine(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}

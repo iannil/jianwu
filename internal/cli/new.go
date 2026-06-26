@@ -35,7 +35,11 @@ Use --force to overwrite an existing book with the same slug.`,
 			fmt.Fprintf(out, "jianwu new — starting grill flow\n")
 			fmt.Fprintf(out, "Workspace: %s\n", wsRoot)
 
-			outline, err := runNewFlow(wsRoot, ws.Config, secrets, prompt, force)
+			cp, err := buildChatterProvider(ws.Config, secrets)
+			if err != nil {
+				return &InfoError{Err: err, Code: ExitCodeLLMProvider}
+			}
+			outline, err := runNewFlow(wsRoot, ws.Config, secrets, prompt, force, cp)
 			if err != nil {
 				return err
 			}

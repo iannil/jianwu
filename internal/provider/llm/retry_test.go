@@ -187,3 +187,72 @@ func (m *mockChatterEmbedder) Embed(ctx context.Context, req EmbedRequest) (*Emb
 	}
 	return m.embed(ctx, req)
 }
+
+// streamBuffer is a minimal Streamer for testing: yields tokens from a slice.
+type streamBuffer struct {
+	tokens []string
+	done   bool
+}
+
+func (s *streamBuffer) Stream(ctx context.Context, _ ChatRequest) (<-chan StreamChunk, error) {
+	ch := make(chan StreamChunk)
+	go func() {
+		defer close(ch)
+		for _, t := range s.tokens {
+			select {
+			case ch <- StreamChunk{Content: t}:
+			case <-ctx.Done():
+				ch <- StreamChunk{Err: ctx.Err(), Done: true}
+				return
+			}
+		}
+		ch <- StreamChunk{Done: true}
+	}()
+	return ch, nil
+}
+
+func (s *streamBuffer) Chat(_ context.Context, _ ChatRequest) (*ChatResponse, error) {
+	return &ChatResponse{}, nil
+}
+
+func (s *streamBuffer) Embed(_ context.Context, _ EmbedRequest) (*EmbedResponse, error) {
+	return &EmbedResponse{}, nil
+}
+
+func TestRetryWrapperStreamPassthrough(t *testing.T) {
+	inner := &streamBuffer{tokens: []string{"hello", " world"}}
+	rw := NewRetryWrapper(inner)
+	ch, err := rw.Stream(context.Background(), ChatRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got string
+	for chunk := range ch {
+		if chunk.Err != nil {
+			t.Fatal(chunk.Err)
+		}
+		got += chunk.Content
+	}
+	if got != "hello world" {
+		t.Errorf("got %q, want %q", got, "hello world")
+	}
+}
+
+func TestRetryWrapperStreamUnsupportedError(t *testing.T) {
+	inner := &nonStreamer{}
+	rw := NewRetryWrapper(inner)
+	_, err := rw.Stream(context.Background(), ChatRequest{})
+	if err == nil {
+		t.Fatal("expected error for non-streaming provider")
+	}
+}
+
+// nonStreamer implements ChatterEmbedder but not Streamer.
+type nonStreamer struct{}
+
+func (n *nonStreamer) Chat(_ context.Context, _ ChatRequest) (*ChatResponse, error) {
+	return &ChatResponse{}, nil
+}
+func (n *nonStreamer) Embed(_ context.Context, _ EmbedRequest) (*EmbedResponse, error) {
+	return &EmbedResponse{}, nil
+}

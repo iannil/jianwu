@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/engine/grill"
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/provider/llm/mock"
@@ -183,7 +184,7 @@ func TestRunNewFlowWithChattersHappyPath(t *testing.T) {
 		scaffolding: scaffChatter,
 	}
 
-	outline, session, err := runNewFlowWithChatters(ws, prompt, false, cp)
+	outline, session, err := runNewFlowWithChatters(ws, &config.Config{}, prompt, false, cp)
 	if err != nil {
 		t.Fatalf("runNewFlowWithChatters: %v", err)
 	}

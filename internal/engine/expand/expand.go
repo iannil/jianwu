@@ -3,6 +3,7 @@ package expand
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/iannil/jianwu/internal/provider/llm"
 )
@@ -22,27 +23,37 @@ func Generate(
 	}
 
 	// Iter 1: research
+	slog.Debug("expand: iter 1 research", "chapter", in.ChapterTitle)
 	notes, err := RunResearch(ctx, chatter, tools, in)
 	if err != nil {
 		return nil, fmt.Errorf("iter 1 research: %w", err)
 	}
+	slog.Debug("expand: iter 1 research complete", "chapter", in.ChapterTitle)
 
 	// Iter 2: draft
+	slog.Debug("expand: iter 2 draft", "chapter", in.ChapterTitle)
 	draft, err := RunDraft(ctx, chatter, in, dc, notes)
 	if err != nil {
 		return nil, fmt.Errorf("iter 2 draft: %w", err)
 	}
+	slog.Debug("expand: iter 2 draft complete", "chapter", in.ChapterTitle,
+		"length", len(draft))
 
 	// Iter 3: validate
+	slog.Debug("expand: iter 3 validate", "chapter", in.ChapterTitle)
 	validated, err := RunValidate(ctx, chatter, draft, notes, dc.StyleGuide)
 	if err != nil {
 		return nil, fmt.Errorf("iter 3 validate: %w", err)
 	}
+	slog.Debug("expand: iter 3 validate complete", "chapter", in.ChapterTitle)
 
 	// Build output: parse footnotes from final markdown, merge with tool registry metadata.
 	finalMD := validated.RevisedMarkdown
 	if finalMD == "" {
 		finalMD = draft // fallback if LLM returned empty
+	}
+	if finalMD == "" {
+		return nil, fmt.Errorf("draft output is empty after iter 2 and 3")
 	}
 	defs := ParseFootnotes(finalMD)
 	citations := mergeCitations(defs, tools)

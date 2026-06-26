@@ -13,22 +13,34 @@ import (
 // client is a thin HTTP wrapper over an OpenAI-compatible chat/embeddings API.
 // Reusable for GLM, Qwen, Moonshot, DeepSeek, etc. — anything that mirrors OpenAI's shape.
 type client struct {
-	baseURL string
-	apiKey  string
-	http    *http.Client
+	baseURL      string
+	apiKey       string
+	http         *http.Client
+	streamClient *http.Client // no static timeout; ctx controls cancellation for streaming
 }
 
 func newClient(baseURL, apiKey string) *client {
 	return &client{
-		baseURL: baseURL,
-		apiKey:  apiKey,
-		http:    &http.Client{Timeout: 60 * time.Second},
+		baseURL:      baseURL,
+		apiKey:       apiKey,
+		http:         &http.Client{Timeout: 60 * time.Second},
+		streamClient: &http.Client{}, // no timeout — ctx handles streaming cancellation
 	}
 }
 
 // post sends a POST with Bearer auth and JSON body, returns the raw response.
 // Caller is responsible for closing the body.
 func (c *client) post(ctx context.Context, path string, body any) (*http.Response, error) {
+	return c.do(ctx, c.http, path, body)
+}
+
+// postStream sends a POST for streaming responses. Uses a client without static timeout
+// (ctx controls cancellation). Caller must close the response body.
+func (c *client) postStream(ctx context.Context, path string, body any) (*http.Response, error) {
+	return c.do(ctx, c.streamClient, path, body)
+}
+
+func (c *client) do(ctx context.Context, cl *http.Client, path string, body any) (*http.Response, error) {
 	data, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
@@ -39,7 +51,7 @@ func (c *client) post(ctx context.Context, path string, body any) (*http.Respons
 	}
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := c.http.Do(req)
+	resp, err := cl.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("http: %w", err)
 	}

@@ -5,11 +5,11 @@ Go CLI + 库。入口：`cmd/jianwu/main.go`。
 
 ## 项目
 
-- **当前版本：** v0.1.3（完整 CLI 闭环：new → expand → review → finalize → export）
+- **当前版本：** v0.1.6（v0.1.x 全部交付）
 - **技术栈：** Go 1.25 + cobra (CLI) + spf13/pflag + YAML 配置 + gemini/glm LLM 提供商
 - **入口点：** `cmd/jianwu/main.go` → `cli.NewRootCmd()` → cobra 子命令
 - **工作区模型：** 每个项目 = 一个 git 仓库，包含 `.jianwu/` 配置 + `books/<slug>/` 输出
-- **下一迭代：** v0.1.4 Fallback Model Wiring
+- **下一迭代：** v0.2.2 自动事实复核
 
 ## 命令
 

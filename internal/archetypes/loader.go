@@ -7,6 +7,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Version is the current version of the embedded archetype definitions.
+// Increment when YAML files in this package are updated.
+const Version = "1"
+
 // Load parses all embedded archetype YAML files keyed by archetype ID.
 func Load() (map[string]*Archetype, error) {
 	entries, err := fs.ReadDir(".")

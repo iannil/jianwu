@@ -1,17 +1,16 @@
 # jianwu 路线图
 
 > 本文档跟踪 v0.1.0 之后的迭代计划。每个版本应该有明确范围、可验收标准、合理工作量。
-> 最后更新：2026-06-23（v0.1.3 已 ship 完整闭环；新增 v0.3 SaaS-ready 内核改造里程碑）
+> 最后更新：2026-06-26（v0.1.x 全部交付，v0.2.2 自动事实复核为下一里程碑）
 >
-> **范围说明**：v0.1.0 tag (2026-06-22) 是过早的——ship 时的实际范围是库 API + new CLI，
-> 未含用户可用的 expand CLI 与 zhurongshuo 风格注入。v0.1.x 的目标是把 v0.1 承诺真正补齐。
-> v0.1.5 ship 后才视作 v0.1 真正交付。详见 `docs/decisions/26-grill-decisions.md` § v0.1.x 完成度审计决策。
+> **v0.1.x 状态**：v0.1.0 tag (2026-06-22) 是过早的，经 v0.1.1–v0.1.6 六个切片补齐全部承诺，
+> v0.1.x 正式交付。详见 `docs/PROJECT_STATUS.md` § 里程碑回顾。
 
 ---
 
 ## 当前状态
 
-**v0.1.3 已 ship（2026-06-23）**：完整 4 阶段引擎 + 完整 CLI 闭环 `new → expand → review → finalize → export`，prompt 注入已补齐。剩 v0.1.4–v0.1.6 收尾后视为 v0.1 真正交付。详见 `PROJECT_STATUS.md`。
+**v0.1.x 全部交付（2026-06-26）**：v0.1.0–v0.1.6 七个切片完成。完整 CLI 闭环 + fallback + timeout + streaming。详见 `PROJECT_STATUS.md`。
 
 ---
 
@@ -64,50 +63,35 @@
 
 **验收：** 完整闭环 `new → expand → review → finalize → export` 端到端跑通。✅
 
-### v0.1.4 — Fallback Model Wiring
+### v0.1.4 — Fallback Model Wiring（**已交付** 2026-06-26）
 
-**范围：** 全局单一 fallback（决策 Q10=A）。
+**范围：** 全局单一 fallback（决策 Q10=A）。`ModelRef` 内嵌 `Fallback *ModelRef`，`buildChatter` 静态装配 `FallbackWrapper`。
 
-**任务：**
-- [ ] `config.ModelRef` 加 `Fallback *ModelRef` 字段（顶层全局，不按阶段）
-- [ ] `cli.buildChatter` 检测 Fallback，非空则 wrap with `FallbackWrapper`
-- [ ] fallback provider == primary provider 时打 warning + 不装 wrapper
-- [ ] 配置示例更新到 workspace 默认模板
-- [ ] E2E test：primary 失败 → fallback 接管
+### v0.1.5 — LLM Timeout（**已交付** 2026-06-26）
 
-**验收：** 配 primary=gemini-2.5-pro + fallback=glm-4.6，断网 Gemini 时自动切到 GLM。
+**范围：** 避免长调用 hang（决策 Q12=C，全局默认 + 阶段覆盖）。`LLMConfig.TimeoutSeconds` 全局默认 90s，`ModelRef.TimeoutSeconds` 阶段覆盖（expand 600s）。Ctrl+C 通过 `signal.NotifyContext` 立即取消。
 
-### v0.1.5 — LLM Timeout
+**v0.1.x promise fully delivered.**
 
-**范围：** 避免长调用 hang（决策 Q12=C，全局默认 + 阶段覆盖）。
+### v0.1.6 — Streaming Output（**已交付** 2026-06-26）
 
-**任务：**
-- [ ] Config 加 `llm.timeout`（默认 90s）+ `models.<stage>.timeout` 覆盖
-- [ ] expand 默认 600s（3 次 LLM + 工具调用）
-- [ ] CLI 给每个 chatter.Chat 包 ctx.WithTimeout
-- [ ] 用户 Ctrl+C 时立即取消（确认全局信号处理）
-
-**验收：** LLM 卡 5 分钟，按阶段超时退出（grill 90s / expand 600s）。
-
-**v0.1.5 ship = v0.1 promise fully delivered.**
-
-### v0.1.6 — Streaming Output（可选 polish）
-
-**范围：** 只 draft 流式（决策 Q11=D+B1）。
-
-**任务：**
-- [ ] `llm.Streamer` 接口
-- [ ] Gemini + GLM 实现 SSE 流式
-- [ ] `jianwu expand` 命令显示 draft token 流（research/validate 不流式，是 JSON）
-- [ ] jianwu 不感知 streaming + caching 兼容性（SDK 自处理）
-
-**验收：** `jianwu expand` 看到正文流式生成。
+**范围：** 只 draft 流式（决策 Q11=D+B1）。`llm.Streamer` 接口，Gemini genai SDK + GLM SSE 实现。`-v` 模式逐 token stdout。
 
 ---
 
 ## v0.2 — 功能扩展
 
-> 目标：把 v0.1 的"能跑"提升到"真好用"。多个独立功能，按价值排序做。
+> 目标：把 v0.1 的"能跑"提升到"真好用"。多个独立功能，按优先级顺序做。
+>
+> **当前迭代：v0.2.2 自动事实复核** — 先优化 claims 抽取精度，再加 verify 命令。
+
+### v0.2.2 — 自动事实复核（当前迭代）
+
+- [ ] Expand validate 迭代优化 claims 抽取
+- [ ] `jianwu verify <slug>` 命令
+- [ ] 每条 claim 跑独立 web search 验证
+- [ ] outline.json 加 `verified_claims` / `disputed_claims` 字段
+- [ ] 单元测试 + mock E2E
 
 ### v0.2.0 — 章节迭代命令
 

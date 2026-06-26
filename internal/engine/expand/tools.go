@@ -26,6 +26,10 @@ type ToolRegistry struct {
 
 	// Citation metadata registry per Q14.A3
 	citations map[string]Citation // keyed by URL
+
+	// Provider names for citation metadata (set from config; empty = use defaults)
+	SearchProviderName string
+	ReaderProviderName string
 }
 
 // NewToolRegistry constructs a registry. Each Generate call gets a fresh one.
@@ -71,12 +75,16 @@ func (t *ToolRegistry) ReadURL(ctx context.Context, url string) (reader.Content,
 	}
 	// Record citation metadata per Q14.A3.
 	t.mu.Lock()
+	prov := t.ReaderProviderName
+	if prov == "" {
+		prov = "jina" // backward compat default
+	}
 	t.citations[url] = Citation{
 		URL:            url,
 		Title:          content.Title,
 		AccessedAt:     time.Now().UTC(),
 		Snippet:        truncate(content.Markdown, 200),
-		ReaderProvider: "jina", // hardcode for v1; could come from registry
+		ReaderProvider: prov,
 	}
 	t.mu.Unlock()
 	return content, nil

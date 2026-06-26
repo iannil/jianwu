@@ -63,7 +63,7 @@ func (r *Repository) ListIncomplete() ([]*Session, error) {
 }
 
 // Archive moves a completed session to books/<slug>/.session.json (audit log).
-// Per Q11.A3.
+// Per Q11.A3. Uses os.Rename for an atomic move within the same filesystem.
 func (r *Repository) Archive(s *Session, slug string) error {
 	src := s.Path(r.SessionsDir)
 	// Workspace root is two levels up from SessionsDir.
@@ -72,15 +72,9 @@ func (r *Repository) Archive(s *Session, slug string) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return fmt.Errorf("mkdir book dir: %w", err)
 	}
-	data, err := os.ReadFile(src)
-	if err != nil {
-		return fmt.Errorf("read session for archive: %w", err)
-	}
-	if err := os.WriteFile(dst, data, 0o644); err != nil {
-		return fmt.Errorf("write archived session: %w", err)
-	}
-	if err := os.Remove(src); err != nil {
-		return fmt.Errorf("remove active session after archive: %w", err)
+	// Atomic rename — both paths are under the same workspace root.
+	if err := os.Rename(src, dst); err != nil {
+		return fmt.Errorf("archive session %s: %w", s.ID, err)
 	}
 	return nil
 }

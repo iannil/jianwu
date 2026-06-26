@@ -15,6 +15,18 @@ type UserInput interface {
 	Ask(dim Dimension, recommendation string) (string, error)
 }
 
+// extractFirstLine returns the first line of s (up to the first '\n').
+// If s contains no newline, the entire string is returned.
+// Used to parse the recommended value from LLM output (first line = value, rest = reasoning).
+func extractFirstLine(s string) string {
+	for i, r := range s {
+		if r == '\n' {
+			return s[:i]
+		}
+	}
+	return s
+}
+
 // Run executes one step of the grill: walk the tree to find the next dimension,
 // call LLM for recommendation, ask the user, record the answer.
 // Returns the updated session and the next dimension to ask (or nil if complete).
@@ -28,19 +40,15 @@ func Run(
 	ui UserInput,
 ) (next *Dimension, err error) {
 	// Find the next dimension to ask.
-	walk := tree.Walk(session.Answers)
-	var pending *Dimension
-	for i := range walk {
-		d := &walk[i]
-		if _, answered := session.Answers[d.ID]; answered {
-			continue
-		}
-		pending = d
-		break
-	}
+	pending := tree.NextPending(session.Answers)
 	if pending == nil {
 		session.Status = SessionCompleted
 		return nil, nil
+	}
+
+	// Check context before potentially expensive LLM call.
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
 	// Get LLM recommendation.
@@ -49,6 +57,11 @@ func Run(
 		return nil, fmt.Errorf("recommend for %s: %w", pending.ID, err)
 	}
 	session.RecordRecommendation(pending.ID, rec)
+
+	// Check context before potentially blocking user input.
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	// Ask user.
 	answer, err := ui.Ask(*pending, rec)
@@ -59,17 +72,15 @@ func Run(
 	// Resolve answer: empty = accept recommendation (first line), "skip" = default.
 	final := answer
 	if final == "" {
-		// Use first line of recommendation.
-		for i, r := range rec {
-			if r == '\n' {
-				final = rec[:i]
-				break
-			}
-		}
-		if final == "" {
-			final = rec
-		}
+		// First line of recommendation is the recommended value; rest is reasoning.
+		final = extractFirstLine(rec)
 	} else if final == "skip" {
+		final = pending.DefaultValue
+	}
+
+	// Validate answer against dimension options. If invalid and a default exists,
+	// fall back to the default to avoid propagating bad values downstream.
+	if !pending.ValidateAnswer(final) && pending.DefaultValue != "" {
 		final = pending.DefaultValue
 	}
 
@@ -83,13 +94,8 @@ func Run(
 	session.CurrentDim = pending.ID
 
 	// Return next dimension (caller iterates).
-	nextWalk := tree.Walk(session.Answers)
-	for i := range nextWalk {
-		d := &nextWalk[i]
-		if _, answered := session.Answers[d.ID]; answered {
-			continue
-		}
-		return d, nil
+	if next := tree.NextPending(session.Answers); next != nil {
+		return next, nil
 	}
 	session.Status = SessionCompleted
 	return nil, nil

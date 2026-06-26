@@ -6,11 +6,14 @@ package config
 func BuiltinDefaults() *Config {
 	return &Config{
 		SchemaVersion: 1,
+		LLM: LLMConfig{
+			TimeoutSeconds: 90,
+		},
 		Models: Models{
 			Intake:      ModelRef{Provider: "glm", Model: "glm-4.6"},
 			Outline:     ModelRef{Provider: "gemini", Model: "gemini-2.5-pro"},
 			Scaffolding: ModelRef{Provider: "gemini", Model: "gemini-2.5-flash"},
-			Expand:      ModelRef{Provider: "glm", Model: "glm-4.6"},
+			Expand:      ModelRef{Provider: "glm", Model: "glm-4.6", TimeoutSeconds: 600},
 		},
 		Search: Search{
 			Primary: "brave", Fallback: "serper", Reader: "jina",

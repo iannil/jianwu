@@ -54,16 +54,16 @@ func (s *Searcher) Search(ctx context.Context, query string, opts search.SearchO
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := s.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", search.ErrSearchNetwork, err)
+		return nil, fmt.Errorf("%w: %v", search.ErrNetwork, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusTooManyRequests {
 		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %s", search.ErrSearchRateLimit, string(b))
+		return nil, fmt.Errorf("%w: %s", search.ErrRateLimit, string(b))
 	}
 	if resp.StatusCode >= 400 {
 		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: HTTP %d: %s", search.ErrSearchProvider, resp.StatusCode, string(b))
+		return nil, fmt.Errorf("%w: HTTP %d: %s", search.ErrProvider, resp.StatusCode, string(b))
 	}
 	var respBody struct {
 		Organic []struct {

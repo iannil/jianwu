@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/iannil/jianwu/internal/book"
-	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
@@ -50,13 +49,10 @@ func TestE2EExpandCommandWithMocks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// 3. Set fake API keys + inject providerDepsHook.
+	// 3. Set fake API keys + build mock deps.
 	t.Setenv("GEMINI_API_KEY", "fake")
 	t.Setenv("GLM_API_KEY", "fake")
 	t.Setenv("BRAVE_API_KEY", "fake")
-
-	original := providerDepsHook
-	defer func() { providerDepsHook = original }()
 
 	chatter := &countingChatter{
 		responses: []llm.ChatResponse{
@@ -65,13 +61,11 @@ func TestE2EExpandCommandWithMocks(t *testing.T) {
 			{Content: `{"revised_markdown":"## Chapter 1\n\nBody text...[^1]\n\n[^1]: [Example](https://example.com) accessed 2026-06-22","claims":[{"text":"claim","has_citation":true}]}`},
 		},
 	}
-	providerDepsHook = func(_ *config.Config, _ *config.Secrets) (*ProviderDeps, error) {
-		return &ProviderDeps{
-			Chatter:  chatter,
-			Searcher: &stubSearcher{},
-			Reader:   &stubReader{},
-			Embedder: &stubEmbedder{},
-		}, nil
+	mockDeps := &ProviderDeps{
+		Chatter:  chatter,
+		Searcher: &stubSearcher{},
+		Reader:   &stubReader{},
+		Embedder: &stubEmbedder{},
 	}
 
 	// 4. Run the expand command from inside the workspace.
@@ -81,11 +75,10 @@ func TestE2EExpandCommandWithMocks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cmd := NewRootCmd()
+	cmd := newExpandCmd()
 	cmd.SetOut(&bytes.Buffer{})
 	cmd.SetErr(&bytes.Buffer{})
-	cmd.SetArgs([]string{"expand", "e2e-book", "01-01"})
-	if err := cmd.Execute(); err != nil {
+	if err := runExpand(cmd, []string{"e2e-book", "01-01"}, 0, mockDeps); err != nil {
 		t.Fatalf("expand command: %v", err)
 	}
 

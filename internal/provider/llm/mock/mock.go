@@ -7,16 +7,19 @@ import (
 	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
-// Provider is a scripted Chatter + Embedder for tests.
+// Provider is a scripted Chatter + Embedder + Streamer for tests.
 // Chat returns the same response (or error) for every call.
+// Stream returns the preset token sequence from NewStream.
 type Provider struct {
-	chatResp   llm.ChatResponse
-	chatErr    error
-	embedResp  [][]float32
-	embedErr   error
-	mu         sync.Mutex
-	chatCalls  []llm.ChatRequest
-	embedCalls []llm.EmbedRequest
+	chatResp     llm.ChatResponse
+	chatErr      error
+	embedResp    [][]float32
+	embedErr     error
+	streamTokens []string // preset tokens for Stream()
+	streamErr    error    // final error for Stream()
+	mu           sync.Mutex
+	chatCalls    []llm.ChatRequest
+	embedCalls   []llm.EmbedRequest
 }
 
 // New creates a Provider that always returns the given chat response.

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/iannil/jianwu/internal/book"
-	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
@@ -139,10 +138,6 @@ func TestExpandRunHappyPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// 2. Set up mock providerDepsHook returning mock providers.
-	original := providerDepsHook
-	defer func() { providerDepsHook = original }()
-
 	// Mock chatter returns 3 scripted responses for the 3 iterations:
 	// iter 1 (research): JSON ResearchNotes
 	// iter 2 (draft): markdown with footnote
@@ -155,21 +150,19 @@ func TestExpandRunHappyPath(t *testing.T) {
 		},
 	}
 
-	providerDepsHook = func(_ *config.Config, _ *config.Secrets) (*ProviderDeps, error) {
-		return &ProviderDeps{
-			Chatter:  chatter,
-			Searcher: &stubSearcher{},
-			Reader:   &stubReader{},
-			Embedder: &stubEmbedder{},
-		}, nil
+	// 2. Build mock deps directly.
+	mockDeps := &ProviderDeps{
+		Chatter:  chatter,
+		Searcher: &stubSearcher{},
+		Reader:   &stubReader{},
+		Embedder: &stubEmbedder{},
 	}
 
-	// 3. Build the command and run it.
+	// 3. Build a command and run expand directly with mock deps.
 	cmd := newExpandCmd()
 	var out bytes.Buffer
 	cmd.SetOut(&out)
 	cmd.SetErr(&out)
-	cmd.SetArgs([]string{"test-book", "01-01"})
 
 	// Run from the workspace root.
 	oldWd, _ := os.Getwd()
@@ -178,7 +171,7 @@ func TestExpandRunHappyPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := cmd.Execute(); err != nil {
+	if err := runExpand(cmd, []string{"test-book", "01-01"}, 0, mockDeps); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
 
@@ -363,8 +356,6 @@ func TestExpandRunAllowWithDoubleForce(t *testing.T) {
 	}
 
 	// Inject mock deps so expand.Generate runs without real API.
-	original := providerDepsHook
-	defer func() { providerDepsHook = original }()
 	chatter := &countingChatter{
 		responses: []llm.ChatResponse{
 			{Content: `{"findings":[],"candidates":[]}`},
@@ -372,8 +363,8 @@ func TestExpandRunAllowWithDoubleForce(t *testing.T) {
 			{Content: `{"revised_markdown":"## New\n\nnew content after force-force...[^1]\n\n[^1]: [X](https://x.com) accessed 2026-06-22","claims":[{"text":"x","has_citation":true}]}`},
 		},
 	}
-	providerDepsHook = func(_ *config.Config, _ *config.Secrets) (*ProviderDeps, error) {
-		return &ProviderDeps{Chatter: chatter, Searcher: &stubSearcher{}, Reader: &stubReader{}, Embedder: &stubEmbedder{}}, nil
+	mockDeps := &ProviderDeps{
+		Chatter: chatter, Searcher: &stubSearcher{}, Reader: &stubReader{}, Embedder: &stubEmbedder{},
 	}
 
 	oldWd, _ := os.Getwd()
@@ -385,8 +376,7 @@ func TestExpandRunAllowWithDoubleForce(t *testing.T) {
 	cmd := newExpandCmd()
 	cmd.SetOut(&bytes.Buffer{})
 	cmd.SetErr(&bytes.Buffer{})
-	cmd.SetArgs([]string{"test-book", "01-01", "--force", "--force"})
-	if err := cmd.Execute(); err != nil {
+	if err := runExpand(cmd, []string{"test-book", "01-01"}, 2, mockDeps); err != nil {
 		t.Fatalf("expected success with --force --force on reviewed chapter, got: %v", err)
 	}
 

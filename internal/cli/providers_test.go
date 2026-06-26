@@ -62,36 +62,6 @@ func TestBuildEmbedder(t *testing.T) {
 	}
 }
 
-func TestProviderDepsHookIsConsultedWhenSet(t *testing.T) {
-	original := providerDepsHook
-	defer func() { providerDepsHook = original }()
-
-	called := false
-	providerDepsHook = func(cfg *config.Config, secrets *config.Secrets) (*ProviderDeps, error) {
-		called = true
-		return &ProviderDeps{Chatter: mock.New(llm.ChatResponse{Content: "x"})}, nil
-	}
-
-	deps, err := buildProviderDeps(&config.Config{}, &config.Secrets{})
-	if err != nil {
-		t.Fatalf("buildProviderDeps: %v", err)
-	}
-	if !called {
-		t.Error("providerDepsHook was not consulted")
-	}
-	if deps == nil {
-		t.Fatal("deps is nil")
-	}
-}
-
-func TestProviderDepsHookFallsBackToRealAssemblyWhenNil(t *testing.T) {
-	// Can't fully test real assembly without API keys, but can verify the hook
-	// variable starts as the real builder (not nil).
-	if providerDepsHook == nil {
-		t.Fatal("providerDepsHook should default to real builder, not nil")
-	}
-}
-
 func TestBuildToolRegistryAssemblesAllProviders(t *testing.T) {
 	deps := &ProviderDeps{
 		Chatter:  mock.New(llm.ChatResponse{Content: "x"}),
@@ -99,7 +69,10 @@ func TestBuildToolRegistryAssemblesAllProviders(t *testing.T) {
 		Reader:   &stubReader{},
 		Embedder: &stubEmbedder{},
 	}
-	registry, err := buildToolRegistry(deps)
+	cfg := &config.Config{
+		Search: config.Search{Primary: "test-search", Reader: "test-reader"},
+	}
+	registry, err := buildToolRegistry(deps, cfg)
 	if err != nil {
 		t.Fatalf("buildToolRegistry: %v", err)
 	}
@@ -116,6 +89,12 @@ func TestBuildToolRegistryAssemblesAllProviders(t *testing.T) {
 	if registry.Embedder == nil {
 		t.Error("Embedder not wired")
 	}
+	if registry.SearchProviderName != "test-search" {
+		t.Errorf("SearchProviderName = %q, want %q", registry.SearchProviderName, "test-search")
+	}
+	if registry.ReaderProviderName != "test-reader" {
+		t.Errorf("ReaderProviderName = %q, want %q", registry.ReaderProviderName, "test-reader")
+	}
 }
 
 // stubSearcher/Reader/Embedder defined at bottom of file or in a shared test helper.
@@ -123,6 +102,72 @@ type stubSearcher struct{}
 
 func (s *stubSearcher) Search(ctx context.Context, query string, opts search.SearchOpts) ([]search.SearchResult, error) {
 	return nil, nil
+}
+
+func TestBuildChatterWithFallback(t *testing.T) {
+	cfg := &config.Config{
+		Models: config.Models{
+			Outline: config.ModelRef{
+				Provider: "gemini",
+				Model:    "gemini-2.5-pro",
+				Fallback: &config.ModelRef{Provider: "glm", Model: "glm-4.6"},
+			},
+		},
+	}
+	secrets := &config.Secrets{GeminiAPIKey: "gk", GLMAPIKey: "gk"}
+	c, err := buildChatter(cfg, secrets, "outline")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c == nil {
+		t.Fatal("nil chatter")
+	}
+	_, ok := c.(*llm.FallbackWrapper)
+	if !ok {
+		t.Errorf("expected *llm.FallbackWrapper, got %T", c)
+	}
+}
+
+func TestBuildChatterFallbackSelf(t *testing.T) {
+	cfg := &config.Config{
+		Models: config.Models{
+			Outline: config.ModelRef{
+				Provider: "gemini",
+				Model:    "gemini-2.5-pro",
+				Fallback: &config.ModelRef{Provider: "gemini", Model: "gemini-2.5-pro"},
+			},
+		},
+	}
+	secrets := &config.Secrets{GeminiAPIKey: "gk"}
+	c, err := buildChatter(cfg, secrets, "outline")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c == nil {
+		t.Fatal("nil chatter")
+	}
+	_, ok := c.(*llm.RetryWrapper)
+	if !ok {
+		t.Errorf("expected *llm.RetryWrapper (no fallback), got %T", c)
+	}
+}
+
+func TestBuildChatterNoFallback(t *testing.T) {
+	// No fallback configured — should still return RetryWrapper (unchanged behaviour).
+	cfg := &config.Config{
+		Models: config.Models{
+			Intake: config.ModelRef{Provider: "gemini", Model: "gemini-2.5-flash"},
+		},
+	}
+	secrets := &config.Secrets{GeminiAPIKey: "gk"}
+	c, err := buildChatter(cfg, secrets, "intake")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, ok := c.(*llm.RetryWrapper)
+	if !ok {
+		t.Errorf("expected *llm.RetryWrapper, got %T", c)
+	}
 }
 
 type stubReader struct{}

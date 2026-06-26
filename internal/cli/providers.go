@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/engine/expand"
@@ -15,7 +16,9 @@ import (
 
 // buildChatter constructs a Chatter for the given stage, wrapped in Retry + Fallback per Q7.
 // stage is one of "intake", "outline", "scaffolding", "expand".
-// For S6, fallback is optional: if cfg.Models[stage] has no fallback configured, returns primary only.
+// If the ModelRef has a Fallback configured (non-nil), primary and fallback are each
+// wrapped in RetryWrapper, then combined into a FallbackWrapper.
+// If primary == fallback (identical provider+model), a warning is logged and no fallback is applied.
 func buildChatter(cfg *config.Config, secrets *config.Secrets, stage string) (llm.Chatter, error) {
 	primary, err := stageModel(cfg, stage)
 	if err != nil {
@@ -25,9 +28,31 @@ func buildChatter(cfg *config.Config, secrets *config.Secrets, stage string) (ll
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", stage, err)
 	}
-	wrapped := llm.NewRetryWrapper(p)
-	// Note: in S6 we don't yet wire fallback because Config doesn't carry fallback yet.
-	// S6.1 or later can add config.Models[stage].Fallback and wrap with FallbackWrapper.
+	var wrapped llm.ChatterEmbedder = llm.NewRetryWrapper(p)
+
+	if primary.Fallback != nil {
+		// Skip if fallback is identical to primary.
+		if primary.Fallback.Provider == primary.Provider && primary.Fallback.Model == primary.Model {
+			slog.Warn("fallback skipped: primary and fallback are identical",
+				"stage", stage,
+				"provider", primary.Provider,
+				"model", primary.Model)
+		} else {
+			fb, err := llmfactory.NewProvider(*primary.Fallback, secrets)
+			if err != nil {
+				return nil, fmt.Errorf("%s fallback: %w", stage, err)
+			}
+			fbWrapped := llm.NewRetryWrapper(fb)
+			wrapped = &llm.FallbackWrapper{Primary: wrapped, Fallback: fbWrapped}
+			slog.Warn("fallback configured",
+				"stage", stage,
+				"primary_provider", primary.Provider,
+				"primary_model", primary.Model,
+				"fallback_provider", primary.Fallback.Provider,
+				"fallback_model", primary.Fallback.Model)
+		}
+	}
+
 	return wrapped, nil
 }
 
@@ -58,8 +83,8 @@ func stageModel(cfg *config.Config, stage string) (config.ModelRef, error) {
 
 // ProviderDeps bundles the providers needed by expand CLI (and future commands
 // that need search/reader/embedder in addition to chatter). Per Q20=B this is a
-// single struct rather than 4 separate hooks, prefiguring the v0.2 refactor of
-// chatterProviderHook into a CLI struct field.
+// single struct rather than 4 separate hooks, prefiguring the eventual DI
+// refactoring of providerDepsHook.
 type ProviderDeps struct {
 	Chatter  llm.Chatter
 	Searcher search.Searcher
@@ -67,27 +92,8 @@ type ProviderDeps struct {
 	Embedder llm.Embedder
 }
 
-// providerDepsHook allows tests to inject mock provider bundles without going
-// through the real factory.
-//
-// Deprecated: providerDepsHook (and chatterProviderHook) are test-only
-// package-global mutable vars. Both will be refactored into a CLI struct
-// field in v0.2.6 (see docs/ROADMAP.md §v0.2.6). Do not add new production
-// reads of either var. New test setups should prefer providerDepsHook
-// (the struct-bundle pattern) over chatterProviderHook (the single-provider
-// pattern). WARNING: package-global mutable var, no mutex — test binaries
-// only, no concurrent mutation.
-var providerDepsHook = func(cfg *config.Config, secrets *config.Secrets) (*ProviderDeps, error) {
-	return buildProviderDepsReal(cfg, secrets)
-}
-
-// buildProviderDeps is the public entry that consults the hook.
+// buildProviderDeps assembles providers from config + secrets using factories.
 func buildProviderDeps(cfg *config.Config, secrets *config.Secrets) (*ProviderDeps, error) {
-	return providerDepsHook(cfg, secrets)
-}
-
-// buildProviderDepsReal assembles providers from config + secrets using factories.
-func buildProviderDepsReal(cfg *config.Config, secrets *config.Secrets) (*ProviderDeps, error) {
 	chatter, err := buildChatter(cfg, secrets, "expand")
 	if err != nil {
 		return nil, fmt.Errorf("expand chatter: %w", err)
@@ -113,9 +119,13 @@ func buildProviderDepsReal(cfg *config.Config, secrets *config.Secrets) (*Provid
 }
 
 // buildToolRegistry assembles an expand.ToolRegistry from ProviderDeps.
-func buildToolRegistry(deps *ProviderDeps) (*expand.ToolRegistry, error) {
+// Sets provider names from config for citation metadata (avoids hardcoded strings).
+func buildToolRegistry(deps *ProviderDeps, cfg *config.Config) (*expand.ToolRegistry, error) {
 	if deps == nil {
 		return nil, fmt.Errorf("deps is nil")
 	}
-	return expand.NewToolRegistry(deps.Searcher, deps.Reader, deps.Embedder), nil
+	reg := expand.NewToolRegistry(deps.Searcher, deps.Reader, deps.Embedder)
+	reg.SearchProviderName = cfg.Search.Primary
+	reg.ReaderProviderName = cfg.Search.Reader
+	return reg, nil
 }

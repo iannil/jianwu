@@ -26,11 +26,20 @@ func Generate(ctx context.Context, chatter llm.Chatter, in Input) (*book.Outline
 		return nil, fmt.Errorf("build prompt data: %w", err)
 	}
 
-	sysPrompt, err := renderTemplate("system", mustLoadSystem(), data)
+	sysTmpl, err := loadSystem()
+	if err != nil {
+		return nil, fmt.Errorf("load system template: %w", err)
+	}
+	userTmpl, err := loadUser()
+	if err != nil {
+		return nil, fmt.Errorf("load user template: %w", err)
+	}
+
+	sysPrompt, err := renderTemplate("system", sysTmpl, data)
 	if err != nil {
 		return nil, err
 	}
-	userPrompt, err := renderTemplate("user", mustLoadUser(), data)
+	userPrompt, err := renderTemplate("user", userTmpl, data)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +47,11 @@ func Generate(ctx context.Context, chatter llm.Chatter, in Input) (*book.Outline
 	schema, err := JSONSchema()
 	if err != nil {
 		return nil, fmt.Errorf("generate schema: %w", err)
+	}
+
+	// Check context before potentially expensive LLM call.
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
 	req := llm.ChatRequest{
@@ -148,27 +162,13 @@ func renderTemplate(name string, raw []byte, data any) (string, error) {
 	return buf.String(), nil
 }
 
-func mustLoadSystem() []byte {
-	b, err := loadSystem()
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func mustLoadUser() []byte {
-	b, err := loadUser()
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
+// truncate safely truncates a string at n rune boundaries (handles multi-byte chars).
 func truncate(s string, n int) string {
-	if len(s) <= n {
+	runes := []rune(s)
+	if len(runes) <= n {
 		return s
 	}
-	return s[:n] + "..."
+	return string(runes[:n]) + "..."
 }
 
 // yamlMarshalArchetype serializes an archetype back to YAML text for prompt injection.

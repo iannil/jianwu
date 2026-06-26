@@ -72,6 +72,125 @@ func TestWalkConditionalTriggerRequiresMet(t *testing.T) {
 	}
 }
 
+func TestNextPendingEmpty(t *testing.T) {
+	tree := DefaultTree()
+	d := tree.NextPending(map[string]string{})
+	if d == nil {
+		t.Fatal("expected a dimension, got nil")
+	}
+	if d.ID != "topic" {
+		t.Errorf("first pending: %q, want topic", d.ID)
+	}
+}
+
+func TestNextPendingAfterPartialAnswers(t *testing.T) {
+	tree := DefaultTree()
+	// After answering topic, audience should be next
+	d := tree.NextPending(map[string]string{"topic": "X"})
+	if d == nil {
+		t.Fatal("expected a dimension, got nil")
+	}
+	if d.ID != "audience" {
+		t.Errorf("next pending: %q, want audience", d.ID)
+	}
+}
+
+func TestNextPendingReturnsNilWhenComplete(t *testing.T) {
+	tree := DefaultTree()
+	answers := map[string]string{
+		"topic":           "X",
+		"audience":        "scholar",
+		"goal":            "understanding",
+		"archetype":       "ontology-epistemology-practice",
+		"depth":           "advanced",
+		"length":          "long",
+		"language":        "zh",
+		"scope":           "single",
+		"example_type":    "mixed",
+		"citation_style":  "academic",
+		"visualization":   "tables",
+		"timeliness":      "timeless",
+	}
+	d := tree.NextPending(answers)
+	if d != nil {
+		t.Errorf("expected nil, got %q", d.ID)
+	}
+}
+
+func TestDefaultTreeValidates(t *testing.T) {
+	tree := DefaultTree()
+	if err := tree.Validate(); err != nil {
+		t.Fatalf("DefaultTree validation: %v", err)
+	}
+}
+
+func TestValidateDetectsCycle(t *testing.T) {
+	tree := &DesignTree{
+		Dimensions: []Dimension{
+			{ID: "a", DependsOn: []string{"b"}},
+			{ID: "b", DependsOn: []string{"a"}},
+		},
+	}
+	err := tree.Validate()
+	if err == nil {
+		t.Fatal("expected cycle error, got nil")
+	}
+}
+
+func TestValidateDetectsUnknownDep(t *testing.T) {
+	tree := &DesignTree{
+		Dimensions: []Dimension{
+			{ID: "a", DependsOn: []string{"nonexistent"}},
+		},
+	}
+	err := tree.Validate()
+	if err == nil {
+		t.Fatal("expected error for unknown dependency, got nil")
+	}
+}
+
+func TestValidateDetectsDuplicateID(t *testing.T) {
+	tree := &DesignTree{
+		Dimensions: []Dimension{
+			{ID: "a"},
+			{ID: "a"},
+		},
+	}
+	err := tree.Validate()
+	if err == nil {
+		t.Fatal("expected error for duplicate ID, got nil")
+	}
+}
+
+func TestValidateAnswer(t *testing.T) {
+	tree := DefaultTree()
+	tests := []struct {
+		name     string
+		dimID    string
+		answer   string
+		valid    bool
+	}{
+		{"topic accepts any", "topic", "anything at all", true},
+		{"audience accepts valid option", "audience", "scholar", true},
+		{"audience accepts valid option 2", "audience", "educated-general", true},
+		{"audience rejects invalid", "audience", "not-an-option", false},
+		{"depth accepts valid", "depth", "advanced", true},
+		{"depth rejects invalid", "depth", "expert", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := tree.Find(tt.dimID)
+			if d == nil {
+				t.Fatalf("dimension %q not found", tt.dimID)
+			}
+			got := d.ValidateAnswer(tt.answer)
+			if got != tt.valid {
+				t.Errorf("ValidateAnswer(%q) = %v, want %v", tt.answer, got, tt.valid)
+			}
+		})
+	}
+}
+
 func mustContain(t *testing.T, ids []string, want string) {
 	t.Helper()
 	for _, id := range ids {

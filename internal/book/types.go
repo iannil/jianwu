@@ -15,7 +15,11 @@ type Meta struct {
 	Status     string     `json:"status"`
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
-	Engine     EngineMeta `json:"engine"`
+	Engine     EngineMeta            `json:"engine"`
+	// ClaimWhitelist records claim texts that have been verified in any chapter.
+	// When fact-checking a new chapter, claims in this set are auto-verified
+	// without an LLM call. Key is the claim text; value is true.
+	ClaimWhitelist map[string]bool `json:"claim_whitelist,omitempty"`
 }
 
 type Parameters struct {
@@ -64,11 +68,22 @@ type OutlineChapter struct {
 	ReviewedAt         *time.Time    `json:"reviewed_at,omitempty"`
 	ReviewedBy         string        `json:"reviewed_by,omitempty"`
 	Citations          []Citation    `json:"citations,omitempty"`
+	Verdicts           []ClaimVerdict `json:"verdicts,omitempty"`
 }
 
 type Claim struct {
 	Text        string `json:"text"`
 	HasCitation bool   `json:"has_citation"`
+}
+
+// ClaimVerdict records the result of verifying one claim against its cited source.
+// Populated by the factcheck command; empty means not yet fact-checked.
+type ClaimVerdict struct {
+	ClaimText        string `json:"claim_text"`
+	Verified         bool   `json:"verified"`          // does the source support this?
+	Reasoning        string `json:"reasoning"`         // LLM's explanation
+	SuggestedRewrite string `json:"suggested_rewrite,omitempty"` // proposed revision if unverified
+	CitationID       string `json:"citation_id,omitempty"`       // which [^N] this was checked against
 }
 
 type ExpandedWith struct {

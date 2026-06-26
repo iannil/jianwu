@@ -1,9 +1,11 @@
 package expand
 
 import (
+	"io"
 	"time"
 
 	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // ExpandInput is the input for expanding one chapter.
@@ -29,6 +31,11 @@ type ExpandInput struct {
 	NextChapter     *book.OutlineChapter
 	// Config
 	WebSearchEnabled bool // false skips research iteration
+	// Streaming (optional)
+	Streamer llm.Streamer `json:"-"` // non-nil enables streaming in draft iteration
+	// StreamOutput is where streaming tokens are written in real-time (e.g. os.Stdout).
+	// Only used when Streamer is also non-nil. Nil = silent streaming.
+	StreamOutput io.Writer `json:"-"`
 }
 
 // ExpandOutput is the expanded chapter result.

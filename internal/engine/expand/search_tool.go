@@ -15,6 +15,10 @@ func (t *ToolRegistry) SearchAndRegister(ctx context.Context, query string) ([]s
 	if err != nil {
 		return nil, err
 	}
+	prov := t.SearchProviderName
+	if prov == "" {
+		prov = "brave" // backward compat default
+	}
 	t.mu.Lock()
 	for _, r := range results {
 		// Only register if not already known.
@@ -23,7 +27,7 @@ func (t *ToolRegistry) SearchAndRegister(ctx context.Context, query string) ([]s
 				URL:            r.URL,
 				Title:          r.Title,
 				Snippet:        r.Snippet,
-				SearchProvider: "brave",
+				SearchProvider: prov,
 				AccessedAt:     time.Now().UTC(),
 			}
 		}

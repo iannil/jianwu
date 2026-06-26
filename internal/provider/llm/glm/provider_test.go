@@ -93,3 +93,68 @@ func TestProviderEmbed(t *testing.T) {
 		t.Fatalf("got %d embeddings", len(resp.Embeddings))
 	}
 }
+
+func TestProviderStreamYieldsTokens(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Verify request headers.
+		if r.Header.Get("Authorization") != "Bearer test-key" {
+			t.Errorf("auth: %q", r.Header.Get("Authorization"))
+		}
+		// Verify stream=true in request body.
+		var req map[string]any
+		json.NewDecoder(r.Body).Decode(&req)
+		if req["stream"] != true {
+			t.Errorf("stream flag: %v", req["stream"])
+		}
+
+		// Write SSE response.
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		flusher, _ := w.(http.Flusher)
+		writeSSE := func(data string) {
+			w.Write([]byte("data: " + data + "\n\n"))
+			flusher.Flush()
+		}
+		writeSSE(`{"choices":[{"delta":{"content":"Hello "},"index":0}]}`)
+		writeSSE(`{"choices":[{"delta":{"content":"world"},"index":0}]}`)
+		writeSSE(`{"choices":[{"delta":{},"index":0}],"finish_reason":"stop"}`)
+		writeSSE(`[DONE]`)
+	}))
+	defer srv.Close()
+
+	p, err := New(Config{APIKey: "test-key", BaseURL: srv.URL + "/v4"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ch, err := p.Stream(context.Background(), llm.ChatRequest{
+		Model:    "glm-4.6",
+		Messages: []llm.Message{{Role: "user", Content: "hi"}},
+	})
+	if err != nil {
+		t.Fatalf("Stream: %v", err)
+	}
+	var content string
+	for chunk := range ch {
+		if chunk.Err != nil {
+			t.Fatal(chunk.Err)
+		}
+		content += chunk.Content
+	}
+	if content != "Hello world" {
+		t.Errorf("got %q, want %q", content, "Hello world")
+	}
+}
+
+func TestProviderStream4xxError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{"error": "bad request"})
+	}))
+	defer srv.Close()
+
+	p, _ := New(Config{APIKey: "k", BaseURL: srv.URL + "/v4"})
+	_, err := p.Stream(context.Background(), llm.ChatRequest{Model: "glm-4.6"})
+	if err == nil {
+		t.Fatal("expected error for 4xx")
+	}
+}

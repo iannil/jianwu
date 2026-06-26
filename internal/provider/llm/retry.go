@@ -126,6 +126,16 @@ func (rw *RetryWrapper) Embed(ctx context.Context, req EmbedRequest) (*EmbedResp
 	return nil, fmt.Errorf("retry exhausted after %d attempts: %w", cfg.MaxAttempts, lastErr)
 }
 
+// Stream passes through to the inner provider's Stream implementation.
+// Streaming does NOT retry per Q4: already-emitted tokens cannot be replayed.
+func (rw *RetryWrapper) Stream(ctx context.Context, req ChatRequest) (<-chan StreamChunk, error) {
+	streamer, ok := rw.Inner.(Streamer)
+	if !ok {
+		return nil, fmt.Errorf("inner provider does not support streaming")
+	}
+	return streamer.Stream(ctx, req)
+}
+
 // backoff returns delay = BaseDelay * 2^attempt, capped at MaxDelay, with ±Jitter.
 func backoff(cfg RetryConfig, attempt int) time.Duration {
 	d := cfg.BaseDelay

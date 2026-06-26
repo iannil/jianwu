@@ -53,7 +53,7 @@ func TestSearch4xxReturnsError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !errors.Is(err, search.ErrSearchProvider) {
-		t.Errorf("expected ErrSearchProvider, got %v", err)
+	if !errors.Is(err, search.ErrProvider) {
+		t.Errorf("expected ErrProvider, got %v", err)
 	}
 }

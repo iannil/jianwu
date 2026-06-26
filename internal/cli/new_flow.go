@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -87,36 +89,17 @@ func deriveSlugFromTopic(topic string) string {
 	return book.Slugify(topic)
 }
 
-// chatterProviderHook allows tests to inject mock chatters without going through the real factory.
-//
-// Deprecated: chatterProviderHook (and providerDepsHook) are test-only
-// package-global mutable vars. Both will be refactored into a CLI struct
-// field in v0.2.6 (see docs/ROADMAP.md §v0.2.6). Do not add new production
-// reads of either var. New test setups should prefer providerDepsHook
-// (the struct-bundle pattern introduced in v0.1.1) over chatterProviderHook
-// (the single-provider pattern legacy from v0.1.0). WARNING: package-global
-// mutable var, no mutex — test binaries only, no concurrent mutation.
-var chatterProviderHook = func(cfg *config.Config, secrets *config.Secrets) (chatterProvider, error) {
-	return buildChatterProvider(cfg, secrets)
-}
-
 // runNewFlow executes the full grill → outline → scaffolding pipeline.
 // Returns the final outline or an error wrapped as *InfoError.
-// CLI-path wrapper: builds chatters from config then delegates to
-// runNewFlowWithChatters (which tests call directly when they need
-// the session for assertions).
 func runNewFlow(
 	wsRoot string,
 	cfg *config.Config,
 	secrets *config.Secrets,
 	prompt *TerminalPrompt,
 	force bool,
+	cp chatterProvider,
 ) (*book.Outline, error) {
-	cp, err := chatterProviderHook(cfg, secrets)
-	if err != nil {
-		return nil, &InfoError{Err: err, Code: ExitCodeLLMProvider}
-	}
-	outline, _, err := runNewFlowWithChatters(wsRoot, prompt, force, cp)
+	outline, _, err := runNewFlowWithChatters(wsRoot, cfg, prompt, force, cp)
 	return outline, err
 }
 
@@ -146,6 +129,7 @@ type chatterProvider struct {
 // Returns the final outline and the session (archived) or an error wrapped as *InfoError.
 func runNewFlowWithChatters(
 	wsRoot string,
+	cfg *config.Config,
 	prompt *TerminalPrompt,
 	force bool,
 	cp chatterProvider,
@@ -164,7 +148,9 @@ func runNewFlowWithChatters(
 
 	// 2. Grill: walk tree, ask each dim
 	for {
-		next, err := grill.Run(defaultCtx(), cp.intake, tree, session, prompt)
+		grillCtx, grillCancel := stageCtx(cfg, "intake")
+		next, err := grill.Run(grillCtx, cp.intake, tree, session, prompt)
+		grillCancel()
 		if err != nil {
 			// Save session so user can resume.
 			_ = repo.Save(session)
@@ -194,7 +180,8 @@ func runNewFlowWithChatters(
 	}
 
 	// 5. Outline
-	outline, err := outline.Generate(defaultCtx(), cp.outline, outline.Input{
+	outlineCtx, outlineCancel := stageCtx(cfg, "outline")
+	outline, err := outline.Generate(outlineCtx, cp.outline, outline.Input{
 		ArchetypeID: session.Answers["archetype"],
 		Topic:       session.Answers["topic"],
 		Audience:    session.Answers["audience"],
@@ -203,6 +190,7 @@ func runNewFlowWithChatters(
 		Length:      session.Answers["length"],
 		Language:    session.Answers["language"],
 	})
+	outlineCancel()
 	if err != nil {
 		return nil, session, wrapLLMError(err)
 	}
@@ -217,7 +205,8 @@ func runNewFlowWithChatters(
 	}
 
 	// 7. Scaffolding
-	results := scaffolding.ScaffoldAll(defaultCtx(), cp.scaffolding, outline, session.Answers["archetype"],
+	scaffCtx, scaffCancel := stageCtx(cfg, "scaffolding")
+	results := scaffolding.ScaffoldAll(scaffCtx, cp.scaffolding, outline, session.Answers["archetype"],
 		scaffolding.ChapterParams{
 			Topic:    session.Answers["topic"],
 			Audience: session.Answers["audience"],
@@ -228,6 +217,7 @@ func runNewFlowWithChatters(
 		},
 		scaffolding.Options{},
 	)
+	scaffCancel()
 	failedCount := 0
 	for _, r := range results {
 		if r.Err != nil {
@@ -271,6 +261,9 @@ func writeBookMeta(bookDir, slug string, session *grill.Session) error {
 			Goal:     session.Answers["goal"],
 			Length:   session.Answers["length"],
 		},
+		Engine: book.EngineMeta{
+			JianwuVersion: Version,
+		},
 	}
 	return book.SaveMeta(filepath.Join(bookDir, "meta.json"), meta)
 }
@@ -283,7 +276,29 @@ func wrapLLMError(err error) error {
 	return &InfoError{Err: err, Code: ExitCodeLLMProvider}
 }
 
-// defaultCtx returns a context with no timeout (S6 doesn't add timeouts; user can Ctrl+C).
+// defaultCtx returns a context.Background() with signal handling for Ctrl+C.
+// The returned context is cancelled on SIGINT/SIGTERM.
 func defaultCtx() context.Context {
-	return context.Background()
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	return ctx
+}
+
+// stageCtx returns a context for the given stage with:
+//   - Ctrl+C cancellation (signal.NotifyContext)
+//   - Per-stage timeout from config (falling back to global LLM timeout)
+//   - No timeout when neither global nor stage timeout is configured (0).
+//   - No timeout when cfg is nil (safe for tests).
+func stageCtx(cfg *config.Config, stage string) (context.Context, context.CancelFunc) {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	if cfg == nil {
+		return ctx, cancel
+	}
+	timeout := cfg.LLM.TimeoutSeconds
+	if m, err := stageModel(cfg, stage); err == nil && m.TimeoutSeconds > 0 {
+		timeout = m.TimeoutSeconds
+	}
+	if timeout > 0 {
+		return context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+	}
+	return ctx, cancel
 }

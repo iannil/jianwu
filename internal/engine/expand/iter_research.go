@@ -29,8 +29,8 @@ func RunResearch(
 		for _, q := range queries {
 			results, err := tools.SearchAndRegister(ctx, q)
 			if err != nil {
-				// Tool limit reached or search error; continue with what we have.
-				break
+				// Tool limit reached or search error; try next query.
+				continue
 			}
 			for i, r := range results {
 				// Read top 2 results per query.

@@ -7,6 +7,7 @@ import (
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/provider/llm/gemini"
 	"github.com/iannil/jianwu/internal/provider/llm/glm"
+	"github.com/iannil/jianwu/internal/provider/llm/ollama"
 )
 
 // NewChatter constructs a Chatter for the given provider/model.
@@ -24,6 +25,8 @@ func NewChatter(ref config.ModelRef, secrets *config.Secrets) (llm.Chatter, erro
 			return nil, fmt.Errorf("glm provider requires GLM_API_KEY")
 		}
 		return glm.New(glm.Config{APIKey: secrets.GLMAPIKey})
+	case "ollama":
+		return ollama.New(ollama.Config{})
 	default:
 		return nil, fmt.Errorf("unknown LLM provider: %q", ref.Provider)
 	}
@@ -43,6 +46,8 @@ func NewEmbedder(ref config.ModelRef, secrets *config.Secrets) (llm.Embedder, er
 			return nil, fmt.Errorf("glm provider requires GLM_API_KEY")
 		}
 		return glm.New(glm.Config{APIKey: secrets.GLMAPIKey})
+	case "ollama":
+		return ollama.New(ollama.Config{})
 	default:
 		return nil, fmt.Errorf("unknown LLM provider: %q", ref.Provider)
 	}
@@ -63,6 +68,8 @@ func NewProvider(ref config.ModelRef, secrets *config.Secrets) (llm.ChatterEmbed
 			return nil, fmt.Errorf("glm provider requires GLM_API_KEY")
 		}
 		return glm.New(glm.Config{APIKey: secrets.GLMAPIKey})
+	case "ollama":
+		return ollama.New(ollama.Config{})
 	default:
 		return nil, fmt.Errorf("unknown LLM provider: %q", ref.Provider)
 	}
