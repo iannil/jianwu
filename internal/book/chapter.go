@@ -2,7 +2,6 @@ package book
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -44,7 +43,7 @@ func ChapterPath(bookDir string, partIdx, chIdx int) string {
 // Creates chapters/ subdir if missing. Returns the absolute path written.
 func WriteChapter(bookDir string, partIdx, chIdx int, fm ChapterFrontmatter, markdown string) (string, error) {
 	chaptersDir := filepath.Join(bookDir, "chapters")
-	if err := os.MkdirAll(chaptersDir, 0o755); err != nil {
+	if err := DefaultStorage.MkdirAll(chaptersDir, 0o755); err != nil {
 		return "", fmt.Errorf("mkdir chapters: %w", err)
 	}
 
@@ -55,7 +54,7 @@ func WriteChapter(bookDir string, partIdx, chIdx int, fm ChapterFrontmatter, mar
 
 	path := ChapterPath(bookDir, partIdx, chIdx)
 	content := fmt.Sprintf("---\n%s---\n\n%s\n", string(yamlBytes), markdown)
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+	if err := DefaultStorage.WriteFile(path, []byte(content), 0o644); err != nil {
 		return "", fmt.Errorf("write chapter: %w", err)
 	}
 	return path, nil
@@ -64,7 +63,7 @@ func WriteChapter(bookDir string, partIdx, chIdx int, fm ChapterFrontmatter, mar
 // ReadChapter reads a chapter file, returning the frontmatter + body.
 // Returns os.IsNotExist error if file missing.
 func ReadChapter(path string) (*ChapterFrontmatter, string, error) {
-	raw, err := os.ReadFile(path)
+	raw, err := DefaultStorage.ReadFile(path)
 	if err != nil {
 		return nil, "", err
 	}
