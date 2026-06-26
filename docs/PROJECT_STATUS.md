@@ -1,7 +1,7 @@
 # jianwu 项目状态
 
 > 本文档对 LLM 友好——任何接手后续迭代的 agent 读这一份就能理解项目当前形态、什么能用、什么没做、怎么扩展。
-> 最后更新：2026-06-23（v0.1.1 已 ship expand CLI；v0.1.1-post 清理切片）
+> 最后更新：2026-06-26（v0.1.3 已 ship，完整闭环可用）
 
 ---
 
@@ -9,27 +9,27 @@
 
 jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。
 
-- **当前版本**：v0.1.1（2026-06-23 ship 了 expand CLI；v0.1.0 tag 范围过早，v0.1.x 系列补齐到 v0.1.5 后视为真正交付）
-- **可用 CLI 入口**：`jianwu init` / `info` / `config get/set/list` / `new` / `expand <slug> <NN-MM>`（grill → outline → scaffolding → 单章 expand 闭环）
-- **库 API**：`internal/engine/{outline,scaffolding,grill,expand}` 4 个引擎阶段独立可调
-- **CLI（v0.1.3 已交付）**：review / finalize / export --target md / status —— 全状态机闭环可用
-- **质量缺口（v0.1.2 已修）**：expand draft/validate prompt 现已真正注入 archetype + 完整风格规约 + 风格样例 + 相邻章节；占位符已清除。剩余人读验收：跑一章真实 expand 由祝融确认风格。
-- **质量基线**：23 个包测试全绿，`go vet` / `gofmt -l` 全清
+- **当前版本**：**v0.1.3**（2026-06-23 ship） — 完整 CLI 闭环：`new → expand → review → finalize → export`
+- **可用 CLI 命令**：`init` / `info` / `config get·set·list` / `new` / `expand <slug> <NN-MM>` / `review` / `finalize` / `export` / `status`
+- **库 API**：4 阶段引擎 `grill → outline → scaffolding → expand` 独立可调
+- **质量基线**：24 个包测试全绿，`go vet` / `gofmt` 全清
+- **下一里程碑**：**v0.1.4 Fallback Model Wiring** — 主模型失败时自动切备用模型
 
 ---
 
 ## 1. 项目目标
 
-> **肩吾 **—— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
+> **肩吾** —— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
 
-用户给出主题，AI 走完 grill 问诊 → outline 生成 → scaffolding 脚手架 → expand 成稿（带 web search 引用）的全流程，产出"配得上 zhurongshuo 同书架"的中文非虚构图书。
+用户给出主题，AI 走完 grill 问诊 → outline 生成 → scaffolding 脚手架 → expand 成稿（带 web search 引用）的全流程，
+产出"配得上 zhurongshuo 同书架"的中文非虚构图书。完整状态机：`expanded → reviewed → final → export`。
 
 ## 2. 两个仓库
 
 | 仓库 | 角色 | 状态 |
 |---|---|---|
-| `jianwu` | 核心引擎（库 + CLI） | v0.1.0 shipped |
-| `mouqin` | Web SaaS（包装 jianwu） | v1.0 未启动 |
+| `jianwu` | 核心引擎（库 + CLI） | **v0.1.3 shipped**（完整闭环） |
+| `mouqin` | Web SaaS（包装 jianwu） | v1.0 未启动，前置 v0.3 SaaS-ready 内核 |
 
 库优先：所有核心逻辑在 `jianwu` 库里，CLI 和未来的 Web 都包同一个库。
 
@@ -48,8 +48,12 @@ cmd/jianwu/main.go                    # CLI 入口（exit code mapping）
 internal/
   cli/                                # cobra 命令层
     root / init / info / config / new # v0.1 命令
+    expand / review / finalize        # v0.1.1-3 新增命令
+    export / status                   # v0.1.3 新增命令
     prompt                            # TerminalPrompt（grill.UserInput 实现）
     providers / new_flow              # 编排 + provider 装配
+    book_resolve                      # loadBook + mirrorChapterStatus 共享助手
+    footnotes                         # 全局脚注重编号（export 用）
   workspace/                          # .jianwu/ 加载、walk-up detect、Init/Load
   config/                             # 5 层 config resolver + secrets (ENV > file, 0600)
   book/                               # Meta/Outline/Chapter/Citation 类型 + JSON I/O + Slugify
@@ -67,7 +71,8 @@ internal/
     expand/                           # 3-iteration agent + 工具调用 + citation 解析
 ```
 
-**包依赖图（无环）：** `cli → engine → provider → book/config/workspace`；`{llm,search,reader}factory` 横跨 provider 子树以打破循环。
+**包依赖图（无环）：** `cli → engine → provider → book/config/workspace`；
+`{llm,search,reader}factory` 横跨 provider 子树以打破循环。
 
 ## 5. v0.1 4 阶段引擎
 
@@ -76,12 +81,10 @@ internal/
 | Grill | `engine/grill` | stateful interactive | GLM-4.6 | ✅ 完成 |
 | Outline | `engine/outline` | 单次 batch | Gemini 2.5 Pro | ✅ 完成 |
 | Scaffolding | `engine/scaffolding` | N 章并行 | Gemini 2.5 Flash | ✅ 完成 |
-| Expand | `engine/expand` | 3-iteration agent | GLM-4.6 | ✅ 引擎完成，CLI 待补 |
+| Expand | `engine/expand` | 3-iteration agent | GLM-4.6 | ✅ 完成（含 prompt 注入） |
 
-**关键流程（v0.1）：**
+**关键流程（`jianwu new`）：**
 ```
-jianwu new
-  ↓
 grill.Run × 12 维度（用户接受/修改 LLM 推荐）
   ↓
 outline.Generate（单次 LLM + JSON Schema 强制输出）
@@ -93,18 +96,26 @@ save books/<slug>/{meta.json, outline.json}
 session archive to books/<slug>/.session.json
 ```
 
-**Expand（库 API，v0.1.x 补 CLI）：**
+**Expand（3 迭代 agent）：**
 ```
 expand.Generate(ctx, chatter, tools, input)
   ↓ iter 1: RunResearch
 web_search × N + read_url × M  →  LLM 提取 research notes + citation candidates
-  ↓ iter 2: RunDraft
+  ↓ iter 2: RunDraft（注入 archetype + style guide + samples + 相邻章节）
 LLM 写 markdown + [^N] footnotes
   ↓ iter 3: RunValidate
-LLM 自检 + 修订，输出 claims[].has_citation
+LLM 自检 + 修订（注入 style guide），输出 claims[].has_citation
   ↓
 ParseFootnotes + mergeCitations(registry metadata)
   → ExpandOutput{Markdown, Citations[], UnverifiedClaims[], WordCount}
+```
+
+**状态机命令（v0.1.3，纯状态/文件操作，不调 LLM）：**
+```
+review <slug> <NN-MM>   : expanded → reviewed
+finalize <slug>         : 全书 reviewed → final（Meta.Status="final"）
+export <slug>           : 合并 chapters → 单 md，全局脚注重编号
+status <slug>           : 显示各章状态 + 下一步提示
 ```
 
 ## 6. Provider 抽象
@@ -130,7 +141,7 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 - `ErrLLMProvider` (4xx) → 不 retry、不 fallback（无意义）
 - 退出码：`0` 成功 / `1` 通用错 / `2` 用法错 / `3` workspace 未找到 / `4` LLM 错 / `5` 网络错
 
-**Retry/Fallback（Q7）：**
+**Retry/Fallback：**
 - 同 provider retry 3 次，指数退避 1s→2s→4s + ±20% jitter，ctx-aware（Ctrl+C 立即响应）
 - Retry 耗尽 → fallback provider；fallback 也失败 → 返回最后一次错误
 
@@ -145,17 +156,13 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
     sessions/<id>.json       # 运行中的 grill 会话
   books/<slug>/
     meta.json                # Meta（id/slug/title/archetype/parameters/...）
-    outline.json             # Outline（parts[].chapters[]）
+    outline.json             # Outline（parts[].chapters[]）+ citations[] + status
     .session.json            # 已完成的 grill 会话（audit log）
-    chapters/NN-MM.md        # expand 后产出（v0.1.x）
+    chapters/NN-MM.md        # expand 产出（YAML frontmatter + markdown + [^N] footnotes）
+    export/<slug>.md         # export 命令产出（全书合并，脚注重编号）
   exports/                   # 导出产物（v0.2+）
   archive/                   # 归档旧版 book（v0.2+）
 ```
-
-### Book 文件
-- `meta.json`：书籍元数据（slug, archetype, parameters, engine versions）
-- `outline.json`：parts[] × chapters[]，每章带 status (scaffolded/expanded/reviewed/final/failed) + abstract/key_concepts/learning_objectives/suggested_examples + citations[]
-- `chapters/NN-MM.md`（v0.1.x expand 后）：markdown + frontmatter + `[^N]` footnotes
 
 完整 schema 见 `internal/book/types.go`。
 
@@ -172,15 +179,19 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 
 ## 9. 已交付
 
-### ✅ CLI 命令（v0.1.1）
-- `jianwu init [--bare] [path]`
-- `jianwu info`
-- `jianwu config get/set/list`
-- `jianwu new [--force]`
-- `jianwu expand <slug> <NN-MM> [--force]`（v0.1.1 新增）
+### ✅ CLI 命令（完整列表）
 
-### ✅ CLI 命令（v0.1.0 范围）
-- 同上除去 `expand`
+| 命令 | 版本 | 说明 |
+|---|---|---|
+| `init [--bare] [path]` | v0.1.0 | 初始化 workspace |
+| `info` | v0.1.0 | 工作区诊断信息 |
+| `config get/set/list` | v0.1.0 | 配置查询与修改 |
+| `new [--force]` | v0.1.0 | 完整 new 流程（grill→outline→scaffolding） |
+| `expand <slug> <NN-MM> [--force]` | **v0.1.1** | 展开单个章节（research→draft→validate） |
+| `review <slug> <NN-MM>` | **v0.1.3** | 标记章节为已审阅 |
+| `finalize <slug> [--dry-run]` | **v0.1.3** | 全书审阅完成后定稿 |
+| `export <slug> [--dry-run]` | **v0.1.3** | 合并章节导出为单文件 markdown |
+| `status <slug>` | **v0.1.3** | 章节进度概览 + 下一步提示 |
 
 ### ✅ 引擎库 API
 - `outline.Generate(ctx, chatter, Input) (*book.Outline, error)`
@@ -200,24 +211,31 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 ### ✅ 数据资产（embed）
 - 3 个 archetype YAML（本体-认识-实践 / 诊断-解码-破局 / 基础-应用-实战）
 - 1 个 style-guide.md + 3 个 few-shot samples
-- 6 本 builtin corpus JSON（reality-construction / advancement-of-reality / silent-games / forced-convergence / ai-engineer-in-action / intelligent-computing-center-construction-guide）
+- 6 本 builtin corpus JSON
 
-## 10. 待做（v0.1.x → v0.2）
+### ✅ Expand Prompt 注入（v0.1.2）
+- archetype YAML 整份注入 draft prompt
+- 完整 style-guide.md 注入 draft + validate 双 prompt
+- 3 个 archetype 对应 samples 注入 draft prompt
+- 相邻章节（prev/next）Title+Abstract+KeyConcepts 注入 user_draft
+
+## 10. 待做（v0.1.x → v0.2 → v0.3 → v1.0）
 
 ### v0.1.x（让 v0.1 真正名副其实）
 
-> v0.1.0 ship 时实际范围是库 API + new CLI；以下切片把 v0.1 承诺（用户能从 CLI 跑出 zhurongshuo 风格章节）真正补齐。
-> v0.1.5 ship 后视为 v0.1 真正交付。详见 `docs/decisions/26-grill-decisions.md` § v0.1.x 完成度审计决策。
+> v0.1.0 tag 时实际范围是库 API + new CLI，未含 expand CLI 与风格注入。
+> v0.1.x 系列补齐承诺。**v0.1.5 ship 后视为 v0.1 真正交付。**
 
 - [x] `jianwu expand <slug> <NN-MM>` CLI 命令（**v0.1.1**，已交付 2026-06-23）
-- [x] Expand prompt 注入 archetype + samples + guide + adjacent chapters（**v0.1.2**，已交付）—— similar book 切出独立切片（embedding 检索增强，依赖 Embedder）
-- [x] `jianwu review <slug> <NN-MM>` / `jianwu finalize <slug>` / `jianwu export <slug> --target md` / `jianwu status <slug>`（**v0.1.3**，已交付）
-- [ ] Fallback model wiring（**v0.1.4**）
+- [x] Expand prompt 注入 archetype + samples + guide + adjacent（**v0.1.2**，已交付）
+- [x] `jianwu review / finalize / export / status` 状态机命令（**v0.1.3**，已交付）
+- [ ] Fallback model wiring（**v0.1.4**，当前迭代）
 - [ ] LLM 调用超时（**v0.1.5**）
 - [ ] Streaming 输出（**v0.1.6**，可选 polish）
 
 ### v0.2（功能扩展）
-- [ ] 章节迭代命令（`rewrite` / `add-chapter` / `move-chapter`）
+
+- [ ] 章节迭代命令（rewrite / add-chapter / move-chapter / delete-chapter / expand --all）
 - [ ] `corpus sync` 扩展语料（重新从 zhurongshuo 拉取）
 - [ ] Embedding 索引文件（v0.1 是实时计算，v0.2 加 cache）
 - [ ] 自动事实复核（claims 抽取 + 验证 agent）
@@ -225,7 +243,22 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 - [ ] 多 export target（zhurongshuo / hugo / pdf）
 - [ ] 后 3 个原型（micro-meso-macro / theory-dynamics-history-present / mindset-method-practice）
 
+### v0.3（SaaS-ready 内核改造，mouqin 前置）
+
+> jianwu 当前全程假设"单用户 + 本地"——12 处直接 `os.*` 文件调用、secrets 全局单文件、
+> provider 装配靠全局可变 var。v0.3 补这层内核能力，**不含任何 web UI**。
+
+| 切片 | 内容 | 前置 |
+|---|---|---|
+| v0.3.0 | 存储抽象 `Storage` 接口 | 地基 |
+| v0.3.1 | 长任务 / 进度模型（expand 回调 + 可取消） | v0.1.5 |
+| v0.3.2 | Token / 成本计量 | — |
+| v0.3.3 | per-tenant Secrets | — |
+| v0.3.4 | 并发安全 provider 装配（吸收 v0.2.6） | — |
+| v0.3.5 | SaaS 安全加固（SSRF allowlist / LimitReader / 错误截断） | — |
+
 ### v1.0（mouqin SaaS）
+
 - [ ] mouqin web app（前后端）
 - [ ] 多用户 / 鉴权 / 账单
 - [ ] 公开 book 分享链接
@@ -235,30 +268,21 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 ## 11. 已知技术债
 
 ### 架构层
-- `cli.chatterProviderHook` 是 test-only 全局可变 var（注释已警告），v0.2 重构为 struct field（决策 Q14=C，v0.1.x 不动）
-- `cli.providerDepsHook`（v0.1.1 新增）同款 test-only 全局可变 var，预演 v0.2 重构方向（决策 Q20=B）
+- `cli.chatterProviderHook` + `cli.providerDepsHook` 是 test-only 全局可变 var（注释已警告），v0.3.4 重构为显式注入
 - 三个 factory 包（`llmfactory` / `searchfactory` / `readerfactory`）独立存在只为打破 import cycle——是 Go 标准做法但显得啰嗦
 
-### 代码层（v0.1.1-post 已清理）
-- ~~`book.Citation.UsedInParagraph` 字段从未填充~~ — 已删除（无 schema 兼容压力，从未填充）
-- ~~`expand.types.ExpandOutput.Draft` 字段保留 pre-validation draft 用于 debug~~ — 已删除（从未读）
-- ~~`cli.new.go` 的 `_ = session` 是预期行为~~ — 已重构（`runNewFlow` 不再返回 session，CLI 路径与测试路径分离）
-
-### 代码层（v0.1.0 误记，留作记录）
-- ~~`expand.ResearchPlan` struct 从未使用~~ — 实际从未定义（误记）
-- ~~`expand.NewToolRegistryFromProviders` 是 alias~~ — 实际从未定义（误记）
-- ~~`expand.citation.go` 的 `inChinese` 空 if~~ — 实际不存在（误记）
-- ~~`expand.Citation.UsedInParagraph` 字段从未填充~~ — 实际从未定义（仅 book 包有）
+### 代码层（已清理）
+- ~~`book.Citation.UsedInParagraph` 字段从未填充~~ — 已删除
+- ~~`expand.ExpandOutput.Draft` 字段保留 pre-validation draft~~ — 已删除
+- ~~`cli.new.go` 的 `_ = session`~~ — 已重构
+- ~~`expand.similar_book_tool.go` `LookupSimilarBook` 从未被主流程调用~~ — 已删除（v0.1.2 切出独立切片，代码债清理）
+- ~~`provider/llm/interface.go` `chatterEmbedder` 废弃类型~~ — 已删除（用 `ChatterEmbedder` 替代）
 
 ### 安全（v0.1 可接受，v1.0 SaaS 必修）
 - Search/Reader 的 BaseURL 配置无 allowlist（v1.0 SaaS 需要）
 - Jina 的 `io.ReadAll` 无大小限制（v1.0 加 LimitReader）
 - Search/Reader 错误消息含完整 response body（v1.0 截断）
-- Citation 中的 URL 无 SSRF 校验（Jina 服务端 fetch，我们的客户端不直连）
-
-### 文档
-- ~~`DESIGN.md` §11 状态行还写"v0.1 设计已锁定，进入实施阶段"~~ — 已更新（line 7: "v0.1.0 已交付"）
-- ~~`EXTRACTION_NOTES.md` 还标"待审阅"~~ — 已更新（line 9: "v0.1.0 ship 时已通过 7 个切片的 SDD review 验证"）
+- Citation 中的 URL 无 SSRF 校验（Jina 服务端 fetch，客户端不直连）
 
 ## 12. 关键设计决策（grill-me 26 项）
 
@@ -271,15 +295,15 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 - **独立于 zhurongshuo**：内置最小语料 + sync 扩展分层
 - **显式 workspace**：一个 workspace = 一个 git 仓库 = 一个逻辑集合
 
-## 13. 开发工作流（v0.1.x+）
+## 13. 开发工作流
 
-参考已归档的 7 个切片计划（`docs/archive/plans/`）了解 SDD（subagent-driven development）模式：
+参考已归档的切片计划（`docs/archive/plans/`）了解 SDD（subagent-driven development）模式：
 
-1. **/grill-me** 26 个维度决策对齐
-2. **writing-plans** 出 task-by-task 计划（每个 task TDD：RED → GREEN → commit）
+1. **/grill-me** 决策对齐（先决策后代码）→ 产出 `docs/decisions/`
+2. **writing-plans** 出 task-by-task 计划 → `docs/plans/`
 3. **subagent-driven-development** 每个 task 派 fresh implementer subagent + task reviewer
 4. 切片完成 → opus 最终 whole-branch review → 一个修复 commit 解决所有 findings
-5. tag vX.Y.Z + push
+5. 计划文件归档到 `docs/archive/plans/`（ship 后）
 
 新切片应该按这个模式继续。
 
@@ -287,7 +311,7 @@ type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
 
 - **库代码**（数据解析、状态机、纯逻辑）：TDD（test-first）
 - **LLM-driven 代码**：test-after，Mock Provider + httptest
-- **E2E**：1 个 happy path（`cli/e2e_new_test.go` 用 `chatterProviderHook` 注入 mock）
+- **E2E**：每命令 1 个 happy path（用 `chatterProviderHook` / `providerDepsHook` 注入 mock）
 - **Live integration**：每阶段都有，无 API key 时 SKIP
 
 跑全部测试：
@@ -311,14 +335,13 @@ cd my-library
 export GEMINI_API_KEY=...
 export GLM_API_KEY=...
 
-# 完整跑一遍
+# 完整跑一遍（grill → outline → scaffolding → expand → review → finalize → export）
 jianwu new
-# ... 答 12 个 grill 问题（接受推荐用回车）...
-# 自动产出 books/<slug>/{meta.json, outline.json}
-
-# 扩展单章（v0.1.1+）
 jianwu expand <slug> 01-01
-# 产出 books/<slug>/chapters/01-01.md + 更新 outline.json 状态
+jianwu review  <slug> 01-01
+jianwu finalize <slug>
+jianwu export   <slug> --dry-run  # 预览
+jianwu export   <slug>            # 产出 books/<slug>/export/<slug>.md
 ```
 
 ## 16. 文档索引
@@ -327,37 +350,41 @@ jianwu expand <slug> 01-01
 |---|---|
 | `README.md` | 用户视角介绍 + 安装 + 快速上手 |
 | `docs/PROJECT_STATUS.md`（本文档） | LLM 友好的当前状态全景 |
-| `docs/architecture/overview.md` | 架构图 + 数据流 |
-| `docs/decisions/26-grill-decisions.md` | 26 项核心决策 + v0.1.x 21 项审计决策 |
+| `docs/architecture/overview.md` | 架构图 + 数据流 + 关键接口 |
+| `docs/decisions/26-grill-decisions.md` | 26 项核心决策 + v0.1.x 审计决策 |
 | `docs/ROADMAP.md` | v0.1.x → v1.0 路线图 |
-| `docs/plans/*.md` | 当前切片的 SDD plan（v0.1.1+；ship 后保留作参考） |
-| `docs/archive/plans/*.md` | v0.1.0 的 7 个历史切片 SDD plan（S1-S7） |
-| `DESIGN.md` | 原始设计文档（v0.1 锁定版，部分状态需更新） |
-| `EXTRACTION_NOTES.md` | zhurongshuo 资产萃取记录 |
+| `docs/EXTRACTION_NOTES.md` | zhurongshuo 资产萃取记录 |
+| `docs/plans/` | 当前切片的 SDD plan（为空表示无进行中切片） |
+| `docs/archive/plans/` | 已完成切片的 SDD plan（S1-S7 + v0.1.1–v0.1.3） |
+| `docs/archive/DESIGN.md` | 原始设计文档（v0.1 锁定版，部分内容已过期） |
+| `AGENTS.md` | 给 AI agent 的项目记忆（构建/测试/架构/约定速查） |
 | `LICENSE` | AGPL-3.0 |
 
----
+## 17. 里程碑回顾
 
-## 17. v0.1.1 ship 复盘（2026-06-23）
+### v0.1.1 Expand CLI（2026-06-23）
 
-**做了什么：** 把 expand 引擎从库 API 接到 CLI，加了 `jianwu expand <slug> <NN-MM>` 命令。8 个 task 走完 SDD（plan → 每 task implementer + reviewer → opus whole-branch review → 1 个 fix commit）。
+expand 引擎从库 API 接到 CLI，加 `jianwu expand <slug> <NN-MM>` 命令。8 个 task 走完 SDD。
 
-**关键发现（来自 v0.1.0 后审计）：**
-- v0.1.0 tag 过早（承诺"用户能跑出章节"但 CLI 不支持 expand）— Q1=B 重新定义 ship 标准
-- expand prompts 全是占位符（`iter_draft.go:25-26`）— LLM 收到 `"(archetype loaded at orchestrator level)"` 字面字符串，产出 generic markdown 不是 zhurongshuo 风格 — Q16=C 把 prompt 注入从 v0.2.6 提到 v0.1.2
+### v0.1.2 Expand Prompt 注入（2026-06-23）
 
-**什么有效：**
-- SDD 纪律（Q19=A）保持：每 task fresh subagent + reviewer + opus final review
-- TDD 顺序在所有 7 个代码 task 都成立（RED → GREEN → commit）
-- 决策先行：21 项 grill 决策（Q1-Q21）写进 `docs/decisions/26-grill-decisions.md` 后才动代码
+把 archetype + style guide + samples + 相邻章节真正注入 draft/validate prompt，使产出贴合 zhurongshuo 风格。similar-book 切出独立切片（v0.2.1）。
 
-**什么没效 / 需要改进：**
-- v0.1.0 ship 时没 grill 这些决策 — 导致 ship 后才发现"承诺未达成"
-- gofmt 在 opus final review 时发现一处需要清理（commit `da47501`）
-- final review 发现 3 个 Important issues（ROADMAP 重复段、--force --force 测试缺失、dead code）— 都是 reviewer 兜底，per-task reviewer 没抓到
+### v0.1.3 状态机命令（2026-06-23）
 
-**下一个切片（v0.1.4）：** Fallback model wiring — config 配置的备用模型在主模型失败时自动接管。
+review / finalize / export --target md / status 四命令，纯状态/文件操作（不调 LLM）。
+outline.json 为状态真相源、镜像同步章节 .md frontmatter；严格状态机 expanded→reviewed→final。
+export 全局重编号脚注、缺正文章节占位提示。
 
-> v0.1.3（状态机命令）已交付：review / finalize / export --target md / status 四命令，纯状态/文件操作（不调 LLM）。outline.json 为状态真相源、镜像同步章节 .md frontmatter；严格状态机 expanded→reviewed→final；export 全局重编号脚注、缺正文章节占位。决策见 `docs/decisions/26-grill-decisions.md` § v0.1.3（审计 Q7/Q8/Q9 + 实施 Q1-Q11）；计划见 `docs/plans/2026-06-23-v0.1.3-state-machine-commands.md`。
->
-> v0.1.2（Expand Prompt 注入）已交付：archetype + 完整风格规约 + 风格样例 + 相邻章节真正注入 draft/validate prompt，对齐 outline 引擎既有模式；similar book 切出独立切片。决策见 § v0.1.2（Q1/Q4-Q11）；计划见 `docs/plans/2026-06-23-v0.1.2-prompt-injection.md`。
+### 下一个切片：v0.1.4 Fallback Model Wiring
+
+**目标：** 配置中指定备用模型，主模型失败时自动接管。全局单一 fallback（决策 Q10=A）。
+
+**任务：**
+- `config.ModelRef` 加 `Fallback *ModelRef` 字段
+- `cli.buildChatter` 检测 Fallback，非空则 wrap with `FallbackWrapper`
+- fallback provider == primary provider 时打 warning + 不装 wrapper
+- 配置示例更新到 workspace 默认模板
+- E2E test：primary 失败 → fallback 接管
+
+**验收：** 配 primary=gemini-2.5-pro + fallback=glm-4.6，断网 Gemini 时自动切到 GLM。

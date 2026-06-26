@@ -74,7 +74,7 @@ internal/cli ──────────┬─→ internal/engine/{outline, s
     └─ repo.Archive(session, slug)  ← 移到 books/<slug>/.session.json（audit log）
 ```
 
-## 数据流（v0.1.x `jianwu expand` — 待实现）
+## 数据流（v0.1.x `jianwu expand` — 已实现）
 
 ```
 [jianwu expand <slug> <NN-MM>]

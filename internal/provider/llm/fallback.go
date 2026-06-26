@@ -9,8 +9,8 @@ import (
 // If both fail, returns the fallback's error (last attempt).
 // Wrap Primary and Fallback in RetryWrapper if you want retry-then-fallback per Q7.
 type FallbackWrapper struct {
-	Primary  chatterEmbedder
-	Fallback chatterEmbedder
+	Primary  ChatterEmbedder
+	Fallback ChatterEmbedder
 }
 
 func (fw *FallbackWrapper) Chat(ctx context.Context, req ChatRequest) (*ChatResponse, error) {

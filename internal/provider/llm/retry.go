@@ -48,7 +48,7 @@ type RetryWrapper struct {
 }
 
 // NewRetryWrapper constructs a RetryWrapper with default config and real clock.
-func NewRetryWrapper(inner chatterEmbedder) *RetryWrapper {
+func NewRetryWrapper(inner ChatterEmbedder) *RetryWrapper {
 	return &RetryWrapper{Inner: inner, Config: DefaultRetryConfig, clock: clock{}}
 }
 

@@ -232,7 +232,7 @@ GEMINI_API_KEY=xxx go test ./internal/engine/expand/... -run TestGenerateLive   
 
 Embedded data assets (via `//go:embed`): 3 archetype YAML files, 1 style guide + 3 few-shot samples, 6 built-in corpus JSON books. Runtime has zero external dependency on the zhurongshuo repo.
 
-See [`DESIGN.md`](DESIGN.md) for the full design doc and [`docs/decisions/26-grill-decisions.md`](docs/decisions/26-grill-decisions.md) for the decision record.
+See [`docs/archive/DESIGN.md`](docs/archive/DESIGN.md) for the original design doc (v0.1 locked) and [`docs/decisions/26-grill-decisions.md`](docs/decisions/26-grill-decisions.md) for the decision record.
 
 ## License
 

@@ -232,7 +232,7 @@ GEMINI_API_KEY=xxx go test ./internal/engine/expand/... -run TestGenerateLive   
 
 内置数据资产（`//go:embed`）：3 个 archetype YAML、1 个风格规约 + 3 个 few-shot 样例、6 本内置 corpus JSON。运行时对 zhurongshuo 仓库零外部依赖。
 
-完整设计见 [`DESIGN.md`](DESIGN.md)，决策记录见 [`docs/decisions/26-grill-decisions.md`](docs/decisions/26-grill-decisions.md)。
+完整设计见 [`docs/archive/DESIGN.md`](docs/archive/DESIGN.md)（v0.1 锁定版），决策记录见 [`docs/decisions/26-grill-decisions.md`](docs/decisions/26-grill-decisions.md)。
 
 ## 许可
 

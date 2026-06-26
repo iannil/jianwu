@@ -26,9 +26,3 @@ type ChatterEmbedder interface {
 	Embedder
 }
 
-// chatterEmbedder is the union of Chatter + Embedder for wrappers that compose both.
-// Deprecated: Use ChatterEmbedder instead.
-type chatterEmbedder interface {
-	Chatter
-	Embedder
-}

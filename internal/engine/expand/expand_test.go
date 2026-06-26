@@ -122,30 +122,3 @@ func TestTruncateUTF8(t *testing.T) {
 		t.Errorf("expected first 4 runes, got %q", got)
 	}
 }
-
-func TestLookupSimilarBookCapExpires(t *testing.T) {
-	// stubEmbedder returns empty embeddings
-	stubEmbedder := mockChatter3Phases{}
-	reg := NewToolRegistry(nil, nil, &stubEmbedder)
-
-	// 1st call should succeed
-	_, err1 := reg.LookupSimilarBook(context.Background(), "test")
-	if err1 != nil {
-		t.Fatalf("1st call failed: %v", err1)
-	}
-
-	// 2nd call should succeed
-	_, err2 := reg.LookupSimilarBook(context.Background(), "test")
-	if err2 != nil {
-		t.Fatalf("2nd call failed: %v", err2)
-	}
-
-	// 3rd call should error
-	_, err3 := reg.LookupSimilarBook(context.Background(), "test")
-	if err3 == nil {
-		t.Fatal("3rd call should error, but succeeded")
-	}
-	if !strings.Contains(err3.Error(), "call limit") {
-		t.Errorf("expected limit error, got: %v", err3)
-	}
-}

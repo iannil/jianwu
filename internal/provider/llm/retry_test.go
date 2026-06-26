@@ -168,7 +168,7 @@ func TestRetryWrapperEmbedRetriesOnNetworkError(t *testing.T) {
 	}
 }
 
-// mockChatterEmbedder is a test helper that implements chatterEmbedder with custom funcs
+// mockChatterEmbedder is a test helper that implements ChatterEmbedder with custom funcs
 type mockChatterEmbedder struct {
 	chat  func(ctx context.Context, req ChatRequest) (*ChatResponse, error)
 	embed func(ctx context.Context, req EmbedRequest) (*EmbedResponse, error)

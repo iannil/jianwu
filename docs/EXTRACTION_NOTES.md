@@ -184,8 +184,10 @@ DESIGN.md 第 7.3 节提到 `~/.local/share/jianwu/corpus/index/` 存 embedding 
 
 ```
 /Users/rong.zhu/Code/jianwu/
-├── DESIGN.md                                        # 设计文档（v0.1 锁定）
-├── EXTRACTION_NOTES.md                              # 本文件
+├── docs/
+│   ├── EXTRACTION_NOTES.md                           # 本文件
+│   ├── archive/DESIGN.md                             # 设计文档（v0.1 锁定）
+│   └── ...
 └── internal/
     ├── archetypes/
     │   ├── ontology-epistemology-practice.yaml
