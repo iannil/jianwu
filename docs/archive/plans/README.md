@@ -1,6 +1,6 @@
 # 归档：SDD 切片计划（v0.1.x 已交付）
 
-> 本文档归档 v0.1.0（S1-S7）+ v0.1.x（v0.1.1–v0.1.3）所有已完成切片的 SDD 实施计划。
+> 本文档归档 v0.1.0（S1-S7）+ v0.1.x（v0.1.1–v0.1.6）+ v0.2.0 所有已完成切片的 SDD 实施计划。
 > 不再维护——以 `docs/PROJECT_STATUS.md` 为当前真相源。
 
 ---
@@ -19,19 +19,28 @@
 | S6 | `2026-06-22-s6-new-command.md` | `jianwu new` 命令编排 | 7 | ✅ v0.0.6 |
 | S7 | `2026-06-22-s7-expand.md` | Expand agent 阶段 | 10 | ✅ v0.1.0 |
 
-### v0.1.x 切片（3 份，新增）
+### v0.1.x 切片（6 份，新增）
 
 | 切片 | 文件 | 内容 | 状态 |
 |---|---|---|---|
 | v0.1.1 | `2026-06-22-v0.1.1-expand-cli.md` | Expand CLI 命令 + chapter I/O + providerDepsHook | ✅ v0.1.1 |
 | v0.1.2 | `2026-06-23-v0.1.2-prompt-injection.md` | Archetype + style + sample + adjacent 注入 | ✅ v0.1.2 |
 | v0.1.3 | `2026-06-23-v0.1.3-state-machine-commands.md` | review / finalize / export / status 命令 | ✅ v0.1.3 |
+| v0.1.4 | `2026-06-26-v0.1.4-fallback-wiring.md` | Fallback model wiring（ModelRef.Fallback） | ✅ v0.1.4 |
+| v0.1.5 | `2026-06-26-v0.1.5-grill-hardening.md` | Grill 健壮性改进（P1/P2/P5/P6） | ✅ v0.1.5 |
+| v0.1.6 | `2026-06-26-v0.1.6-streaming-output.md` | Streamer 接口 + draft 流式输出 | ✅ v0.1.6 |
 
-总计：~66 个 task（v0.1.0）+ ~20 个 task（v0.1.x），每个都单独 TDD + subagent-driven review。
+### v0.2 切片（1 份）
+
+| 切片 | 文件 | 内容 | 状态 |
+|---|---|---|---|
+| v0.2.0 | `2026-06-26-v0.2.0-factcheck.md` | factcheck + revise 命令，claims 自动复核 | ✅ v0.2.0 |
+
+总计：~66 个 task（v0.1.0）+ ~26 个 task（v0.1.x）+ ~8 个 task（v0.2.0），每个都单独 TDD + subagent-driven review。
 
 ## 用作模板
 
-新切片（v0.1.4 Fallback Wiring、v0.2 等）应该按相同模式：
+新切片应该按相同模式：
 
 1. 在 `docs/plans/` 下新建 `YYYY-MM-DD-<slice-name>.md`（注意：不再放 `superpowers/plans/`，那是 v0.1 流程遗留）
 2. 头部含 superpowers:subagent-driven-development 引用
