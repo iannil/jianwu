@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/iannil/jianwu/internal/storage"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,7 +38,7 @@ func LoadSecrets() (*Secrets, error) {
 	}
 	path := filepath.Join(home, ".config", "jianwu", "secrets.yaml")
 
-	if info, err := os.Stat(path); err == nil {
+	if info, err := storage.OS.Stat(path); err == nil {
 		// File exists: enforce strict permissions.
 		perm := info.Mode().Perm()
 		if perm > 0o600 {
@@ -46,7 +47,7 @@ func LoadSecrets() (*Secrets, error) {
 				path, perm, path,
 			)
 		}
-		data, err := os.ReadFile(path)
+		data, err := storage.OS.ReadFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("read secrets: %w", err)
 		}

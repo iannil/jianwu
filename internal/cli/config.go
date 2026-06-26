@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
+	"github.com/iannil/jianwu/internal/storage"
 	"github.com/iannil/jianwu/internal/workspace"
 )
 
@@ -72,7 +72,7 @@ func newConfigSetCmd() *cobra.Command {
 				return fmt.Errorf("marshal config: %w", err)
 			}
 			path := filepath.Join(wsRoot, ".jianwu", "config.yaml")
-			if err := os.WriteFile(path, data, 0o644); err != nil {
+			if err := storage.OS.WriteFile(path, data, 0o644); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "set %s = %s\n", args[0], args[1])

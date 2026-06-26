@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/iannil/jianwu/internal/storage"
 	"gopkg.in/yaml.v3"
 )
 
@@ -38,7 +39,7 @@ func Load(wsRoot string) (*Config, error) {
 // Merging is field-by-field for struct fields (mergeConfig, mergeModelRef)
 // and wholesale-replace for slices (Archetypes.Library, Style.Guide/Samples).
 func overlayYAML(cfg *Config, path string) error {
-	data, err := os.ReadFile(path)
+	data, err := storage.OS.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil

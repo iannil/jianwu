@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/storage"
 	"github.com/spf13/cobra"
 )
 
@@ -112,10 +113,10 @@ func exportMD(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
 		fmt.Fprintf(out, "[dry-run] would write %s (%d chapter(s), %d placeholder(s))\n", outPath, present, missing)
 		return nil
 	}
-	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+	if err := storage.OS.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return &InfoError{Err: fmt.Errorf("mkdir export dir: %w", err), Code: ExitCodeGeneric}
 	}
-	if err := os.WriteFile(outPath, []byte(b.String()), 0o644); err != nil {
+	if err := storage.OS.WriteFile(outPath, []byte(b.String()), 0o644); err != nil {
 		return &InfoError{Err: fmt.Errorf("write export: %w", err), Code: ExitCodeGeneric}
 	}
 	fmt.Fprintf(out, "✓ Exported %s (%d chapter(s), %d placeholder(s))\n", outPath, present, missing)
@@ -130,7 +131,7 @@ func exportHugo(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
 
 	// Book-level _index.md.
 	if !dryRun {
-		if err := os.MkdirAll(baseDir, 0o755); err != nil {
+		if err := storage.OS.MkdirAll(baseDir, 0o755); err != nil {
 			return &InfoError{Err: fmt.Errorf("mkdir hugo content: %w", err), Code: ExitCodeGeneric}
 		}
 	}
@@ -143,7 +144,7 @@ func exportHugo(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
 		partSlug := slugify(p.Title)
 
 		if !dryRun {
-			os.MkdirAll(partDir, 0o755)
+			storage.OS.MkdirAll(partDir, 0o755)
 		}
 
 		// Part _index.md.
@@ -157,7 +158,7 @@ func exportHugo(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
 			fmt.Fprintf(&partBuf, "%s\n\n", p.Intro)
 		}
 		if !dryRun {
-			os.WriteFile(filepath.Join(partDir, "_index.md"), []byte(partBuf.String()), 0o644)
+			storage.OS.WriteFile(filepath.Join(partDir, "_index.md"), []byte(partBuf.String()), 0o644)
 		}
 
 		// Chapter files.
@@ -189,7 +190,7 @@ func exportHugo(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
 			chBuf.WriteString("\n")
 
 			if !dryRun {
-				os.WriteFile(chPath, []byte(chBuf.String()), 0o644)
+				storage.OS.WriteFile(chPath, []byte(chBuf.String()), 0o644)
 			}
 			totalChapters++
 		}

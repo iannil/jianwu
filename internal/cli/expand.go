@@ -14,6 +14,7 @@ import (
 	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/engine/expand"
 	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/storage"
 	"github.com/iannil/jianwu/internal/workspace"
 )
 
@@ -70,7 +71,7 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *Provider
 
 	// --force semantics (Q3=B).
 	chapPath := book.ChapterPath(bookDir, partIdx, chIdx)
-	if _, statErr := os.Stat(chapPath); statErr == nil {
+	if _, statErr := storage.OS.Stat(chapPath); statErr == nil {
 		// File exists. Check force.
 		existingFM, _, readErr := book.ReadChapter(chapPath)
 		if readErr != nil {

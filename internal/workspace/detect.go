@@ -1,8 +1,9 @@
 package workspace
 
 import (
-	"os"
 	"path/filepath"
+
+	"github.com/iannil/jianwu/internal/storage"
 )
 
 // FindWorkspace walks up from startPath looking for a directory containing
@@ -28,6 +29,6 @@ func FindWorkspace(startPath string) (string, error) {
 }
 
 func isWorkspace(dir string) bool {
-	info, err := os.Stat(filepath.Join(dir, MarkerName))
+	info, err := storage.OS.Stat(filepath.Join(dir, MarkerName))
 	return err == nil && info.IsDir()
 }

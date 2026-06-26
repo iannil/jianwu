@@ -21,6 +21,7 @@ import (
 	"github.com/iannil/jianwu/internal/engine/outline"
 	"github.com/iannil/jianwu/internal/engine/scaffolding"
 	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/storage"
 )
 
 // checkSlugConflict returns nil if the slug is available; an error if a book exists
@@ -28,7 +29,7 @@ import (
 // Per Q21.A3.
 func checkSlugConflict(wsRoot, slug string, force bool) error {
 	bookDir := filepath.Join(wsRoot, "books", slug)
-	info, err := os.Stat(bookDir)
+	info, err := storage.OS.Stat(bookDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -41,7 +42,7 @@ func checkSlugConflict(wsRoot, slug string, force bool) error {
 	if !force {
 		return fmt.Errorf("book %q already exists at %s; use --force to overwrite", slug, bookDir)
 	}
-	if err := os.RemoveAll(bookDir); err != nil {
+	if err := storage.OS.RemoveAll(bookDir); err != nil {
 		return fmt.Errorf("remove existing book dir: %w", err)
 	}
 	return nil
@@ -243,7 +244,7 @@ func runNewFlowWithChatters(
 
 // writeBookMeta writes meta.json for the new book.
 func writeBookMeta(bookDir, slug string, session *grill.Session) error {
-	if err := os.MkdirAll(bookDir, 0o755); err != nil {
+	if err := storage.OS.MkdirAll(bookDir, 0o755); err != nil {
 		return fmt.Errorf("mkdir book dir: %w", err)
 	}
 	meta := &book.Meta{

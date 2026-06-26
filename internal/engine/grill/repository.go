@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/iannil/jianwu/internal/storage"
 )
 
 // Repository manages session files in a workspace.
@@ -35,7 +37,7 @@ func (r *Repository) Load(id string) (*Session, error) {
 // ListIncomplete returns sessions in progress, sorted by StartedAt ascending.
 // Used for resume prompts on startup (per Q11.A2).
 func (r *Repository) ListIncomplete() ([]*Session, error) {
-	entries, err := os.ReadDir(r.SessionsDir)
+	entries, err := storage.OS.ReadDir(r.SessionsDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -69,11 +71,11 @@ func (r *Repository) Archive(s *Session, slug string) error {
 	// Workspace root is two levels up from SessionsDir.
 	wsRoot := filepath.Dir(filepath.Dir(r.SessionsDir))
 	dst := filepath.Join(wsRoot, "books", slug, ".session.json")
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+	if err := storage.OS.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return fmt.Errorf("mkdir book dir: %w", err)
 	}
 	// Atomic rename — both paths are under the same workspace root.
-	if err := os.Rename(src, dst); err != nil {
+	if err := storage.OS.Rename(src, dst); err != nil {
 		return fmt.Errorf("archive session %s: %w", s.ID, err)
 	}
 	return nil

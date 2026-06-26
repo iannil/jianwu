@@ -2,8 +2,9 @@ package workspace
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
+
+	"github.com/iannil/jianwu/internal/storage"
 )
 
 // Init creates a workspace at the given path.
@@ -12,15 +13,15 @@ import (
 // Returns an error if a workspace already exists at the path.
 func Init(path string, opts InitOpts) error {
 	marker := filepath.Join(path, MarkerName)
-	if _, err := os.Stat(marker); err == nil {
+	if _, err := storage.OS.Stat(marker); err == nil {
 		return fmt.Errorf("workspace already exists at %s", path)
 	}
 
-	if err := os.MkdirAll(marker, 0o755); err != nil {
+	if err := storage.OS.MkdirAll(marker, 0o755); err != nil {
 		return fmt.Errorf("create %s: %w", marker, err)
 	}
 
-	if err := os.WriteFile(
+	if err := storage.OS.WriteFile(
 		filepath.Join(marker, SchemaVersionFileName),
 		[]byte(CurrentSchemaVersion+"\n"),
 		0o644,
@@ -29,7 +30,7 @@ func Init(path string, opts InitOpts) error {
 	}
 
 	cfg := defaultWorkspaceConfig()
-	if err := os.WriteFile(
+	if err := storage.OS.WriteFile(
 		filepath.Join(marker, ConfigFileName),
 		[]byte(cfg),
 		0o644,
@@ -42,7 +43,7 @@ func Init(path string, opts InitOpts) error {
 	}
 
 	for _, sub := range []string{"books", "exports", "archive"} {
-		if err := os.MkdirAll(filepath.Join(path, sub), 0o755); err != nil {
+		if err := storage.OS.MkdirAll(filepath.Join(path, sub), 0o755); err != nil {
 			return fmt.Errorf("create %s: %w", sub, err)
 		}
 	}

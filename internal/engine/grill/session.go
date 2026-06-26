@@ -3,11 +3,11 @@ package grill
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/iannil/jianwu/internal/storage"
 )
 
 // Session is the persisted state of a grill interview.
@@ -102,7 +102,7 @@ func (s *Session) Path(dir string) string {
 
 // Save writes the session to disk as pretty JSON.
 func (s *Session) Save(dir string) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := storage.OS.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("mkdir sessions: %w", err)
 	}
 	data, err := json.MarshalIndent(s, "", "  ")
@@ -110,7 +110,7 @@ func (s *Session) Save(dir string) error {
 		return fmt.Errorf("marshal session: %w", err)
 	}
 	data = append(data, '\n')
-	if err := os.WriteFile(s.Path(dir), data, 0o644); err != nil {
+	if err := storage.OS.WriteFile(s.Path(dir), data, 0o644); err != nil {
 		return fmt.Errorf("write session: %w", err)
 	}
 	return nil
@@ -118,7 +118,7 @@ func (s *Session) Save(dir string) error {
 
 // LoadSession reads a session by ID from the directory.
 func LoadSession(dir, id string) (*Session, error) {
-	data, err := os.ReadFile(filepath.Join(dir, id+".json"))
+	data, err := storage.OS.ReadFile(filepath.Join(dir, id+".json"))
 	if err != nil {
 		return nil, fmt.Errorf("read session %s: %w", id, err)
 	}
