@@ -16,30 +16,45 @@ func newExportCmd() *cobra.Command {
 	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "export <slug>",
-		Short: "Export a book to a single markdown file",
-		Long: `Assemble all chapters into books/<slug>/export/<slug>.md.
-Footnotes are renumbered globally across the book. Chapters without prose get a placeholder.
-Exportable at any status; the output header notes whether the book is draft or final.`,
+		Short: "Export a book to markdown files",
+		Long: `Assemble all chapters into export/ directory.
+
+Targets:
+  md    — Single markdown file with Pandoc frontmatter (default)
+  hugo  — Chapter-per-file Hugo content structure
+
+Footnotes are renumbered globally across the book.
+Exportable at any status.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runExport(cmd, args, target, dryRun)
 		},
 	}
-	cmd.Flags().StringVar(&target, "target", "md", "export target (only \"md\" supported in v0.1.3)")
+	cmd.Flags().StringVar(&target, "target", "md", "export target: md (single file) or hugo (chapter-per-file)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "report what would be written without writing")
 	return cmd
 }
 
 func runExport(cmd *cobra.Command, args []string, target string, dryRun bool) error {
-	out := cmd.OutOrStdout()
 	slug := args[0]
-	if target != "md" {
-		return &InfoError{Err: fmt.Errorf("unsupported export target %q; only \"md\" is supported", target), Code: ExitCodeUsage}
-	}
 	bc, err := loadBook(slug)
 	if err != nil {
 		return err
 	}
+	switch target {
+	case "md":
+		return exportMD(cmd, bc, dryRun)
+	case "hugo":
+		return exportHugo(cmd, bc, dryRun)
+	default:
+		return &InfoError{Err: fmt.Errorf("unsupported export target %q; supported: md, hugo", target), Code: ExitCodeUsage}
+	}
+}
+
+// exportMD writes a single markdown file with Pandoc YAML frontmatter.
+func exportMD(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
+	out := cmd.OutOrStdout()
+	slug := bc.Meta.Slug
 
 	var b strings.Builder
 	// Pandoc-compatible YAML frontmatter.
@@ -101,4 +116,109 @@ func runExport(cmd *cobra.Command, args []string, target string, dryRun bool) er
 	}
 	fmt.Fprintf(out, "✓ Exported %s (%d chapter(s), %d placeholder(s))\n", outPath, present, missing)
 	return nil
+}
+
+// exportHugo writes a chapter-per-file Hugo content structure.
+// Output: export/hugo/content/_index.md + part-NN/_index.md + chapter files.
+func exportHugo(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
+	out := cmd.OutOrStdout()
+	baseDir := filepath.Join(bc.BookDir, "export", "hugo", "content")
+
+	// Book-level _index.md.
+	if !dryRun {
+		if err := os.MkdirAll(baseDir, 0o755); err != nil {
+			return &InfoError{Err: fmt.Errorf("mkdir hugo content: %w", err), Code: ExitCodeGeneric}
+		}
+	}
+
+	counter := 1
+	totalChapters := 0
+	for pi := range bc.Outline.Parts {
+		p := bc.Outline.Parts[pi]
+		partDir := filepath.Join(baseDir, fmt.Sprintf("part-%02d", p.Index))
+		partSlug := slugify(p.Title)
+
+		if !dryRun {
+			os.MkdirAll(partDir, 0o755)
+		}
+
+		// Part _index.md.
+		var partBuf strings.Builder
+		fmt.Fprintf(&partBuf, "---\n")
+		fmt.Fprintf(&partBuf, "title: \"%s\"\n", p.Title)
+		fmt.Fprintf(&partBuf, "slug: \"%s\"\n", partSlug)
+		fmt.Fprintf(&partBuf, "weight: %d\n", p.Index)
+		fmt.Fprintf(&partBuf, "---\n\n")
+		if p.Intro != "" {
+			fmt.Fprintf(&partBuf, "%s\n\n", p.Intro)
+		}
+		if !dryRun {
+			os.WriteFile(filepath.Join(partDir, "_index.md"), []byte(partBuf.String()), 0o644)
+		}
+
+		// Chapter files.
+		for ci := range p.Chapters {
+			c := p.Chapters[ci]
+			chSlug := slugify(c.Title)
+			chPath := filepath.Join(partDir, fmt.Sprintf("ch%02d-%s.md", c.Index, chSlug))
+
+			_, body, rerr := book.ReadChapter(book.ChapterPath(bc.BookDir, p.Index, c.Index))
+			if rerr != nil {
+				totalChapters++
+				continue
+			}
+			renumbered, next := renumberFootnotes(body, counter)
+			counter = next
+
+			var chBuf strings.Builder
+			fmt.Fprintf(&chBuf, "---\n")
+			fmt.Fprintf(&chBuf, "title: \"%s\"\n", c.Title)
+			fmt.Fprintf(&chBuf, "slug: \"%s\"\n", chSlug)
+			fmt.Fprintf(&chBuf, "weight: %d\n", c.Index)
+			fmt.Fprintf(&chBuf, "date: \"%s\"\n", bc.Meta.CreatedAt.Format("2006-01-02"))
+			fmt.Fprintf(&chBuf, "draft: false\n")
+			if c.Abstract != "" {
+				fmt.Fprintf(&chBuf, "description: \"%s\"\n", c.Abstract)
+			}
+			fmt.Fprintf(&chBuf, "---\n\n")
+			chBuf.WriteString(renumbered)
+			chBuf.WriteString("\n")
+
+			if !dryRun {
+				os.WriteFile(chPath, []byte(chBuf.String()), 0o644)
+			}
+			totalChapters++
+		}
+	}
+
+	summary := fmt.Sprintf("export/hugo/ (%d chapters in %d parts)", totalChapters, len(bc.Outline.Parts))
+	if dryRun {
+		fmt.Fprintf(out, "[dry-run] would write %s\n", summary)
+	} else {
+		fmt.Fprintf(out, "✓ Exported %s\n", summary)
+	}
+	return nil
+}
+
+// slugify converts a title to a URL-safe slug for Hugo filenames.
+func slugify(s string) string {
+	var out strings.Builder
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			out.WriteRune(r)
+		} else if r >= 'A' && r <= 'Z' {
+			out.WriteRune(r + 32) // tolower
+		} else if r >= 0x4E00 && r <= 0x9FFF {
+			// CJK: use a short placeholder
+			out.WriteRune('-')
+		} else {
+			out.WriteRune('-')
+		}
+	}
+	slug := out.String()
+	// Collapse multiple dashes.
+	for strings.Contains(slug, "--") {
+		slug = strings.ReplaceAll(slug, "--", "-")
+	}
+	return strings.Trim(slug, "-")
 }
