@@ -84,7 +84,6 @@ func TestExpandCmdArgsValidation(t *testing.T) {
 	cmd.SetErr(&bytes.Buffer{})
 
 	cases := [][]string{
-		{"only-one-arg"},
 		{"too", "many", "args"},
 	}
 	for _, args := range cases {
@@ -97,6 +96,11 @@ func TestExpandCmdArgsValidation(t *testing.T) {
 	// Valid: exactly 2 args
 	if err := cmd.Args(cmd, []string{"my-book", "01-01"}); err != nil {
 		t.Errorf("expected success for 2 args, got: %v", err)
+	}
+
+	// Valid: 1 arg (--all mode, validated in RunE)
+	if err := cmd.Args(cmd, []string{"my-book"}); err != nil {
+		t.Errorf("expected success for 1 arg, got: %v", err)
 	}
 }
 

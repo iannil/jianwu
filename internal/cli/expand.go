@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/config"
@@ -19,21 +20,34 @@ import (
 
 func newExpandCmd() *cobra.Command {
 	var forceCount int
+	var expandAll bool
 	cmd := &cobra.Command{
 		Use:   "expand <slug> <NN-MM>",
-		Short: "Expand one chapter into markdown with citations",
-		Long: `Run the 3-iteration expand agent (research → draft → validate) on one chapter,
-producing chapters/NN-MM.md with YAML frontmatter and [^N] footnote citations.
-Updates outline.json with status, citations, word_count, unverified_claims.
+		Short: "Expand one (or all) chapters into markdown with citations",
+		Long: `Run the 3-iteration expand agent (research → draft → validate) on one
+or all scaffolded chapters, producing chapters/NN-MM.md with YAML frontmatter
+and [^N] footnote citations. Updates outline.json with status, citations,
+word_count, unverified_claims.
 
+Use --all to expand every scaffolded chapter in the book (parallel, continue-on-error).
 Use --force to overwrite an existing expanded chapter.
 Use --force twice (--force --force) to overwrite a reviewed or final chapter.`,
-		Args: cobra.ExactArgs(2),
+		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if expandAll {
+				if len(args) != 1 {
+					return &InfoError{Err: fmt.Errorf("--all requires only <slug>"), Code: ExitCodeUsage}
+				}
+				return runExpandAll(cmd, args[0], forceCount)
+			}
+			if len(args) != 2 {
+				return &InfoError{Err: fmt.Errorf("requires <slug> <NN-MM> or --all"), Code: ExitCodeUsage}
+			}
 			return runExpand(cmd, args, forceCount, nil)
 		},
 	}
 	cmd.Flags().CountVarP(&forceCount, "force", "f", "overwrite existing chapter (use twice to override reviewed/final)")
+	cmd.Flags().BoolVar(&expandAll, "all", false, "expand all scaffolded chapters")
 	return cmd
 }
 
@@ -245,4 +259,80 @@ func extractSite(rawURL string) string {
 	return s
 }
 
+// runExpandAll expands all scaffolded chapters in a book in parallel.
+func runExpandAll(cmd *cobra.Command, slug string, forceCount int) error {
+	out := cmd.OutOrStdout()
 
+	bc, err := loadBook(slug)
+	if err != nil {
+		return err
+	}
+	ws, err := workspace.Load(bc.WSRoot)
+	if err != nil {
+		return &InfoError{Err: err, Code: ExitCodeGeneric}
+	}
+	secrets, err := config.LoadSecrets()
+	if err != nil {
+		return &InfoError{Err: fmt.Errorf("load secrets: %w", err), Code: ExitCodeLLMProvider}
+	}
+	deps, err := buildProviderDeps(ws.Config, secrets)
+	if err != nil {
+		return &InfoError{Err: err, Code: ExitCodeLLMProvider}
+	}
+
+	// Collect all scaffolded chapters.
+	type item struct {
+		partIdx, chIdx int
+		ch             *book.OutlineChapter
+	}
+	var items []item
+	for pi := range bc.Outline.Parts {
+		p := &bc.Outline.Parts[pi]
+		for ci := range p.Chapters {
+			c := &p.Chapters[ci]
+			if c.Status != book.StatusScaffolded {
+				continue
+			}
+			items = append(items, item{partIdx: p.Index, chIdx: c.Index, ch: c})
+		}
+	}
+
+	if len(items) == 0 {
+		fmt.Fprintf(out, "No scaffolded chapters to expand in %s\n", slug)
+		return nil
+	}
+
+	fmt.Fprintf(out, "Expanding %d scaffolded chapter(s) in %s...\n", len(items), slug)
+
+	g, _ := errgroup.WithContext(cmd.Context())
+	results := make([]struct {
+		item
+		err error
+	}, len(items))
+
+	for i := range items {
+		i := i
+		it := items[i]
+		g.Go(func() error {
+			addr := fmt.Sprintf("%02d-%02d", it.partIdx, it.chIdx)
+			args := []string{slug, addr}
+			results[i].item = it
+			results[i].err = runExpand(cmd, args, forceCount, deps)
+			return nil // continue-on-error
+		})
+	}
+	_ = g.Wait() // ignore errgroup error (continue-on-error)
+
+	// Report results.
+	success, failed := 0, 0
+	for _, r := range results {
+		if r.err != nil {
+			fmt.Fprintf(out, "  ✗ %02d-%02d: %v\n", r.partIdx, r.chIdx, r.err)
+			failed++
+		} else {
+			success++
+		}
+	}
+	fmt.Fprintf(out, "✓ Expand complete: %d succeeded, %d failed\n", success, failed)
+	return nil
+}
