@@ -1,0 +1,118 @@
+schema_version: 1
+id: micro-meso-macro
+name:
+  zh: 微观-中观-宏观型
+  en: Micro-Meso-Macro
+description: |
+  适用于需要通过"缩放视角"来理解或解决复杂系统问题的领域。
+  从最小的可操作单元（微观）出发，看它们如何组织成局部系统（中观），
+  再到这些系统如何在更宏观的格局中互动演化（宏观）。
+  三部构成完整缩放闭环：从原子到系统到生态。
+when_to_use:
+  goals:
+    - understanding
+    - practical-skill
+    - mastery
+  topic_types:
+    - technical
+    - engineering
+    - systems
+    - organizational
+    - strategic
+  audience_fit:
+    - practitioner
+    - engineer
+    - manager
+    - strategist
+  not_recommended_for:
+    - purely-philosophical
+    - quick-reference
+    - tool-tutorial
+parts:
+  - role: micro
+    title_template:
+      zh: "第{n}篇 微观——{subtitle}"
+      en: "Part {n}. Micro — {subtitle}"
+    guidance: |
+      这一篇聚焦最小的可操作单位。回答"这个系统由什么基本元素构成"。
+      写作策略：从程序员/工程师日常面对的"一个具体问题"切入，
+      把抽象概念具象化为可操作的字段、变量、接口或行为单元。
+      避免：大规模架构图、系统级讨论、脱离具体场景的纯理论。
+      允许：代码片段、具体数据示例、决策矩阵、反模式对照。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "引子章：用一个具体痛点或 bug 引出微观层面的根本问题"
+      - "定义章：定义核心单元——字段、维度、接口、原子操作"
+      - "重构章：识别并消除微观层面的坏味道（万能字段、特例、魔法值）"
+      - "模式章：微观层面的最佳实践与通用模式"
+  - role: meso
+    title_template:
+      "zh": "第{n}篇 中观——{subtitle}"
+      en: "Part {n}. Meso — {subtitle}"
+    guidance: |
+      这一篇从微观元素上升到局部系统的组织逻辑。
+      核心问题：基本单元如何组合成有意义的系统结构？
+      重点分析：表结构设计、模块划分、职责边界、状态管理、时序与演化。
+      写作策略：用"拆解真实案例"的方式展示中观层面的设计权衡，
+      让读者看到每一个设计决策的取舍依据。
+      避免：回到微观层面重复讨论单个元素；要聚焦元素之间的关系。
+      允许：架构图、表结构对比、决策树、演化时序图。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "结构章：核心系统结构的直觉化拆解（表设计、模块划分、组件关系）"
+      - "时空章：状态与时间的分离——当前状态 vs 历史意图"
+      - "分离章：职责分离与边界划分的原则与实战"
+      - "演化章：中观结构的自然演化路径与重构时机"
+  - role: macro
+    title_template:
+      zh: "第{n}篇 宏观——{subtitle}"
+      en: "Part {n}. Macro — {subtitle}"
+    guidance: |
+      这一篇从中观系统上升到全局格局。
+      核心问题：多个子系统之间如何建立信任、对账、协调？
+      重点分析：系统边界、信任模型、数据冗余策略、跨系统一致性。
+      写作策略：用"多方博弈"的视角分析系统间关系，展示宏观层面的设计哲学。
+      避免：只讲内部实现；要有"俯瞰"的全局视角。
+      允许：系统上下文图、信任边界模型、对账机制说明、容错策略。
+    typical_chapters: [3, 4]
+    chapter_role_hints:
+      - "边界章：系统间的信任边界与接口契约设计"
+      - "冗余章：有意的数据冗余——在哪里冗余、如何保证一致性"
+      - "对账章：对账机制作为最终一致性的兜底策略"
+      - "演进章：宏观架构的长期演进路径"
+  - role: action-guide
+    title_template:
+      zh: "第{n}部分 行动指南——{subtitle}"
+      en: "Part {n}. Action Guide — {subtitle}"
+    guidance: |
+      这一篇（可选）把全书的方法论提炼为可操作的行动路线图。
+      核心内容：遗留系统治理、分步重构路线图、防腐化机制。
+      避免：重复前三篇已经讲过的方法论。
+      允许：决策清单、优先级矩阵、演进路线图。
+    typical_chapters: [2, 3]
+    chapter_role_hints:
+      - "路线图章：从诊断到治理的分步行动路线图"
+      - "防腐章：建立持续的防腐化机制与工程文化"
+    conditional: true
+    skip_when: "前三部已足够完整，或主题偏方法论而非工程实战"
+examples:
+  - slug: data-as-the-boundary
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/practices/season-4/data-as-the-boundary/
+    fit_score: 0.98
+    note: 标准范本——架构哲学(前置) + 微观/中观/宏观 + 行动指南(后置)
+  - slug: silent-games
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/practices/season-2/silent-games/
+    fit_score: 0.82
+    note: 三重视角的隐形博弈分析（个体→组织→社会），有类似的缩放结构
+metadata:
+  extracted_from: zhurongshuo-corpus-v1
+  extracted_at: 2026-06-28
+  author: jianwu+human
+  notes: |
+    核心结构源自 data-as-the-boundary（数据即边界）的三层解压：
+    微观(字段与维度)→中观(表结构与时空分离)→宏观(系统边界与对账)。
+    架构哲学部作为前置引导，行动指南部作为实践收尾，均标记为可选。
+    关键识别特征：明显的"缩放"视角——从最小可操作单元逐步放大到系统生态。
+    silent-games（沉默的博弈）部分符合此结构，可作为辅助参考。

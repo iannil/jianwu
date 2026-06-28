@@ -1,0 +1,86 @@
+{
+  "slug": "data-as-the-boundary",
+  "title": {
+    "zh": "数据即边界：重构软件复杂度",
+    "en": "Data as the Boundary: Reframing Software Complexity"
+  },
+  "subtitle": null,
+  "archetype": "micro-meso-macro",
+  "audience": "practitioner",
+  "depth": "advanced",
+  "goal": "practical-skill",
+  "length": "long",
+  "language": ["zh"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/practices/season-4/data-as-the-boundary/",
+    "accessed_at": "2026-06-28"
+  },
+  "abstract": "对于SaaS或复杂软件的构建者，这本书将从根本上重构你对软件架构复杂度的理解。用全新的哲学思想指导软件和系统架构设计，解决复杂度问题。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "第一部分：架构哲学——复用的代价"
+      },
+      "role": "",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第1章 代码里的\"考古现场\"" }, "abstract": "" },
+        { "index": 2, "title": { "zh": "第2章 概念压缩论" }, "abstract": "" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "第二部分：微观解压——字段与维度的重构"
+      },
+      "role": "micro",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第3章 拒绝\"万能字段\"" }, "abstract": "" },
+        { "index": 2, "title": { "zh": "第4章 消灭\"特例\"" }, "abstract": "" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "第三部分：中观解压——表结构与时空分离"
+      },
+      "role": "meso",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第5章 当前状态 vs. 历史意图" }, "abstract": "" },
+        { "index": 2, "title": { "zh": "第6章 分离职责的表设计" }, "abstract": "" }
+      ]
+    },
+    {
+      "index": 4,
+      "title": {
+        "zh": "第四部分：宏观解压——系统边界与对账"
+      },
+      "role": "macro",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第7章 信任的边界与数据冗余" }, "abstract": "" },
+        { "index": 2, "title": { "zh": "第8章 系统对账论" }, "abstract": "" }
+      ]
+    },
+    {
+      "index": 5,
+      "title": {
+        "zh": "第五部分：行动指南——遗留系统的治理"
+      },
+      "role": "action-guide",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第9章 重构实战路线图" }, "abstract": "" },
+        { "index": 2, "title": { "zh": "第10章 防腐化机制" }, "abstract": "" }
+      ]
+    }
+  ],
+  "extracted_by": "research",
+  "extracted_at": "2026-06-28",
+  "extraction_confidence": "high",
+  "notes": "标准 micro-meso-macro 范本。五部结构：哲学前置→微观→中观→宏观→行动指南后置。"
+}

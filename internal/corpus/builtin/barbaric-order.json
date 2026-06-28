@@ -1,0 +1,89 @@
+{
+  "slug": "barbaric-order",
+  "title": {
+    "zh": "野蛮秩序：先活下来，再赢下来",
+    "en": "Barbaric Order: Survive First, Win Later"
+  },
+  "subtitle": null,
+  "archetype": "mindset-method-practice",
+  "audience": "entrepreneur",
+  "depth": "intermediate",
+  "goal": "practical-skill",
+  "length": "medium",
+  "language": ["zh"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/practices/season-3/barbaric-order/",
+    "accessed_at": "2026-06-28"
+  },
+  "abstract": "在面临组织变革、裁员或恶性竞争等极端压力环境下，学习\"先生存，再发展\"的丛林法则。从生存心态到赢家心法到实战战术，一套完整的逆境生存方法论。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "序言"
+      },
+      "role": "",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "序言：你不是在创业，你是在打仗" }, "abstract": "" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "生存法则篇"
+      },
+      "role": "mindset",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第一章 野蛮心态：口袋越空，脑袋越要硬" }, "abstract": "" },
+        { "index": 2, "title": { "zh": "第二章 垃圾寻宝：在别人丢弃的地方找到黄金" }, "abstract": "" },
+        { "index": 3, "title": { "zh": "第三章 唯一铁律：先找买家，再找货" }, "abstract": "" },
+        { "index": 4, "title": { "zh": "第四章 街头实战：不动手，就等死" }, "abstract": "" },
+        { "index": 5, "title": { "zh": "第五章 组建你的\"野狼团\"" }, "abstract": "" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "赢家心法篇"
+      },
+      "role": "method",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第六章 从体面到卓越：你的形象就是你的品牌" }, "abstract": "" },
+        { "index": 2, "title": { "zh": "第七章 关系的进化：从抱团取暖到强强联合" }, "abstract": "" },
+        { "index": 3, "title": { "zh": "第八章 驾驭选择：人生是概率的游戏" }, "abstract": "" },
+        { "index": 4, "title": { "zh": "第九章 内心秩序：管理压力，而非被其吞噬" }, "abstract": "" },
+        { "index": 5, "title": { "zh": "第十章 终身成长：世界上没有别人，只有你自己" }, "abstract": "" }
+      ]
+    },
+    {
+      "index": 4,
+      "title": {
+        "zh": "结语"
+      },
+      "role": "",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "野蛮生长，向阳而生" }, "abstract": "" }
+      ]
+    },
+    {
+      "index": 5,
+      "title": {
+        "zh": "附录"
+      },
+      "role": "",
+      "intro": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "速查手册" }, "abstract": "" }
+      ]
+    }
+  ],
+  "extracted_by": "research",
+  "extracted_at": "2026-06-28",
+  "extraction_confidence": "high",
+  "notes": "另一种 mindset-method-practice 表达。以生存法则(心法)→赢家心法(方法)→实战(贯穿全书)的方式验证了原型的可伸缩性。"
+}

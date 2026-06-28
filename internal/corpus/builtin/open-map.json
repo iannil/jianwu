@@ -1,0 +1,81 @@
+{
+  "slug": "open-map",
+  "title": {
+    "zh": "开图：情报与决策推演",
+    "en": "Open Map: Intelligence and Decision-Making Wargaming"
+  },
+  "subtitle": null,
+  "archetype": "mindset-method-practice",
+  "audience": "practitioner",
+  "depth": "intermediate",
+  "goal": "practical-skill",
+  "length": "medium",
+  "language": ["zh"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/practices/season-3/open-map/",
+    "accessed_at": "2026-06-28"
+  },
+  "abstract": "将\"有意识的观察\"这一哲学概念，流程化为一套信息收集、分析和决策的实战方法。将投资决策过程，提升为专业级别的情报分析与沙盘推演。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "导论"
+      },
+      "role": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "引言：你是在'战斗'，还是在'开图'？" } }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "心法篇"
+      },
+      "role": "mindset",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第一章 告别\"勇气\"，拥抱\"底气\"" } },
+        { "index": 2, "title": { "zh": "第二章 万物皆有\"图\"：识别你面前的决策系统" } }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "方法篇"
+      },
+      "role": "method",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第三章 情报：如何像分析师一样收集信息" } },
+        { "index": 2, "title": { "zh": "第四章 分析：绘制你的专属\"地图\"" } },
+        { "index": 3, "title": { "zh": "第五章 推演：在脑中预演未来" } }
+      ]
+    },
+    {
+      "index": 4,
+      "title": {
+        "zh": "实战篇"
+      },
+      "role": "practice",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第六章 职场博弈——求职与晋升的地图" } },
+        { "index": 2, "title": { "zh": "第七章 商业博弈——销售、谈判与创业的地图" } },
+        { "index": 3, "title": { "zh": "第八章 个人成长——人生重大决策的地图" } }
+      ]
+    },
+    {
+      "index": 5,
+      "title": {
+        "zh": "结语"
+      },
+      "role": "",
+      "chapters": [
+        { "index": 1, "title": { "zh": "地图在手，成为自己人生的领航员" } }
+      ]
+    }
+  ],
+  "extracted_by": "research",
+  "extracted_at": "2026-06-28",
+  "extraction_confidence": "high",
+  "notes": "标准 mindset-method-practice 范本。三部完整对应：心法篇→方法篇→实战篇。"
+}

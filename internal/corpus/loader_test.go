@@ -7,7 +7,7 @@ import (
 	"github.com/iannil/jianwu/internal/storage"
 )
 
-func TestLoadReturnsAllSixBooks(t *testing.T) {
+func TestLoadReturnsAllTenBooks(t *testing.T) {
 	m, err := Load()
 	if err != nil {
 		t.Fatalf("Load error: %v", err)
@@ -19,6 +19,10 @@ func TestLoadReturnsAllSixBooks(t *testing.T) {
 		"forced-convergence",
 		"ai-engineer-in-action",
 		"intelligent-computing-center-construction-guide",
+		"data-as-the-boundary",
+		"revisiting-history",
+		"open-map",
+		"barbaric-order",
 	}
 	if len(m) != len(want) {
 		t.Fatalf("got %d books, want %d", len(m), len(want))
@@ -62,7 +66,7 @@ func TestLoadWithWorkspaceMergesOverride(t *testing.T) {
 		t.Fatalf("LoadWithWorkspace error: %v", err)
 	}
 
-	// Should have 6 builtin books + overridden book
+	// Should have 10 builtin books + overridden book
 	b, ok := m["reality-construction"]
 	if !ok {
 		t.Fatal("reality-construction not found")
@@ -92,8 +96,8 @@ func TestLoadWithWorkspaceNoCorpusDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadWithWorkspace error: %v", err)
 	}
-	if len(m) != 6 {
-		t.Errorf("expected 6 builtin books, got %d", len(m))
+	if len(m) != 10 {
+		t.Errorf("expected 10 builtin books, got %d", len(m))
 	}
 }
 

@@ -1,0 +1,100 @@
+schema_version: 1
+id: mindset-method-practice
+name:
+  zh: 心法-方法-实践型
+  en: Mindset-Method-Practice
+description: |
+  适用于需要将一套理念或心法转化为可操作能力的实用类图书。
+  从认知升级（心法）出发，经过系统化流程（方法），
+  再到具体场景的实战应用（实践）。
+  三部构成完整转化链条：从知到行。
+when_to_use:
+  goals:
+    - practical-skill
+    - mastery
+    - personal-growth
+  topic_types:
+    - methodology
+    - business
+    - career
+    - strategy
+    - decision-making
+  audience_fit:
+    - practitioner
+    - beginner-to-intermediate
+    - career-switcher
+    - entrepreneur
+  not_recommended_for:
+    - purely-philosophical
+    - theoretical-treatise
+    - tool-tutorial
+parts:
+  - role: mindset
+    title_template:
+      zh: "第{n}部分 心法篇——{subtitle}"
+      en: "Part {n}. Mindset — {subtitle}"
+    guidance: |
+      这一篇重塑认知。回答"在动手之前，需要先建立什么样的思维方式"。
+      写作策略：先用"认知反差"或"常见误区"切入，让读者意识到既有思维模式的局限，
+      然后逐步建立新的认知框架。核心目标不是教知识，而是"卸载旧认知、安装新思维"。
+      避免：直接跳到操作步骤；先要让读者"悟到"。
+      允许：认知模型、思维框架、真实故事、认知反转。
+    typical_chapters: [2, 4]
+    chapter_role_hints:
+      - "反差章：揭示常见误区和认知盲区——你以为的其实是错的"
+      - "框架章：建立核心心法——世界运行模型、决策第一性原则"
+      - "心法章：关键心法——勇气、底气、识别力等核心品质"
+      - "自检章：自检清单——你的思维模式在哪个阶段"
+  - role: method
+    title_template:
+      zh: "第{n}部分 方法篇——{subtitle}"
+      en: "Part {n}. Method — {subtitle}"
+    guidance: |
+      这一篇建立系统化流程。回答"在心法指导下，具体的操作流程是什么"。
+      写作策略：把抽象心法流程化为可重复的操作步骤。
+      每章聚焦一个完整的方法闭合——从输入到处理到输出。
+      重点在方法的可复用性和可教授性。
+      避免：脱离心法根基的纯技术操作；要让方法"有魂"。
+      允许：操作流程图、清单、模板、决策树、对照表。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "情报章：信息收集与分析的方法——如何像分析师一样收集高质量信息"
+      - "分析章：绘制你的专属「地图」——结构化分析方法"
+      - "推演章：在脑中预演未来——推演与决策方法"
+      - "复盘章：从经验中提炼模式——复盘与迭代方法"
+  - role: practice
+    title_template:
+      zh: "第{n}部分 实战篇——{subtitle}"
+      en: "Part {n}. Practice — {subtitle}"
+    guidance: |
+      这一篇把心法和方法放进真实场景。回答"在具体场景中如何应用"。
+      写作策略：选择本领域最具代表性的 3-5 个场景，每个场景展示完整的心法→方法→实操链条。
+      场景应该覆盖从新手到高阶的不同难度层次。
+      避免：脱离场景的泛泛之谈；每个场景都让读者有"亲身经历"的代入感。
+      允许：完整案例拆解、分步决策还原、成败对比分析、行动清单。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "场景一：典型入门场景的完整应用演示（心法→方法→实操）"
+      - "场景二：进阶场景中面临的核心挑战与应对策略"
+      - "场景三：高级场景中的复杂决策与权衡"
+      - "综合章：多场景并行时的优先级与资源分配"
+examples:
+  - slug: open-map
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/practices/season-3/open-map/
+    fit_score: 0.98
+    note: 标准范本——心法篇→方法篇→实战篇的完整三部结构
+  - slug: barbaric-order
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/practices/season-3/barbaric-order/
+    fit_score: 0.95
+    note: 另一种心法-方法-实践表达——生存法则(心法)→赢家心法(方法)→实战(实践)
+metadata:
+  extracted_from: zhurongshuo-corpus-v1
+  extracted_at: 2026-06-28
+  author: jianwu+human
+  notes: |
+    核心结构源自 open-map（开图）的三部划分（心法→方法→实战）。
+    barbaric-order（野蛮秩序）以生存法则/赢家心法/实战的相似结构验证了原型的可伸缩性。
+    关键识别特征：三部有明显递进——从"认知改变"到"能力建设"到"场景实战"。
+    适合主题：决策方法论、职场进阶、商业实战、个人成长类图书。

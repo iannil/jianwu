@@ -18,7 +18,7 @@ func TestLoadGuideReturnsNonEmpty(t *testing.T) {
 	}
 }
 
-func TestLoadSamplesReturnsThree(t *testing.T) {
+func TestLoadSamplesReturnsSix(t *testing.T) {
 	m, err := LoadSamples()
 	if err != nil {
 		t.Fatalf("LoadSamples error: %v", err)
@@ -27,6 +27,9 @@ func TestLoadSamplesReturnsThree(t *testing.T) {
 		"ontology-epistemology-practice",
 		"diagnosis-decoding-breakthrough",
 		"foundations-application-practice",
+		"micro-meso-macro",
+		"theory-dynamics-history-present",
+		"mindset-method-practice",
 	}
 	if len(m) != len(want) {
 		t.Fatalf("got %d samples, want %d", len(m), len(want))

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestLoadReturnsAllThreeArchetypes(t *testing.T) {
+func TestLoadReturnsAllSixArchetypes(t *testing.T) {
 	m, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
@@ -13,6 +13,9 @@ func TestLoadReturnsAllThreeArchetypes(t *testing.T) {
 		"ontology-epistemology-practice",
 		"diagnosis-decoding-breakthrough",
 		"foundations-application-practice",
+		"micro-meso-macro",
+		"theory-dynamics-history-present",
+		"mindset-method-practice",
 	}
 	if len(m) != len(want) {
 		t.Fatalf("got %d archetypes, want %d", len(m), len(want))

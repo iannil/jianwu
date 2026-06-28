@@ -1,0 +1,114 @@
+schema_version: 1
+id: theory-dynamics-history-present
+name:
+  zh: 理论-动态-历史-现实型
+  en: Theory-Dynamics-History-Present
+description: |
+  适用于需要深入理解一个复杂现象或概念的"全息"图景的理论性图书。
+  首先建立理论框架（它对世界是什么看法），然后分析其内在的动态机制（它如何运作和演化），
+  再追溯其历史脉络（它从哪里来），最后回到当下（它对今天的我们意味着什么）。
+  四部构成完整的认知弧：从理论到现实。
+when_to_use:
+  goals:
+    - understanding
+  topic_types:
+    - philosophical
+    - historical
+    - sociological
+    - scientific
+    - civilizational
+  audience_fit:
+    - scholar
+    - advanced-practitioner
+    - educated-general
+  not_recommended_for:
+    - practical-playbook
+    - tool-tutorial
+    - quick-reference
+parts:
+  - role: theory
+    title_template:
+      zh: "第{n}部 理论——{subtitle}"
+      en: "Part {n}. Theory — {subtitle}"
+    guidance: |
+      这一部建立全书的理论根基。回答"这个现象的根本框架是什么"。
+      写作策略：先以"时代问题"或"认知困境"切入，指出既有框架的不足，
+      然后逐步搭建新的理论框架。重点在概念体系的构建和核心隐喻的提出。
+      避免：过早进入细节或案例；先让读者理解框架本身。
+      允许：抽象概念、跨学科类比、思想实验、哲学对话。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "问题章：用时代症状或认知困境引出理论需求"
+      - "框架章：搭建核心概念体系——关键隐喻、基本假设、核心命题"
+      - "对话章：与既有理论体系的对话与定位"
+      - "边界章：理论的适用范围与局限"
+  - role: dynamics
+    title_template:
+      zh: "第{n}部 动态——{subtitle}"
+      en: "Part {n}. Dynamics — {subtitle}"
+    guidance: |
+      这一部从静态理论进入动态分析。回答"这个系统/现象如何运作和演化"。
+      核心分析：内在动力机制、反馈循环、演化和突变路径、涌现秩序。
+      写作策略：用"机制拆解"的方式揭示系统的内在运作逻辑，
+      展示各要素之间的因果网络和非线性互动。
+      避免：停留在静态描述或纯理论推演。
+      允许：机制图、因果回路、演化阶段的划分、模型化阐述。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "机制章：核心动力机制的拆解——正反馈、负反馈、临界点"
+      - "演化章：从涌现到稳定再到瓦解的演化周期"
+      - "路径章：分岔点、路径依赖与非确定性"
+      - "生态章：多主体互动中的协同与竞争"
+  - role: history
+    title_template:
+      zh: "第{n}部 历史——{subtitle}"
+      en: "Part {n}. History — {subtitle}"
+    guidance: |
+      这一部从动力机制进入历史脉络。回答"这个框架如何从历史中涌现"。
+      写作策略：不按"编年史"线性叙述，而是按"主题/转折点"组织。
+      把历史视为观念生态的自然演化——哪些条件促成了关键转折，
+      哪些路径最终被收敛（固化），哪些可能性被遮蔽（遗忘）。
+      避免：流水账式的编年史。
+      允许：主题性历史分析、关键人物与思想节点、跨文明比较。
+    typical_chapters: [3, 5]
+    chapter_role_hints:
+      - "起源章：核心观念的起源——在什么样的土壤中萌芽"
+      - "转折章：关键转折点——什么事件/人物/思想改变了演化方向"
+      - "收敛章：哪些路径被固化为主流，哪些可能性被遮蔽"
+      - "启示章：历史给当下的启示——哪些模式在重复"
+  - role: present
+    title_template:
+      zh: "第{n}部 现实——{subtitle}"
+      en: "Part {n}. The Present — {subtitle}"
+    guidance: |
+      这一部从历史回到当下。回答"理解了这一切之后，当下的我们该怎么做"。
+      核心内容：诊断当下的核心矛盾、识别正在发生的关键收敛、给出行动方向。
+      写作策略：把理论、动态和历史的洞察转化为对当下的诊断和预测。
+      避免：脱离历史逻辑的武断预测。
+      允许：趋势研判、矛盾诊断、行动框架、开放性讨论。
+    typical_chapters: [3, 4]
+    chapter_role_hints:
+      - "诊断章：当下核心矛盾的诊断——哪些力量在主导当前的收敛"
+      - "趋势章：正在显现的未来趋势——可能性分布与收敛方向"
+      - "行动章：作为个体/组织，在当下的可为空间"
+      - "开放章：未解决的问题与未来研究的方向"
+examples:
+  - slug: revisiting-history
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/books/revisiting-history/
+    fit_score: 0.98
+    note: 标准范本——四部结构完整对应，把历史视为观念生态演化
+  - slug: reality-construction
+    source: zhurongshuo
+    source_url: https://zhurongshuo.com/books/reality-construction/
+    fit_score: 0.75
+    note: 本体理论出发，可类比理论部；但其整体四部更接近 ontology-epistemology-practice
+metadata:
+  extracted_from: zhurongshuo-corpus-v1
+  extracted_at: 2026-06-28
+  author: jianwu+human
+  notes: |
+    核心结构源自 revisiting-history（再叙历史）的理论框架：
+    把文明视为观念生态演化，从理论框架到动力机制到历史脉络再到当下。
+    此原型适合"建立一个全新理论框架来解释一个领域"的图书。
+    关键识别特征：以理论框架为前提，以历史脉络为佐证，以当下行动为收束。

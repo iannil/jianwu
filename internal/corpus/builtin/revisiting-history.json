@@ -1,0 +1,81 @@
+{
+  "slug": "revisiting-history",
+  "title": {
+    "zh": "再叙历史：作为观念生态演化的文明",
+    "en": "Revisiting History: Civilization as the Evolution of Conceptual Ecology"
+  },
+  "subtitle": null,
+  "archetype": "theory-dynamics-history-present",
+  "audience": "educated-general",
+  "depth": "advanced",
+  "goal": "understanding",
+  "length": "long",
+  "language": ["zh"],
+  "source": {
+    "name": "zhurongshuo",
+    "url": "https://zhurongshuo.com/books/revisiting-history/",
+    "accessed_at": "2026-06-28"
+  },
+  "abstract": "把文明视为观念生态的演化，从理论框架到动力机制到历史脉络再到当下。历史不是固定事件的线性叙述，而是观念生态的动态演化。过去是已经完成收敛的快照记忆，未来是尚未收敛的可能性分布。",
+  "parts": [
+    {
+      "index": 1,
+      "title": {
+        "zh": "第一部分：理论——观念生态的底层逻辑",
+        "en": "Part I: Theory — The Underlying Logic of Conceptual Ecology"
+      },
+      "role": "theory",
+      "intro": "建立观念生态演化的理论框架，从生物进化隐喻出发，定义收敛与分化的双重动力，并反思历史学家作为观察者的认识论位置。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第1章 观念生态的隐喻——从生物进化到思想演化", "en": "Chapter 1: The Metaphor of Conceptual Ecology — From Biological Evolution to Intellectual Evolution" }, "abstract": "引入观念生态的隐喻，论证思想演化与生物进化的深层同构性。" },
+        { "index": 2, "title": { "zh": "第2章 收敛与分化——演化的双重动力", "en": "Chapter 2: Convergence and Divergence — The Dual Forces of Evolution" }, "abstract": "定义收敛（共识形成、制度固化）与分化（创新、变异、分支）作为观念生态演化的双重动力。" },
+        { "index": 3, "title": { "zh": "第3章 作为观察者的历史学家——认识论的反思", "en": "Chapter 3: The Historian as Observer — An Epistemological Reflection" }, "abstract": "反思历史书写本身也是一种观察行为，历史知识的不完全映射性质。" }
+      ]
+    },
+    {
+      "index": 2,
+      "title": {
+        "zh": "第二部分：动态——演化的动力机制",
+        "en": "Part II: Dynamics — The Driving Mechanisms of Evolution"
+      },
+      "role": "dynamics",
+      "intro": "深入观念生态演化的具体动力机制：正反馈与锁定、临界点与相变、涌现与分层。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第4章 正反馈与锁定——观念的自我强化", "en": "Chapter 4: Positive Feedback and Lock-in — The Self-Reinforcement of Ideas" }, "abstract": "分析观念如何通过正反馈机制自我强化，最终形成路径锁定。" },
+        { "index": 2, "title": { "zh": "第5章 临界点与相变——非线性转折", "en": "Chapter 5: Tipping Points and Phase Transitions — Nonlinear Turning Points" }, "abstract": "探讨观念生态中临界点的出现机制与相变现象，解释历史中的非线性转折。" },
+        { "index": 3, "title": { "zh": "第6章 涌现与分层——从微观观念到宏观文明", "en": "Chapter 6: Emergence and Stratification — From Micro-Ideas to Macro-Civilization" }, "abstract": "微观观念的涌现如何形成宏观文明结构，分层组织的自相似性。" }
+      ]
+    },
+    {
+      "index": 3,
+      "title": {
+        "zh": "第三部分：历史——观念生态的演化路径",
+        "en": "Part III: History — The Evolutionary Path of Conceptual Ecology"
+      },
+      "role": "history",
+      "intro": "用观念生态理论重新审视人类历史的关键转折：轴心时代、大分流与现代性的全球化。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第7章 轴心时代——观念的集中爆发", "en": "Chapter 7: The Axial Age — A Concentrated Explosion of Ideas" }, "abstract": "用收敛与分化的框架重新解读轴心时代各大文明的观念集中爆发。" },
+        { "index": 2, "title": { "zh": "第8章 大分流——东西方的不同收敛路径", "en": "Chapter 8: The Great Divergence — Different Convergence Paths of East and West" }, "abstract": "分析东西方文明在不同收敛路径下的分叉，探讨大分流的观念生态根源。" },
+        { "index": 3, "title": { "zh": "第9章 现代性的扩张——一种观念生态的全球化", "en": "Chapter 9: The Expansion of Modernity — The Globalization of a Conceptual Ecology" }, "abstract": "现代性作为一种观念生态的全球化扩张过程，及其与本土观念生态的碰撞。" }
+      ]
+    },
+    {
+      "index": 4,
+      "title": {
+        "zh": "第四部分：现实——当下的启示",
+        "en": "Part IV: The Present — Implications for Today"
+      },
+      "role": "present",
+      "intro": "把理论视角拉回当下，分析当代认知危机与可能的未来方向。",
+      "chapters": [
+        { "index": 1, "title": { "zh": "第10章 当代的认知危机——信息爆炸与观念碎片化", "en": "Chapter 10: The Contemporary Cognitive Crisis — Information Explosion and Conceptual Fragmentation" }, "abstract": "分析信息爆炸时代观念生态的碎片化趋势及其认知危机。" },
+        { "index": 2, "title": { "zh": "第11章 可能的未来——在不确定性中寻找方向", "en": "Chapter 11: Possible Futures — Finding Direction in Uncertainty" }, "abstract": "在不确定性中探讨可能的未来方向，如何在不完备信息中做出明智选择。" }
+      ]
+    }
+  ],
+  "extracted_by": "research",
+  "extracted_at": "2026-06-28",
+  "extraction_confidence": "medium",
+  "notes": "标准 theory-dynamics-history-present 范本。四部结构完整对应：理论→动态→历史→现实。注意：本书的完整章节结构在公开网站上有限，部分章节标题基于上下文推断。"
+}
