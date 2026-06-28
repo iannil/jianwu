@@ -12,7 +12,10 @@ import (
 	"github.com/iannil/jianwu/internal/provider/search"
 )
 
-const DefaultBaseURL = "https://google.serper.dev/search"
+const (
+	DefaultBaseURL = "https://google.serper.dev/search"
+	maxErrBody     = 4 << 10 // 4 KB cap on error response bodies
+)
 
 type Config struct {
 	APIKey  string
@@ -58,12 +61,12 @@ func (s *Searcher) Search(ctx context.Context, query string, opts search.SearchO
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusTooManyRequests {
-		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %s", search.ErrRateLimit, string(b))
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrBody))
+		return nil, fmt.Errorf("%w: %s", search.ErrRateLimit, truncateErrBody(string(b)))
 	}
 	if resp.StatusCode >= 400 {
-		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: HTTP %d: %s", search.ErrProvider, resp.StatusCode, string(b))
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrBody))
+		return nil, fmt.Errorf("%w: HTTP %d: %s", search.ErrProvider, resp.StatusCode, truncateErrBody(string(b)))
 	}
 	var respBody struct {
 		Organic []struct {
@@ -80,4 +83,12 @@ func (s *Searcher) Search(ctx context.Context, query string, opts search.SearchO
 		out[i] = search.SearchResult{Title: r.Title, URL: r.Link, Snippet: r.Snippet}
 	}
 	return out, nil
+}
+
+// truncateErrBody limits error body length to prevent leaking large responses.
+func truncateErrBody(s string) string {
+	if len(s) > 4000 {
+		return s[:4000] + "..."
+	}
+	return s
 }

@@ -126,12 +126,12 @@ Workspace migration 已取消。schema_version 校验已移除，不再需要迁
 
 **验收通过：** `go test -race ./...` 全绿；无全局可变 provider 状态。
 
-### v0.3.5 — SaaS 安全加固
+### v0.3.5 — SaaS 安全加固 ✅
 
-- [ ] Search / Reader 的 BaseURL allowlist（防 SSRF）
-- [ ] Jina `io.ReadAll` 改 `LimitReader`
-- [ ] Search / Reader 错误消息截断
-- [ ] Citation / 外部 URL 做 SSRF 校验
+- [x] Search / Reader 的 BaseURL allowlist — `reader.ValidateURL()` 仅允许 http/https、禁止 localhost/私有 IP/.local/.internal
+- [x] Jina `io.ReadAll` 已用 `LimitReader`（10MB body + 4KB error body）
+- [x] Search 错误消息截断 — Brave + Serper 均限制为 4KB + `truncateErrBody`
+- [x] Citation / 外部 URL 做 SSRF 校验 — `reader.ValidateURL()` 集成到 Jina reader
 
 ---
 

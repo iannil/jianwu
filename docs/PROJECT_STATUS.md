@@ -1,7 +1,7 @@
 # jianwu 项目状态
 
 > 本文档对 LLM 友好——任何接手后续迭代的 agent 读这一份就能理解项目当前形态、什么能用、什么没做、怎么扩展。
-> 最后更新：2026-06-28（v0.3.4 — 并发安全 provider 装配 delivered）
+> 最后更新：2026-06-28（v0.3.5 — SaaS-ready 内核全线交付）
 
 ---
 
@@ -9,12 +9,12 @@
 
 jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。
 
-- **当前版本**：**v0.2.3**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代命令 + corpus sync）
+- **当前版本**：**v0.3.5**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代 + corpus sync + 3 原型 + v0.3 SaaS-ready 内核全线交付）
 - **可用 CLI 命令**：`init` / `info` / `config get·set·list` / `new` / `expand`（含 `--all`）/ `review` / `finalize` / `export` / `status` / `factcheck` / `revise` / `rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `corpus list·show·stats·sync·reindex`
 - **库 API**：4 阶段引擎 `grill → outline → scaffolding → expand` + factcheck + revise
 - **LLM providers**：Gemini / GLM / Ollama（本地模型）/ Mock（单元测试）
 - **质量基线**：30+ 包测试全绿，`go vet` / `gofmt` 全清
-- **下一里程碑**：**v0.2.4** — Workspace migration / 后 3 个原型
+- **下一里程碑**：**v1.0** — mouqin SaaS（v0.3 SaaS-ready 内核已交付）
 
 ---
 
@@ -329,7 +329,7 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 | v0.3.2 | Token / 成本计量 | — | ✅ 已交付 |
 | v0.3.3 | per-tenant Secrets | — | ✅ 已交付 |
 | v0.3.4 | 并发安全 provider 装配 | — | ✅ 已交付（显式参数注入，`go test -race` 全绿） |
-| v0.3.5 | SaaS 安全加固（SSRF allowlist / LimitReader / 错误截断） | — | 🔲 |
+| v0.3.5 | SaaS 安全加固（SSRF allowlist / LimitReader / 错误截断） | — | ✅ 已交付 |
 
 ### v1.0（mouqin SaaS）
 
@@ -352,11 +352,11 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 - ~~`expand.similar_book_tool.go` `LookupSimilarBook` 从未被主流程调用~~ — 已删除
 - ~~`provider/llm/interface.go` `chatterEmbedder` 废弃类型~~ — 已删除
 
-### 安全（v0.1 可接受，v1.0 SaaS 必修）
-- Search/Reader 的 BaseURL 配置无 allowlist（v1.0 SaaS 需要）
-- Jina 的 `io.ReadAll` 无大小限制（v1.0 加 LimitReader，或利用 v0.3.0 Storage 接口）
-- Search/Reader 错误消息含完整 response body（v1.0 截断）
-- Citation 中的 URL 无 SSRF 校验（Jina 服务端 fetch，客户端不直连）
+### 安全（v0.3.5 已加固）
+- ~~Search/Reader 的 BaseURL 配置无 allowlist~~ — `reader.ValidateURL()` 已添加（仅允许 http/https，禁止 localhost/私有 IP）
+- ~~Jina 的 `io.ReadAll` 无大小限制~~ — 已用 `LimitReader`（10MB body + 4KB error body）
+- ~~Search/Reader 错误消息含完整 response body~~ — Brave + Serper 已截断（4KB cap）
+- ~~Citation 中的 URL 无 SSRF 校验~~ — `reader.ValidateURL()` 集成到 Jina reader（v0.3.5）
 
 ## 12. 关键设计决策（grill-me 26 项）
 

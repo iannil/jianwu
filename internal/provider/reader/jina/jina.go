@@ -41,9 +41,12 @@ func New(cfg Config) (*Reader, error) {
 }
 
 func (r *Reader) Read(ctx context.Context, targetURL string) (reader.Content, error) {
-	// Validate target URL before issuing request
+	// Validate target URL before issuing request (SSRF protection).
 	if _, err := url.Parse(targetURL); err != nil {
 		return reader.Content{}, fmt.Errorf("jina: invalid target URL: %w", err)
+	}
+	if err := reader.ValidateURL(targetURL); err != nil {
+		return reader.Content{}, err
 	}
 
 	fullURL := r.baseURL + "/" + targetURL
