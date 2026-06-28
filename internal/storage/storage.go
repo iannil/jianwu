@@ -2,7 +2,12 @@
 // This allows replacing the OS filesystem with in-memory or test implementations.
 package storage
 
-import "os"
+import (
+	"os"
+	"sort"
+	"strings"
+	"time"
+)
 
 // Storage abstracts filesystem operations used across jianwu.
 // Operations mirror os.* functions for straightforward wrapping.
@@ -41,10 +46,13 @@ func (osStorage) ReadDir(name string) ([]os.DirEntry, error)   { return os.ReadD
 
 // MemStorage is an in-memory Storage for tests.
 type MemStorage struct {
-	files map[string][]byte
+	files   map[string][]byte
+	modTime time.Time // shared timestamp for all entries
 }
 
-func NewMemStorage() *MemStorage { return &MemStorage{files: map[string][]byte{}} }
+func NewMemStorage() *MemStorage {
+	return &MemStorage{files: map[string][]byte{}, modTime: time.Now()}
+}
 
 func (m *MemStorage) ReadFile(path string) ([]byte, error) {
 	data, ok := m.files[path]
@@ -59,8 +67,12 @@ func (m *MemStorage) WriteFile(path string, data []byte, _ os.FileMode) error {
 }
 func (m *MemStorage) MkdirAll(_ string, _ os.FileMode) error { return nil }
 func (m *MemStorage) RemoveAll(path string) error {
+	prefix := path
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
 	for k := range m.files {
-		if len(k) >= len(path) && k[:len(path)] == path {
+		if k == path || strings.HasPrefix(k, prefix) {
 			delete(m.files, k)
 		}
 	}
@@ -76,12 +88,77 @@ func (m *MemStorage) Rename(oldPath, newPath string) error {
 	return nil
 }
 func (m *MemStorage) Stat(path string) (os.FileInfo, error) {
-	_, ok := m.files[path]
+	data, ok := m.files[path]
 	if !ok {
 		return nil, os.ErrNotExist
 	}
-	return nil, nil // minimal stub
+	return &memFileInfo{name: path, size: int64(len(data)), modTime: m.modTime}, nil
 }
 func (m *MemStorage) ReadDir(name string) ([]os.DirEntry, error) {
-	return nil, nil // not implemented for mem
+	prefix := name
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+	var entries []os.DirEntry
+	seen := map[string]bool{}
+	for k := range m.files {
+		if k == name {
+			continue
+		}
+		if !strings.HasPrefix(k, prefix) {
+			continue
+		}
+		rest := k[len(prefix):]
+		// Only collect the top-level entry under this prefix.
+		if slash := strings.IndexByte(rest, '/'); slash >= 0 {
+			rest = rest[:slash]
+		}
+		if seen[rest] {
+			continue
+		}
+		seen[rest] = true
+		entryPath := prefix + rest
+		data, ok := m.files[entryPath]
+		isDir := !ok
+		var size int64
+		if ok {
+			size = int64(len(data))
+		}
+		entries = append(entries, &memDirEntry{name: rest, size: size, modTime: m.modTime, isDir: isDir})
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Name() < entries[j].Name() })
+	return entries, nil
+}
+
+// memFileInfo implements os.FileInfo for MemStorage.
+type memFileInfo struct {
+	name    string
+	size    int64
+	modTime time.Time
+}
+
+func (f *memFileInfo) Name() string       { return f.name }
+func (f *memFileInfo) Size() int64        { return f.size }
+func (f *memFileInfo) Mode() os.FileMode  { return 0o644 }
+func (f *memFileInfo) ModTime() time.Time { return f.modTime }
+func (f *memFileInfo) IsDir() bool        { return false }
+func (f *memFileInfo) Sys() any           { return nil }
+
+// memDirEntry implements os.DirEntry for MemStorage.
+type memDirEntry struct {
+	name    string
+	size    int64
+	modTime time.Time
+	isDir   bool
+}
+
+func (e *memDirEntry) Name() string               { return e.name }
+func (e *memDirEntry) IsDir() bool                 { return e.isDir }
+func (e *memDirEntry) Type() os.FileMode           { return e.Mode().Type() }
+func (e *memDirEntry) Info() (os.FileInfo, error)  { return &memFileInfo{name: e.name, size: e.size, modTime: e.modTime}, nil }
+func (e *memDirEntry) Mode() os.FileMode {
+	if e.isDir {
+		return os.ModeDir | 0o755
+	}
+	return 0o644
 }

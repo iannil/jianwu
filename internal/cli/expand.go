@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -99,7 +98,10 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *Provider
 
 	// Build tool registry from provided deps.
 	if deps == nil {
-		secrets, _ := config.LoadSecrets()
+		secrets, err := config.LoadSecrets()
+		if err != nil {
+			return &InfoError{Err: fmt.Errorf("load secrets: %w", err), Code: ExitCodeLLMProvider}
+		}
 		deps, err = buildProviderDeps(ws.Config, secrets)
 		if err != nil {
 			return &InfoError{Err: err, Code: ExitCodeLLMProvider}
@@ -198,32 +200,6 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *Provider
 	return nil
 }
 
-// findChapter returns a pointer to the chapter at (partIdx, chIdx), or error.
-// Index-based iteration so the returned pointer references outline.Parts[i].Chapters[j]
-// directly (mutations persist when outline is saved).
-func findChapter(outline *book.Outline, partIdx, chIdx int) (*book.OutlineChapter, error) {
-	for i := range outline.Parts {
-		if outline.Parts[i].Index == partIdx {
-			for j := range outline.Parts[i].Chapters {
-				if outline.Parts[i].Chapters[j].Index == chIdx {
-					return &outline.Parts[i].Chapters[j], nil
-				}
-			}
-			return nil, fmt.Errorf("chapter %d not found in part %d", chIdx, partIdx)
-		}
-	}
-	return nil, fmt.Errorf("part %d not found", partIdx)
-}
-
-// findPart returns the part at partIdx, or a zero value if missing.
-func findPart(outline *book.Outline, partIdx int) book.OutlinePart {
-	for _, p := range outline.Parts {
-		if p.Index == partIdx {
-			return p
-		}
-	}
-	return book.OutlinePart{}
-}
 
 // toChapterCitations converts expand.Citation to book.ChapterCitation (frontmatter).
 func toChapterCitations(cs []expand.Citation) []book.ChapterCitation {
@@ -269,24 +245,4 @@ func extractSite(rawURL string) string {
 	return s
 }
 
-// parseChapterAddr parses a "NN-MM" string into (partIdx, chIdx), both 1-based.
-// Accepts zero-padded ("01-01") and bare ("1-1") forms.
-// Returns error if format is wrong or any index is 0.
-func parseChapterAddr(s string) (int, int, error) {
-	if s == "" {
-		return 0, 0, fmt.Errorf("empty chapter address")
-	}
-	parts := strings.SplitN(s, "-", 2)
-	if len(parts) != 2 {
-		return 0, 0, fmt.Errorf("invalid chapter address %q: want NN-MM", s)
-	}
-	partIdx, err := strconv.Atoi(parts[0])
-	if err != nil || partIdx < 1 {
-		return 0, 0, fmt.Errorf("invalid part index %q", parts[0])
-	}
-	chIdx, err := strconv.Atoi(parts[1])
-	if err != nil || chIdx < 1 {
-		return 0, 0, fmt.Errorf("invalid chapter index %q", parts[1])
-	}
-	return partIdx, chIdx, nil
-}
+

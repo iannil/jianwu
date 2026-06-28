@@ -27,10 +27,12 @@ Go CLI + 库。入口：`cmd/jianwu/main.go`。
 
 - **`internal/cli/`** — cobra 命令树；薄封装层，调用 engine + book + workspace。  
   每个子命令有 `newXxxCmd()` + `runXxx()` 可测试核心。所有 CLI 命令列表见 `docs/PROJECT_STATUS.md §9`。
+  全局标志：`--verbose`/`-L`、`--debug`、`--dir`/`-d`（指定 workspace 根目录，详见 `root.go`）。
+  共享辅助函数在 `book_resolve.go`（`loadBook`/`findChapter`/`findPart`/`parseChapterAddr`/`mirrorChapterStatus`）。
 - **`internal/engine/`** — 6 个子包：`grill/`（访谈）、`outline/`（结构）、`scaffolding/`（框架）、`expand/`（3 轮迭代：调研 → 草稿 → 验证）、`factcheck/`（自动事实复核）、`revise/`（基于 verdicts 修订章节）。核心创作 + 质量管线。
 - **`internal/book/`** — 领域类型：`Meta`（含 `ClaimWhitelist`）、`Outline`（含 `Verdicts[]`）、`Chapter`、`Claim`、`ClaimVerdict`、slug。纯数据 + IO。
 - **`internal/provider/`** — 抽象层：`llm/`（Chatter/Embedder/Streamer 接口）、`search/`、`reader/`，以及工厂包。内置实现：gemini、glm、ollama、mock（llm）；brave、serper（搜索）；jina（阅读器）。
-- **`internal/storage/`** — `Storage` 接口（v0.3.0 地基）：ReadFile/WriteFile/MkdirAll/RemoveAll/Rename/Stat/ReadDir。默认 `OS` 实现 + `MemStorage` 测试实现。book/workspace/config/cli/grill 已迁移。
+- **`internal/storage/`** — `Storage` 接口（v0.3.0 地基）：ReadFile/WriteFile/MkdirAll/RemoveAll/Rename/Stat/ReadDir。默认 `OS` 实现 + `MemStorage` 测试实现（含 16 个测试）。book/workspace/config/cli/grill 已迁移。
 - **`internal/config/`** — 5 层合并配置（默认 → 全局 → 工作区 → 环境变量 → 命令行标志）。密钥在 `~/.config/jianwu/secrets.yaml`。
 - **`internal/workspace/`** — 工作区的初始化、检测、加载、状态管理（使用 `storage.OS`）。
 - **`internal/corpus/`** + **`internal/archetypes/`** + **`internal/style/`** — 嵌入的 YAML 资源（参考语料、图书原型、风格指南）。
@@ -50,7 +52,7 @@ Go CLI + 库。入口：`cmd/jianwu/main.go`。
 
 | 文档 | 用途 |
 |---|---|
-| `docs/PROJECT_STATUS.md` | LLM 友好的当前状态全景（更新至 v0.2.0） |
+| `docs/PROJECT_STATUS.md` | LLM 友好的当前状态全景（更新至 v0.2.0 + 2026-06-28 审计修复） |
 | `docs/ROADMAP.md` | v0.1.x → v1.0 路线图（更新至 v0.2.x 实际状态） |
 | `docs/architecture/overview.md` | 架构图 + 数据流 + 关键接口 |
 | `docs/decisions/26-grill-decisions.md` | 26 项核心决策 + v0.1.x 审计决策 |

@@ -23,7 +23,7 @@ func newInfoCmd() *cobra.Command {
 		Use:   "info",
 		Short: "Show workspace status",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			wsRoot, err := workspace.FindWorkspace(".")
+			wsRoot, err := workspace.FindWorkspace(findWorkspacePath())
 			if err != nil {
 				return &InfoError{Err: err, Code: ExitCodeWorkspaceNotFound}
 			}

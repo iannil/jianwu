@@ -1,7 +1,7 @@
 # jianwu 项目状态
 
 > 本文档对 LLM 友好——任何接手后续迭代的 agent 读这一份就能理解项目当前形态、什么能用、什么没做、怎么扩展。
-> 最后更新：2026-06-26（v0.2.0 已 ship，含 factcheck + revise — 大幅超越 v0.1.x）
+> 最后更新：2026-06-28（v0.2.0 + 代码审计修复 — Storage 测试覆盖、frontmatter 完整性、--workspace 全局标志）
 
 ---
 
@@ -109,7 +109,7 @@ expand.Generate(ctx, chatter, tools, input)
   ↓ iter 1: RunResearch
 web_search × N + read_url × M  →  LLM 提取 research notes + citation candidates
   ↓ iter 2: RunDraft（注入 archetype + style guide + samples + 相邻章节）
-LLM 写 markdown + [^N] footnotes（支持 streaming，-v 逐 token）
+LLM 写 markdown + [^N] footnotes（支持 streaming，`-L` 逐 token）
   ↓ iter 3: RunValidate
 LLM 自检 + 修订（注入 style guide），输出 claims[].has_citation
   ↓
@@ -216,6 +216,8 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 | `factcheck <slug> <NN-MM>` | **v0.2.0** | 自动事实复核 — 逐 claim 验证引用来源 |
 | `revise <slug> <NN-MM>` | **v0.2.0** | 基于 factcheck 结果，LLM 修订未通过章节 |
 
+**全局标志：** `--verbose` / `-L`（INFO 日志），`--debug`（DEBUG + LLM 请求/响应 dump），`--dir` / `-d`（指定 workspace 根目录，默认 CWD）
+
 ### ✅ 引擎库 API
 - `outline.Generate(ctx, chatter, Input) (*book.Outline, error)`
 - `scaffolding.GenerateChapter(ctx, chatter, ChapterInput) (*ChapterOutput, error)`
@@ -255,7 +257,7 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 
 ### ✅ Streaming 输出（v0.1.6）
 - `llm.Streamer` 接口；Gemini genai SDK + GLM SSE + Ollama stream + Mock 实现
-- 仅 draft 阶段流式（`-v` 逐 token stdout）
+- 仅 draft 阶段流式（`-L` 逐 token stdout）
 
 ### ✅ 自动事实复核（v0.2.0）
 - `jianwu factcheck <slug> <NN-MM>` — 逐 claim 读取 source URL，LLM 验证
@@ -438,7 +440,7 @@ Grill 模块 4 个低风险修复（重复 walk 逻辑、Context 检查等）。
 ### v0.1.6 Streaming Output（2026-06-26）
 
 `llm.Streamer` 接口（`Stream(ctx, req) <-chan StreamChunk`），Gemini+GLM+Mock 实现。
-`-v` 模式逐 token stdout。仅 draft 阶段流式。
+`-L` 模式逐 token stdout。仅 draft 阶段流式。
 
 ### v0.2.0 事实复核 + 修订（2026-06-26 后）
 

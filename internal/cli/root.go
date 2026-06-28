@@ -16,6 +16,17 @@ const (
 	ExitCodeNetwork           = 5
 )
 
+// cliWorkspaceDir is set by the --dir flag to override the default CWD.
+var cliWorkspaceDir string
+
+// findWorkspacePath returns the configured workspace start path or ".".
+func findWorkspacePath() string {
+	if cliWorkspaceDir != "" {
+		return cliWorkspaceDir
+	}
+	return "."
+}
+
 // GlobalFlags holds root-level flag values.
 type GlobalFlags struct {
 	Verbose bool
@@ -33,8 +44,9 @@ into human-readable, well-structured books.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	cmd.PersistentFlags().BoolVarP(&gf.Verbose, "verbose", "v", false, "verbose output (INFO level logs)")
+	cmd.PersistentFlags().BoolVarP(&gf.Verbose, "verbose", "L", false, "verbose output (INFO level logs)")
 	cmd.PersistentFlags().BoolVar(&gf.Debug, "debug", false, "debug output (DEBUG level + LLM request/response dump)")
+	cmd.PersistentFlags().StringVarP(&cliWorkspaceDir, "dir", "d", "", "workspace root directory (default: CWD)")
 	cmd.PersistentFlags().Bool("version", false, "print version and exit")
 
 	// Override Run to handle --version

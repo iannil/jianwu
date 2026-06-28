@@ -31,7 +31,7 @@ func newConfigGetCmd() *cobra.Command {
 		Short: "Get a config value by dotted key (e.g. models.outline.provider)",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			wsRoot, err := workspace.FindWorkspace(".")
+			wsRoot, err := workspace.FindWorkspace(findWorkspacePath())
 			if err != nil {
 				return &InfoError{Err: err, Code: ExitCodeWorkspaceNotFound}
 			}
@@ -55,7 +55,7 @@ func newConfigSetCmd() *cobra.Command {
 		Short: "Set a config value in the workspace config.yaml",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			wsRoot, err := workspace.FindWorkspace(".")
+			wsRoot, err := workspace.FindWorkspace(findWorkspacePath())
 			if err != nil {
 				return &InfoError{Err: err, Code: ExitCodeWorkspaceNotFound}
 			}
@@ -87,7 +87,7 @@ func newConfigListCmd() *cobra.Command {
 		Short: "List all config keys and values",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			wsRoot, err := workspace.FindWorkspace(".")
+			wsRoot, err := workspace.FindWorkspace(findWorkspacePath())
 			if err != nil {
 				return &InfoError{Err: err, Code: ExitCodeWorkspaceNotFound}
 			}

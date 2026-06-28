@@ -64,7 +64,10 @@ func runFactCheck(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
-	secrets, _ := config.LoadSecrets()
+	secrets, err := config.LoadSecrets()
+	if err != nil {
+		return &InfoError{Err: fmt.Errorf("load secrets: %w", err), Code: ExitCodeLLMProvider}
+	}
 	deps, err := buildProviderDeps(ws.Config, secrets)
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeLLMProvider}

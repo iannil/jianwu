@@ -20,7 +20,7 @@ outline + scaffolding. If an incomplete grill session exists, prompts to resume.
 Use --force to overwrite an existing book with the same slug.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			wsRoot, err := workspace.FindWorkspace(".")
+			wsRoot, err := workspace.FindWorkspace(findWorkspacePath())
 			if err != nil {
 				return &InfoError{Err: err, Code: ExitCodeWorkspaceNotFound}
 			}
@@ -28,7 +28,10 @@ Use --force to overwrite an existing book with the same slug.`,
 			if err != nil {
 				return err
 			}
-			secrets, _ := config.LoadSecrets()
+			secrets, err := config.LoadSecrets()
+			if err != nil {
+				return &InfoError{Err: fmt.Errorf("load secrets: %w", err), Code: ExitCodeLLMProvider}
+			}
 			prompt := NewTerminalPrompt(nil, cmd.OutOrStdout())
 
 			out := cmd.OutOrStdout()

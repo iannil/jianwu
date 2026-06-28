@@ -64,7 +64,10 @@ func runRevise(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
-	secrets, _ := config.LoadSecrets()
+	secrets, err := config.LoadSecrets()
+	if err != nil {
+		return &InfoError{Err: fmt.Errorf("load secrets: %w", err), Code: ExitCodeLLMProvider}
+	}
 	deps, err := buildProviderDeps(ws.Config, secrets)
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeLLMProvider}
@@ -84,14 +87,19 @@ func runRevise(cmd *cobra.Command, args []string) error {
 	}
 
 	// Write revised chapter file with updated frontmatter.
-	fm := book.ChapterFrontmatter{
-		Title:        ch.Title,
-		PartIndex:    partIdx,
-		ChapterIndex: chIdx,
-		Status:       ch.Status, // preserve current status
-		WordCount:    roughWordCount(result.RevisedMarkdown),
-		GeneratedAt:  time.Now().UTC(),
+	// Preserve existing metadata (Model, EngineVersion, Citations, etc.)
+	// and only update fields that change.
+	existingFM, _, readErr := book.ReadChapter(chapPath)
+	var fm book.ChapterFrontmatter
+	if readErr == nil && existingFM != nil {
+		fm = *existingFM
 	}
+	fm.Title = ch.Title
+	fm.PartIndex = partIdx
+	fm.ChapterIndex = chIdx
+	fm.Status = ch.Status // preserve current status
+	fm.WordCount = roughWordCount(result.RevisedMarkdown)
+	fm.GeneratedAt = time.Now().UTC()
 	if _, err := book.WriteChapter(bc.BookDir, partIdx, chIdx, fm, result.RevisedMarkdown); err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
 	}

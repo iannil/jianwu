@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/iannil/jianwu/internal/storage"
 )
 
 func TestSaveAndLoadMetaRoundTrip(t *testing.T) {
@@ -89,5 +91,73 @@ func TestLoadMetaMissingFileReturnsError(t *testing.T) {
 	_, err := LoadMeta("/nonexistent/meta.json")
 	if err == nil {
 		t.Error("expected error for missing file, got nil")
+	}
+}
+
+// TestDefaultStorageWithMemStorage verifies that book IO works with
+// an in-memory storage backend, proving the DefaultStorage abstraction
+// is replaceable for tests.
+func TestDefaultStorageWithMemStorage(t *testing.T) {
+	original := DefaultStorage
+	DefaultStorage = storage.NewMemStorage()
+	t.Cleanup(func() { DefaultStorage = original })
+
+	// SaveMeta + LoadMeta via MemStorage.
+	if err := SaveMeta("/books/meta.json", &Meta{
+		ID:    "test-id",
+		Slug:  "test-book",
+		Title: "测试图书",
+	}); err != nil {
+		t.Fatalf("SaveMeta via MemStorage: %v", err)
+	}
+	meta, err := LoadMeta("/books/meta.json")
+	if err != nil {
+		t.Fatalf("LoadMeta via MemStorage: %v", err)
+	}
+	if meta.Title != "测试图书" {
+		t.Errorf("Title: got %q want %q", meta.Title, "测试图书")
+	}
+
+	// SaveOutline + LoadOutline via MemStorage.
+	if err := SaveOutline("/books/outline.json", &Outline{
+		Parts: []OutlinePart{
+			{
+				Index: 1, Title: "Part 1", Role: "ontology",
+				Chapters: []OutlineChapter{
+					{Index: 1, Title: "Ch 1", Status: StatusScaffolded},
+				},
+			},
+		},
+	}); err != nil {
+		t.Fatalf("SaveOutline via MemStorage: %v", err)
+	}
+	outline, err := LoadOutline("/books/outline.json")
+	if err != nil {
+		t.Fatalf("LoadOutline via MemStorage: %v", err)
+	}
+	if len(outline.Parts) != 1 {
+		t.Fatalf("parts: got %d want 1", len(outline.Parts))
+	}
+	if outline.Parts[0].Chapters[0].Title != "Ch 1" {
+		t.Errorf("chapter title: got %q want %q", outline.Parts[0].Chapters[0].Title, "Ch 1")
+	}
+
+	// WriteChapter + ReadChapter via MemStorage.
+	outPath, err := WriteChapter("/books", 1, 1, ChapterFrontmatter{
+		Title:  "Ch 1",
+		Status: StatusExpanded,
+	}, "# Chapter content")
+	if err != nil {
+		t.Fatalf("WriteChapter via MemStorage: %v", err)
+	}
+	fm, body, err := ReadChapter(outPath)
+	if err != nil {
+		t.Fatalf("ReadChapter via MemStorage: %v", err)
+	}
+	if fm.Title != "Ch 1" {
+		t.Errorf("frontmatter title: got %q want %q", fm.Title, "Ch 1")
+	}
+	if body != "# Chapter content" {
+		t.Errorf("body: got %q want %q", body, "# Chapter content")
 	}
 }
