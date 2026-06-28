@@ -1,7 +1,7 @@
 # jianwu 项目状态
 
 > 本文档对 LLM 友好——任何接手后续迭代的 agent 读这一份就能理解项目当前形态、什么能用、什么没做、怎么扩展。
-> 最后更新：2026-06-28（v0.2.0 + 代码审计修复 — Storage 测试覆盖、frontmatter 完整性、--workspace 全局标志）
+> 最后更新：2026-06-28（v0.2.2 — 章节迭代命令 delivered + 代码审计修复）
 
 ---
 
@@ -9,12 +9,12 @@
 
 jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。
 
-- **当前版本**：**v0.2.0**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage 接口 + hugo/pdf 导出）
-- **可用 CLI 命令**：`init` / `info` / `config get·set·list` / `new` / `expand <slug> <NN-MM>` / `review` / `finalize` / `export` / `status` / `factcheck` / `revise`
+- **当前版本**：**v0.2.2**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代命令）
+- **可用 CLI 命令**：`init` / `info` / `config get·set·list` / `new` / `expand`（含 `--all`）/ `review` / `finalize` / `export` / `status` / `factcheck` / `revise` / `rewrite` / `add-chapter` / `move-chapter` / `delete-chapter`
 - **库 API**：4 阶段引擎 `grill → outline → scaffolding → expand` + factcheck + revise
 - **LLM providers**：Gemini / GLM / Ollama（本地模型）/ Mock（单元测试）
 - **质量基线**：30+ 包测试全绿，`go vet` / `gofmt` 全清
-- **下一里程碑**：**v0.2.2 章节迭代命令** — `rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `expand --all`
+- **下一里程碑**：**v0.2.3** — corpus sync / Embedding 索引 / Workspace migration
 
 ---
 
@@ -215,6 +215,11 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 | `status <slug>` | **v0.1.3** | 章节进度概览 + 下一步提示 |
 | `factcheck <slug> <NN-MM>` | **v0.2.0** | 自动事实复核 — 逐 claim 验证引用来源 |
 | `revise <slug> <NN-MM>` | **v0.2.0** | 基于 factcheck 结果，LLM 修订未通过章节 |
+| `rewrite <slug> <NN-MM>` | **v0.2.2** | 重写章节（等价于 `expand --force --force`） |
+| `add-chapter <slug> --after <NN-MM> --topic "..." [--as <NN-MM>]` | **v0.2.2** | 插入新章节（保留 gap 不重编号） |
+| `move-chapter <slug> <NN-MM> <target-part> [--after <NN-MM>]` | **v0.2.2** | 移动章节到其他 part |
+| `delete-chapter <slug> <NN-MM>` | **v0.2.2** | 删除章节（从 outline + 文件系统） |
+| `expand --all <slug>` | **v0.2.2** | errgroup 并行展开全书 scaffolded 章节 |
 
 **全局标志：** `--verbose` / `-L`（INFO 日志），`--debug`（DEBUG + LLM 请求/响应 dump），`--dir` / `-d`（指定 workspace 根目录，默认 CWD）
 
@@ -284,7 +289,7 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 
 ### v0.2（功能扩展 — 剩余）
 
-- [ ] 章节迭代命令（`rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `expand --all`）
+- [x] 章节迭代命令（`rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `expand --all`）
 - [ ] `corpus sync` 扩展语料（重新从 zhurongshuo 拉取）
 - [ ] Embedding 索引文件缓存（v0.1 是实时计算）
 - [ ] Workspace migration（schema v1 → v2）

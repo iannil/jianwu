@@ -1,6 +1,6 @@
 # jianwu 功能概览
 
-> 当前版本：v0.2.0 | 最后更新：2026-06-28
+> 当前版本：v0.2.2 | 最后更新：2026-06-28
 
 ---
 
@@ -21,6 +21,11 @@
 | `status <slug>` | v0.1.3 | 章节进度概览 |
 | `factcheck <slug> <NN-MM>` | v0.2.0 | 自动事实复核 |
 | `revise <slug> <NN-MM>` | v0.2.0 | 基于事实复核结果修订章节 |
+| `rewrite <slug> <NN-MM>` | v0.2.2 | 重写章节（等价于 expand --force --force） |
+| `add-chapter <slug> --after <NN-MM> --topic "..."` | v0.2.2 | 插入新章节 |
+| `move-chapter <slug> <NN-MM> <target-part>` | v0.2.2 | 移动章节到其他 part |
+| `delete-chapter <slug> <NN-MM>` | v0.2.2 | 删除章节 |
+| `expand --all <slug>` | v0.2.2 | 批量展开全书 |
 
 ---
 
@@ -170,7 +175,10 @@ scaffolded → expanded → reviewed → final → export
 
 ## 下一迭代（v0.2 剩余）
 
-- 章节迭代命令：`rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `expand --all`
+- corpus sync 扩展语料
+- Embedding 索引文件缓存
+- Workspace migration（schema v1 → v2）
+- 后 3 个原型（micro-meso-macro / theory-dynamics-history-present / mindset-method-practice）
 - `corpus sync` 扩展语料
 - Embedding 索引文件缓存
 - Workspace migration（schema v1 → v2）

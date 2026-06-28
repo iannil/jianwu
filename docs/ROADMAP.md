@@ -22,7 +22,7 @@
 | Streaming 输出 | v0.1.6 | ✅ 已交付 |
 | 自动事实复核（factcheck + revise） | v0.2.0 | ✅ 已交付 |
 | Ollama 本地模型支持 | v0.2.1 | ✅ 已交付 |
-| Hugo / PDF 导出目标 | v0.2.4 | ✅ 已交付 |
+| 章节迭代命令（rewrite/add-chapter/move-chapter/delete-chapter/expand --all） | v0.2.2 | ✅ 已交付 |
 | Storage 接口地基 | v0.3.0 | ⏳ 地基已交付（接口 + OS + MemStorage，book/workspace 已迁移） |
 
 ---
@@ -30,15 +30,15 @@
 ## v0.2 — 功能扩展（剩余）
 
 > 目标：把 v0.1 的"能跑"提升到"真好用"。factcheck/revise/Ollama/hugo/pdf 已交付。
-> **当前迭代：v0.2 章节迭代命令** — rewrite / add-chapter / move-chapter / delete-chapter / expand --all
+> 章节迭代命令（rewrite/add-chapter/move-chapter/delete-chapter/expand --all）已交付。
 
-### 章节迭代命令（当前待做）
+### 章节迭代命令（✅ 已交付）
 
-- [ ] `jianwu rewrite <slug> <NN-MM>` — 重写已 expand 章节
-- [ ] `jianwu add-chapter <slug> --after <NN-MM> --topic "..."`
-- [ ] `jianwu move-chapter <slug> <NN-MM> <target-part>`
-- [ ] `jianwu delete-chapter <slug> <NN-MM>`
-- [ ] `jianwu expand --all` — 批量扩展全书（决策 Q4=B）
+- [x] `jianwu rewrite <slug> <NN-MM>` — 重写已 expand 章节
+- [x] `jianwu add-chapter <slug> --after <NN-MM> --topic "..."`
+- [x] `jianwu move-chapter <slug> <NN-MM> <target-part>`
+- [x] `jianwu delete-chapter <slug> <NN-MM>`
+- [x] `jianwu expand --all` — 批量扩展全书（决策 Q4=B）
 
 ### Corpus Sync
 
