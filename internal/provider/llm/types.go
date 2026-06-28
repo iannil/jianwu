@@ -24,14 +24,34 @@ type ToolSpec struct {
 	Parameters  []byte // JSON Schema
 }
 
+// Usage tracks token consumption for a single LLM call.
+type Usage struct {
+	PromptTokens     int  `json:"prompt_tokens"`
+	CompletionTokens int  `json:"completion_tokens"`
+	TotalTokens      int  `json:"total_tokens"`
+	Cached           bool `json:"cached"`
+}
+
 // ChatResponse is the output of Chatter.Chat.
 type ChatResponse struct {
 	Content      string     // assistant's text reply
 	ToolCalls    []ToolCall // optional; populated when Tools were sent
 	FinishReason string     // "stop" | "length" | "tool_calls" | "error"
-	TokensIn     int
-	TokensOut    int
-	Cached       bool // true if response came from cache
+	TokensIn     int        // deprecated: use Usage.PromptTokens
+	TokensOut    int        // deprecated: use Usage.CompletionTokens
+	Cached       bool       // deprecated: use Usage.Cached
+	Usage        Usage      // token consumption details
+}
+
+// PopulateUsage fills Usage from the flat TokensIn/TokensOut/Cached fields.
+// Call this after setting the flat fields to keep Usage in sync.
+func (r *ChatResponse) PopulateUsage() {
+	r.Usage = Usage{
+		PromptTokens:     r.TokensIn,
+		CompletionTokens: r.TokensOut,
+		TotalTokens:      r.TokensIn + r.TokensOut,
+		Cached:           r.Cached,
+	}
 }
 
 // ToolCall is a tool invocation requested by the model (used in S7).

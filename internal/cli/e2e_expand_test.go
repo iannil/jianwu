@@ -78,7 +78,7 @@ func TestE2EExpandCommandWithMocks(t *testing.T) {
 	cmd := newExpandCmd()
 	cmd.SetOut(&bytes.Buffer{})
 	cmd.SetErr(&bytes.Buffer{})
-	if err := runExpand(cmd, []string{"e2e-book", "01-01"}, 0, mockDeps); err != nil {
+	if err := runExpand(cmd, []string{"e2e-book", "01-01"}, 0, mockDeps, false); err != nil {
 		t.Fatalf("expand command: %v", err)
 	}
 

@@ -71,11 +71,13 @@ func (p *Provider) Chat(ctx context.Context, req llm.ChatRequest) (*llm.ChatResp
 	if out.Message.Content == "" && out.Done {
 		return nil, fmt.Errorf("ollama: empty response")
 	}
-	return &llm.ChatResponse{
-		Content: out.Message.Content,
-		TokensIn:   out.PromptEvalCount,
-		TokensOut:  out.EvalCount,
-	}, nil
+	cr := &llm.ChatResponse{
+		Content:   out.Message.Content,
+		TokensIn:  out.PromptEvalCount,
+		TokensOut: out.EvalCount,
+	}
+	cr.PopulateUsage()
+	return cr, nil
 }
 
 // Embed calls Ollama's /api/embed endpoint.

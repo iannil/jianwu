@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/iannil/jianwu/internal/corpus"
+	"github.com/iannil/jianwu/internal/engine"
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/provider/reader"
 	"github.com/iannil/jianwu/internal/provider/search"
@@ -26,6 +27,10 @@ type ToolRegistry struct {
 	// When set, LookupSimilarBook loads the index from here (lazily cached).
 	// If empty or the file doesn't exist, LookupSimilarBook returns nil.
 	CorpusIndexPath string
+
+	// TokenTracker accumulates usage across all LLM calls in this expand session.
+	// The caller sets this before Generate; nil means no tracking.
+	TokenTracker *engine.TokenTracker
 
 	mu sync.Mutex
 	// Per-chapter call counters

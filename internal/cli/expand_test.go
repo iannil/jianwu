@@ -172,7 +172,7 @@ func TestExpandRunHappyPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := runExpand(cmd, []string{"test-book", "01-01"}, 0, mockDeps); err != nil {
+	if err := runExpand(cmd, []string{"test-book", "01-01"}, 0, mockDeps, false); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
 
@@ -368,7 +368,7 @@ func TestExpandRunAllowWithDoubleForce(t *testing.T) {
 	cmd := newExpandCmd()
 	cmd.SetOut(&bytes.Buffer{})
 	cmd.SetErr(&bytes.Buffer{})
-	if err := runExpand(cmd, []string{"test-book", "01-01"}, 2, mockDeps); err != nil {
+	if err := runExpand(cmd, []string{"test-book", "01-01"}, 2, mockDeps, false); err != nil {
 		t.Fatalf("expected success with --force --force on reviewed chapter, got: %v", err)
 	}
 

@@ -24,5 +24,5 @@ The chapter's status is set back to "expanded" after rewrite.`,
 func runRewrite(cmd *cobra.Command, args []string) error {
 	// rewrite == expand with --force --force (override any status).
 	const forceCount = 2
-	return runExpand(cmd, args, forceCount, nil)
+	return runExpand(cmd, args, forceCount, nil, false)
 }

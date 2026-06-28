@@ -48,6 +48,7 @@ func (p *Provider) Chat(ctx context.Context, req llm.ChatRequest) (*llm.ChatResp
 		return nil, p.chatErr
 	}
 	resp := p.chatResp
+	resp.PopulateUsage()
 	return &resp, nil
 }
 

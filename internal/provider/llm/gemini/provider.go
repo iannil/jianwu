@@ -77,6 +77,7 @@ func (p *Provider) Chat(ctx context.Context, req llm.ChatRequest) (*llm.ChatResp
 		out.TokensIn = int(resp.UsageMetadata.PromptTokenCount)
 		out.TokensOut = int(resp.UsageMetadata.CandidatesTokenCount)
 	}
+	out.PopulateUsage()
 	return out, nil
 }
 

@@ -74,12 +74,14 @@ func (p *Provider) Chat(ctx context.Context, req llm.ChatRequest) (*llm.ChatResp
 	if len(out.Choices) == 0 {
 		return nil, fmt.Errorf("glm: empty choices in response")
 	}
-	return &llm.ChatResponse{
+	cr := &llm.ChatResponse{
 		Content:      out.Choices[0].Message.Content,
 		FinishReason: out.Choices[0].FinishReason,
 		TokensIn:     out.Usage.PromptTokens,
 		TokensOut:    out.Usage.CompletionTokens,
-	}, nil
+	}
+	cr.PopulateUsage()
+	return cr, nil
 }
 
 // Embed calls GLM's /embeddings endpoint.

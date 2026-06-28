@@ -12,6 +12,7 @@ import (
 
 	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/engine"
 	"github.com/iannil/jianwu/internal/engine/expand"
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/storage"
@@ -21,6 +22,7 @@ import (
 func newExpandCmd() *cobra.Command {
 	var forceCount int
 	var expandAll bool
+	var showTokens bool
 	cmd := &cobra.Command{
 		Use:   "expand <slug> <NN-MM>",
 		Short: "Expand one (or all) chapters into markdown with citations",
@@ -31,7 +33,8 @@ word_count, unverified_claims.
 
 Use --all to expand every scaffolded chapter in the book (parallel, continue-on-error).
 Use --force to overwrite an existing expanded chapter.
-Use --force twice (--force --force) to overwrite a reviewed or final chapter.`,
+Use --force twice (--force --force) to overwrite a reviewed or final chapter.
+Use --tokens to display token usage for the expand run.`,
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if expandAll {
@@ -43,17 +46,18 @@ Use --force twice (--force --force) to overwrite a reviewed or final chapter.`,
 			if len(args) != 2 {
 				return &InfoError{Err: fmt.Errorf("requires <slug> <NN-MM> or --all"), Code: ExitCodeUsage}
 			}
-			return runExpand(cmd, args, forceCount, nil)
+			return runExpand(cmd, args, forceCount, nil, showTokens)
 		},
 	}
 	cmd.Flags().CountVarP(&forceCount, "force", "f", "overwrite existing chapter (use twice to override reviewed/final)")
 	cmd.Flags().BoolVar(&expandAll, "all", false, "expand all scaffolded chapters")
+	cmd.Flags().BoolVar(&showTokens, "tokens", false, "show token usage after completion")
 	return cmd
 }
 
 // runExpand is the testable core extracted from RunE.
 // If deps is nil, providers are built from workspace config.
-func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *ProviderDeps) error {
+func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *ProviderDeps, showTokens bool) error {
 	out := cmd.OutOrStdout()
 	slug := args[0]
 	addr := args[1]
@@ -162,10 +166,18 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *Provider
 		expandIn.NextChapter = next
 	}
 
+	// Token tracking (optional).
+	var tracker *engine.TokenTracker
+	var chatter llm.Chatter = deps.Chatter
+	if showTokens {
+		tracker = &engine.TokenTracker{}
+		chatter = engine.NewTrackingChatter(deps.Chatter, tracker)
+	}
+
 	// Run expand.
 	fmt.Fprintf(out, "Expanding %s/%s...\n", slug, addr)
 	expandCtx, expandCancel := stageCtx(ws.Config, "expand")
-	result, err := expand.Generate(expandCtx, deps.Chatter, registry, expandIn, nil)
+	result, err := expand.Generate(expandCtx, chatter, registry, expandIn, nil)
 	expandCancel()
 	if err != nil {
 		return wrapLLMError(err)
@@ -208,6 +220,11 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *Provider
 	fmt.Fprintf(out, "✓ Wrote %s\n", chapPath)
 	fmt.Fprintf(out, "  Words: %d, Citations: %d, Unverified claims: %d\n",
 		result.WordCount, len(result.Citations), len(result.UnverifiedClaims))
+	if showTokens && tracker != nil {
+		u := tracker.Snapshot()
+		fmt.Fprintf(out, "  Tokens: %d in + %d out = %d total (%d calls, %d cached)\n",
+			u.PromptTokens, u.CompletionTokens, u.TotalTokens, u.CallCount, u.CachedCount)
+	}
 	if len(result.UnverifiedClaims) > 0 {
 		fmt.Fprintf(out, "\nRun `jianwu review %s %s` after reading to approve.\n", slug, addr)
 	}
@@ -317,7 +334,7 @@ func runExpandAll(cmd *cobra.Command, slug string, forceCount int) error {
 			addr := fmt.Sprintf("%02d-%02d", it.partIdx, it.chIdx)
 			args := []string{slug, addr}
 			results[i].item = it
-			results[i].err = runExpand(cmd, args, forceCount, deps)
+			results[i].err = runExpand(cmd, args, forceCount, deps, false)
 			return nil // continue-on-error
 		})
 	}
