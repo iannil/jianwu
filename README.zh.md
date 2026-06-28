@@ -1,241 +1,149 @@
-# jianwu
+# jianwu (肩吾)
 
 [English](README.md) | 中文
 
-> 肩吾 —— 把 AI 的训练知识结构化为人类可阅读、可学习的图书。
+> 把 LLM 的训练知识结构化为可阅读、可学习的图书 —— 一条命令完成。
 
-生成中文长篇非虚构的 Go 库 + CLI。Web SaaS 包装层在独立仓库（`mouqin`）。
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://go.dev)
+[![Go Report Card](https://goreportcard.com/badge/github.com/iannil/jianwu)](https://goreportcard.com/report/github.com/iannil/jianwu)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](CONTRIBUTING.md)
+[![GitHub Stars](https://img.shields.io/github/stars/iannil/jianwu?style=social&label=Stars)](https://github.com/iannil/jianwu)
 
-## 当前状态
+**jianwu** 是一个 Go CLI + 库，编排 LLM 写出长篇非虚构图书 —— 带目录、一致引用、章节级状态管理和多格式导出。
 
-**已发布：v0.1.3。** 完整写作闭环端到端跑通——`new → expand → review → finalize → export`。
+Web SaaS 版本：[mouqin.com](https://mouqin.com) — Early Access
 
-| 层面 | 内容 | 状态 |
-|---|---|---|
-| CLI | `init` / `info` / `config get·set·list` / `new` | ✅ 已交付 |
-| CLI | `expand <slug> <NN-MM>` | ✅ 已交付 |
-| CLI | `review` / `finalize` / `export` / `status`（状态机） | ✅ 已交付 |
-| 引擎 | Grill · Outline · Scaffolding · Expand（4 阶段） | ✅ 已交付 |
-| 质量 | Expand prompt 注入（archetype + 风格规约 + 样例 + 相邻章节） | ✅ 已交付 |
-| CLI | 配置驱动的 fallback 模型装配 | ⏳ 计划中（v0.1.4） |
-| CLI | 各阶段 LLM 超时 | ⏳ 计划中（v0.1.5） |
-| CLI | Draft 流式输出 | ⏳ 可选（v0.1.6） |
+---
 
-路线图见 [`docs/ROADMAP.md`](docs/ROADMAP.md)，项目全景快照见 [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)。
+## 适用人群
 
-## 安装
+- **写作者 & 研究者** — 把研究笔记变成有结构的、带脚注的图书
+- **LLM 高级用户** — 受够了 token 限制和缺少书级结构
+- **中文非虚构作者** — 为长篇中文写作设计的 AI 辅助管线
+- **Go 开发者** — 对 LLM 编排、provider 抽象、prompt 工程感兴趣
 
-```bash
-go install github.com/iannil/jianwu/cmd/jianwu@latest
-```
+## 解决的问题
 
-或从源码构建：
+LLM 有海量训练知识，但只能输出 token。它们无法给你一本带目录、一致引用和章节状态管理的书。大部分 AI 写作工具产的是**文字**——段落、邮件、博客。
 
-```bash
-git clone https://github.com/iannil/jianwu
-cd jianwu
-go build -o ./bin/jianwu ./cmd/jianwu
-```
+**jianwu 产的是书。**
+
+## 功能
+
+| 领域 | 能力 |
+|---|---|
+| **创作管线** | Grill（设计）→ Outline → Scaffold → Expand（调研 → 草稿 → 验证） |
+| **质量保障** | 逐 claim URL 验证 + 自动修订 |
+| **导出** | Markdown、Hugo 站点、PDF（单书或全书站） |
+| **LLM 提供商** | Gemini 2.5 Pro/Flash、GLM-4、Ollama（本地）、Mock |
+| **搜索 & 阅读** | Brave Search、Serper（备选）、Jina Reader |
+| **语料** | 内置参考书 + 嵌入索引（RAG） |
+| **配置** | 5 层合并（默认 → 全局 → 工作区 → 环境变量 → 标志） |
+| **开发者体验** | 窄 Go 接口、状态机、表格驱动测试 |
+
+**当前版本：v0.3.5。** [完整状态 →](docs/PROJECT_STATUS.md) | [路线图 →](docs/ROADMAP.md)
 
 ## 快速开始
 
-从空 workspace 到导出单一 markdown 图书的完整闭环：
-
 ```bash
-jianwu init my-library
-cd my-library
+# 安装
+go install github.com/iannil/jianwu/cmd/jianwu@latest
 
-# API keys（或写入 ~/.config/jianwu/secrets.yaml，权限 0600）
+# 或从源码构建
+git clone https://github.com/iannil/jianwu
+cd jianwu && go build -o ./bin/jianwu ./cmd/jianwu
+
+# 设置 API key
 export GEMINI_API_KEY=...
-export GLM_API_KEY=...
 
-jianwu new                     # 交互式 grill → outline → scaffolding
-                               #   → books/<slug>/{meta.json, outline.json}
-jianwu expand <slug> 01-01     # research → draft → validate；写出
-                               #   chapters/01-01.md + 引用，更新 outline.json
-jianwu review  <slug> 01-01    # 把一章 expanded 标记为 reviewed（人工签发）
-jianwu status  <slug>          # 逐章进度 + 下一步动作提示
-jianwu finalize <slug>         # 全部 reviewed → final（--dry-run 可预览）
-jianwu export   <slug>         # 合并章节 → books/<slug>/export/<slug>.md
-                               #   （全局脚注重编号；支持 --dry-run）
+# 从零到导出，一次会话完成
+jianwu init my-book && cd my-book
+jianwu new                     # grill → outline → scaffolding
+jianwu expand my-book 01-01    # research → draft → validate
+jianwu status my-book          # 进度 + 下一步
+jianwu finalize my-book        # 锁稿
+jianwu export my-book          # 全书 markdown + 脚注
 ```
 
-`<slug>` 是 `jianwu new` 打印的 kebab-case 书籍 id（也是 `books/` 下的目录名）。`<NN-MM>` 是章节地址：部 `NN`、章 `MM`。
-
-状态机是严格的：一章必须先 `expanded` 才能 `review`，全书每章都 `reviewed` 才能 `finalize`。`outline.json` 是状态的单一真相源；章节 `.md` frontmatter 由它镜像同步。
-
-## 配置
-
-5 层，低 → 高优先级：
-
-1. 编译时 defaults（`internal/config/defaults.go`）
-2. `~/.config/jianwu/config.yaml`（全局用户）
-3. `<workspace>/.jianwu/config.yaml`
-4. 环境变量（如 `JIANWU_OUTLINE_MODEL=glm-4.6`）
-5. CLI flag（如 `--model glm-4.6`）
-
-```bash
-jianwu config get models.outline.provider
-jianwu config set scaffolding.concurrency 10
-jianwu config list
-```
-
-**Secrets** 放在 `~/.config/jianwu/secrets.yaml`（强制 `0600` 权限）或环境变量：`GEMINI_API_KEY` / `GLM_API_KEY` / `BRAVE_API_KEY` / `SERPER_API_KEY` / `JINA_API_KEY`。ENV 按字段覆盖 file。
-
-**各阶段默认模型：**
-
-| 阶段 | 默认模型 |
-|---|---|
-| Grill | GLM-4.6 |
-| Outline | Gemini 2.5 Pro |
-| Scaffolding | Gemini 2.5 Flash |
-| Expand | GLM-4.6 |
-
-## Providers
-
-一切都藏在小 Go 接口后（`Chatter`、`Embedder`、`Searcher`、`Reader`）；引擎层组合它们。
-
-**LLM**
-- **Gemini** 走官方 `google.golang.org/genai` SDK（`gemini-2.5-pro`、`gemini-2.5-flash`、`text-embedding-004`）。
-- **GLM** 走直接 REST、OpenAI-compatible 客户端（`glm-4.6`、`glm-4-air`、`embedding-3`）。同一客户端可复用于 Qwen / Moonshot / DeepSeek。
-- **Mock** 用于单元测试。
-
-**Search：** Brave Search API（主）→ Serper.dev（备）。
-**URL Reader：** Jina Reader（`r.jina.ai`）。
-
-**Retry：** 3 次重试，指数退避（1s → 2s → 4s）+ ±20% jitter，针对 network / 429 / 5xx，context-aware（Ctrl+C 立即取消）。库层已有 `FallbackWrapper`；从 CLI 配置驱动的 fallback 模型选择在 v0.1.4 装配。
-
-## 引擎
-
-jianwu 提供完整 4 阶段引擎。每个阶段都是独立、可调用的库包。
-
-```
-jianwu new
-  ↓
-grill.Run        # 12 维度设计树；用户接受 / 修改 LLM 的推荐
-  ↓
-outline.Generate # 单次 LLM 调用，JSON Schema 强制输出 → book.Outline
-  ↓
-scaffolding      # N 章并行（errgroup，continue-on-error）
-  ↓
-books/<slug>/{meta.json, outline.json}  +  归档会话 .session.json
-```
-
-```
-jianwu expand <slug> <NN-MM>
-  ↓ iter 1  research   web_search × N + read_url × M → research notes + 引用候选
-  ↓ iter 2  draft      LLM 写 markdown + [^N] 脚注
-  ↓ iter 3  validate   自检 + 修订 → claims[].has_citation
-  ↓
-ParseFootnotes + 合并引用元数据
-  → chapters/NN-MM.md（frontmatter + 正文）+ 更新 outline.json 状态/引用/字数
-```
-
-Expand prompt 真正注入 archetype YAML、完整风格规约、few-shot 风格样例和相邻章节选段——让正文对齐 zhurongshuo 文体，而非 generic LLM 输出。
+📖 [完整入门指南 →](docs/getting-started.md)
 
 ## 架构
 
 ```
-cmd/jianwu/main.go                    # CLI 入口（exit code 映射）
-internal/
-  cli/                                # cobra 命令层
-    root / init / info / config / new
-    expand / review / finalize / export / status
-    prompt                            # TerminalPrompt（grill.UserInput 实现）
-    providers / new_flow              # 编排 + provider 装配
-  workspace/                          # .jianwu/ 加载、walk-up detect、Init/Load
-  config/                             # 5 层 resolver + secrets（ENV > file, 0600）
-  book/                               # Meta/Outline/Chapter/Citation 类型 + JSON I/O + Slugify
-  archetypes/ style/ corpus/          # 内置数据（//go:embed FS）
-  provider/
-    llm/        gemini/ glm/ mock/    # Chatter + Embedder + Retry/Fallback wrappers
-    search/     brave/ serper/        # Searcher
-    reader/     jina/                 # Reader
-    llmfactory/ searchfactory/ readerfactory/   # 工厂（独立包以打破 import cycle）
-  engine/
-    outline/                          # 单次 LLM 调用 → book.Outline
-    scaffolding/                      # N 章并行 + RetryFailed
-    grill/                            # 12 维度设计树 + stateful session
-    expand/                           # 3-iteration agent + 工具调用 + citation 解析
+cmd/jianwu/main.go
+├── internal/cli/            # cobra 命令树
+├── internal/engine/
+│   ├── grill/               # 12 维度设计树
+│   ├── outline/             # 单次 LLM 调用 → JSON Schema 输出
+│   ├── scaffolding/         # N 章并行（errgroup）
+│   ├── expand/              # 3 轮迭代：调研 → 草稿 → 验证
+│   ├── factcheck/           # 逐 claim URL 验证
+│   └── revise/              # 自动修订 + 新引用
+├── internal/provider/
+│   ├── llm/                 # Chatter / Embedder / Streamer 接口
+│   ├── search/              # Searcher 接口
+│   ├── reader/              # Reader 接口
+│   └── gemini/ glm/ ollama/ brave/ serper/ jina/  # 具体实现
+├── internal/book/           # Meta / Outline / Chapter / Claim 类型
+├── internal/config/         # 5 层配置合并
+├── internal/workspace/      # 工作区管理
+├── internal/storage/        # Storage 接口（OS + MemStorage）
+└── internal/corpus/         # 参考语料 + 嵌入索引
 ```
 
-**包依赖图（无环）：** `cli → engine → provider → book / config / workspace`。三个 `*factory` 包横跨 provider 子树以打破 import cycle。
+**关键设计决策：**
+- 窄接口（5 行定义一个 provider）
+- 无全局状态，无 `init()`（`//go:embed` 除外）
+- 状态机：`scaffolded → expanded → reviewed → finalized`
+- 表格驱动测试 + Mock provider；零 testify 依赖
+- AGPL-3.0（代码）+ 内部使用的 zhurongshuo 数据
 
-**Workspace 布局：**
+## Providers
 
-```
-<workspace>/
-  .jianwu/
-    config.yaml            # workspace 配置（覆盖全局）
-    schema_version         # "1"（已废弃，不再写入或校验）
-    sessions/<id>.json     # 运行中的 grill 会话
-  books/<slug>/
-    meta.json              # id / slug / title / archetype / parameters / engine versions
-    outline.json           # parts[] × chapters[]；逐章 status + citations（真相源）
-    .session.json          # 已完成的 grill 会话（audit log）
-    chapters/NN-MM.md      # expand 产出：frontmatter + markdown + [^N] 脚注
-    export/<slug>.md       # `jianwu export` 产出
-  exports/  archive/       # 预留（v0.2+）
-```
+一切都藏在小 Go 接口后。接入新 provider = 实现接口 + 注册工厂。
 
-章节 `status` 流转 `scaffolded → expanded → reviewed → final`（出错时 `failed`）。
+- **LLM：** Gemini 2.5 Pro/Flash、GLM-4.6/Air、Ollama（本地：Qwen、Llama 等）、Mock
+- **搜索：** Brave Search（主）→ Serper（备）
+- **阅读：** Jina Reader
 
-## 库 API
+**重试：** 3 次，指数退避（1s→2s→4s）+ ±20% jitter；context-aware（Ctrl+C 取消）。FallbackWrapper 链式切换 provider。
 
-所有引擎逻辑都在库里；CLI 和未来的 web app 包同一组包。
+## 资源
 
-```go
-outline.Generate(ctx, chatter, Input) (*book.Outline, error)
+| 资源 | 链接 |
+|---|---|
+| 博客 | [mouqin.com/blog/](https://mouqin.com/blog/) |
+| 引擎详解 | [mouqin.com/engine/](https://mouqin.com/engine/) |
+| CLI 参考 | [mouqin.com/docs/commands/](https://mouqin.com/docs/commands/) |
+| 配置指南 | [mouqin.com/docs/configuration/](https://mouqin.com/docs/configuration/) |
+| 架构文档 | [docs/architecture/overview.md](docs/architecture/overview.md) |
+| 路线图 | [docs/ROADMAP.md](docs/ROADMAP.md) |
+| 决策记录 | [docs/decisions/26-grill-decisions.md](docs/decisions/26-grill-decisions.md) |
 
-scaffolding.GenerateChapter(ctx, chatter, ChapterInput) (*ChapterOutput, error)
-scaffolding.ScaffoldAll(...) map[string]Result
-scaffolding.RetryFailed(...)
+## 贡献
 
-grill.NewSession()
-grill.Run(...)
-grill.Repository{ Save, Load, ListIncomplete, Archive }
+欢迎 PR！见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-expand.Generate(ctx, chatter, tools, ExpandInput) (*ExpandOutput, error)
-```
-
-Provider 接口：
-
-```go
-type Chatter  interface { Chat (ctx, ChatRequest)  (*ChatResponse,  error) }
-type Embedder interface { Embed(ctx, EmbedRequest) (*EmbedResponse, error) }
-type Searcher interface { Search(ctx, Query)       (*Results,       error) }
-type Reader   interface { Read (ctx, url string)   (string,         error) }
-```
-
-**错误分类**（驱动 retry / fallback / exit code）：`ErrNetwork` / `ErrRateLimit` / `ErrServer` 触发重试再 fallback；`ErrLLMProvider`（4xx）两者都不做。退出码：`0` 成功 · `1` 通用 · `2` 用法 · `3` workspace 未找到 · `4` LLM 错 · `5` 网络错。
-
-## 开发
+**开发：**
 
 ```bash
-go test ./...                                 # 全部包
+go test ./...                       # 全部测试（Mock provider）
 go build -o ./bin/jianwu ./cmd/jianwu
-go vet ./...  &&  gofmt -l .                   # 必须全清
+go vet ./...  &&  gofmt -l .        # 必须全清
 
-go test -run TestE2E ./internal/cli/...        # E2E happy path（mock provider）
-GEMINI_API_KEY=xxx go test ./internal/engine/expand/... -run TestGenerateLive   # 真 LLM
+# Live LLM 测试（需要 API key）
+GEMINI_API_KEY=xxx go test ./internal/engine/expand/... -run TestGenerateLive
 ```
 
-**测试策略：** 库 / 状态机 / 纯逻辑代码 test-first（TDD）；LLM-driven 代码 test-after，用 Mock provider + `httptest`。Live integration 测试在无 API key 时 SKIP。
+**SDD 工作流：** subagent-driven development — `/grill-me` 定设计决策，writing-plans 出 task 计划，每 task 独立 subagent。
 
-**开发工作流（SDD —— subagent-driven development）：**
+---
 
-1. `/grill-me` —— 在设计树上对齐决策。
-2. `writing-plans` —— 出 task-by-task 计划（每 task TDD：RED → GREEN → commit）。
-3. `subagent-driven-development` —— 每 task 派 fresh implementer subagent + task reviewer。
-4. 切片完成 → whole-branch review → 一个修复 commit 解决所有 findings。
-5. tag `vX.Y.Z` + push。
-
-内置数据资产（`//go:embed`）：3 个 archetype YAML、1 个风格规约 + 3 个 few-shot 样例、6 本内置 corpus JSON。运行时对 zhurongshuo 仓库零外部依赖。
-
-完整设计见 [`docs/archive/DESIGN.md`](docs/archive/DESIGN.md)（v0.1 锁定版），决策记录见 [`docs/decisions/26-grill-decisions.md`](docs/decisions/26-grill-decisions.md)。
+⭐ **如果你觉得这个项目有用，给个 star —— 帮助更多人发现它。**
 
 ## 许可
 
-代码：**AGPL-3.0**（见 [`LICENSE`](LICENSE)）。
+代码：**AGPL-3.0**（见 [LICENSE](LICENSE)）。
 
 内置 zhurongshuo 参考数据（`internal/archetypes/`、`internal/style/`、`internal/corpus/`）：© zhurong，仅内部使用，不可再分发。

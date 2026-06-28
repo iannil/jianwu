@@ -1,11 +1,11 @@
-baseURL = "/"
+baseURL = "https://mouqin.com/"
 languageCode = "zh-CN"
 title = "肩吾 — jianwu"
 # no theme — custom layouts only
-disableKinds = ["RSS", "sitemap", "robotsTXT", "taxonomy", "term"]
+disableKinds = ["RSS", "robotsTXT", "taxonomy", "term"]
 
 [params]
-  description = "把 AI 的训练知识结构化为人类可阅读、可学习的图书"
+  description = "某钦 (mouqin) — AI 辅助中文非虚构写作平台。从想法到书稿，在浏览器中完成全流程。基于肩吾 (jianwu) 引擎的 LLM 写作管线"
   githubRepo = "https://github.com/iannil/jianwu"
   latestVersion = "v0.3.5"
   turnstileSiteKey = "0x4AAAAAADsVRZpQKGKkO9Yh"  # ← 替换为你的真实 Turnstile Site Key

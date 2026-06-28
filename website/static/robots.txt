@@ -1,0 +1,26 @@
+# 某钦 mouqin — robots.txt
+# Allow AI crawlers for AI-assisted writing content.
+
+User-agent: *
+Allow: /
+Sitemap: https://mouqin.com/sitemap.xml
+
+# Block admin/internal paths
+Disallow: /api/
+Disallow: /waitlist-api/
+
+# Recommended AI crawler access (overrides Cloudflare managed block)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /

@@ -8,6 +8,45 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='80' height='90' x='10' y='5' rx='6' fill='none' stroke='%231F2937' stroke-width='6'/><line x1='20' y1='30' x2='80' y2='30' stroke='%231F2937' stroke-width='4' stroke-linecap='round'/><line x1='20' y1='48' x2='65' y2='48' stroke='%239CA3AF' stroke-width='3' stroke-linecap='round'/><line x1='20' y1='60' x2='55' y2='60' stroke='%239CA3AF' stroke-width='3' stroke-linecap='round'/></svg>">
   {{ $css := resources.Get "css/main.css" | resources.Minify | resources.Fingerprint }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+
+  {{- /* Canonical URL */ -}}
+  <link rel="canonical" href="{{ .Permalink }}">
+
+  {{- /* FAQ Schema (blog posts only) */ -}}
+  {{- if and .IsPage (eq .Section "blog") .Params.faq -}}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {{- range $i, $q := .Params.faq }}
+      {{- if $i }},{{ end }}
+      {
+        "@type": "Question",
+        "name": {{ $q.q | jsonify }},
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": {{ $q.a | jsonify }}
+        }
+      }
+      {{- end }}
+    ]
+  }
+  </script>
+  {{- end }}
+
+  {{- /* Open Graph */ -}}
+  <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}">
+  <meta property="og:description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <meta property="og:url" content="{{ .Permalink }}">
+  <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+  <meta property="og:site_name" content="某钦 mouqin">
+  <meta property="og:locale" content="zh_CN">
+
+  {{- /* Twitter Card */ -}}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}">
+  <meta name="twitter:description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
 </head>
 <body class="{{ if .IsHome }}mouqin-page{{ end }}">
   {{ partial "header.html" . }}
