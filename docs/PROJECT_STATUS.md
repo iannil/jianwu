@@ -1,7 +1,7 @@
 # jianwu 项目状态
 
 > 本文档对 LLM 友好——任何接手后续迭代的 agent 读这一份就能理解项目当前形态、什么能用、什么没做、怎么扩展。
-> 最后更新：2026-06-28（v0.2.3 — corpus sync delivered）
+> 最后更新：2026-06-28（v0.3.4 — 并发安全 provider 装配 delivered）
 
 ---
 
@@ -324,11 +324,11 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 
 | 切片 | 内容 | 前置 | 状态 |
 |---|---|---|---|
-| v0.3.0 | 存储抽象 `Storage` 接口 | 地基 | ⏳ **已交付地基**（接口 + OS 实现 + book/workspace 迁移） |
-| v0.3.1 | 长任务 / 进度模型（expand 回调 + 可取消） | v0.1.5 | 🔲 |
-| v0.3.2 | Token / 成本计量 | — | 🔲 |
-| v0.3.3 | per-tenant Secrets | — | 🔲 |
-| v0.3.4 | 并发安全 provider 装配 | — | 🔲 |
+| v0.3.0 | 存储抽象 `Storage` 接口 | 地基 | ✅ 已交付 |
+| v0.3.1 | 长任务 / 进度模型（expand 回调 + 可取消） | v0.1.5 | ✅ 已交付 |
+| v0.3.2 | Token / 成本计量 | — | ✅ 已交付 |
+| v0.3.3 | per-tenant Secrets | — | ✅ 已交付 |
+| v0.3.4 | 并发安全 provider 装配 | — | ✅ 已交付（显式参数注入，`go test -race` 全绿） |
 | v0.3.5 | SaaS 安全加固（SSRF allowlist / LimitReader / 错误截断） | — | 🔲 |
 
 ### v1.0（mouqin SaaS）
@@ -342,7 +342,7 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 ## 11. 已知技术债
 
 ### 架构层
-- `cli.chatterProviderHook` + `cli.providerDepsHook` 是 test-only 全局可变 var（注释已警告），v0.3.4 重构为显式注入
+- ~~`cli.chatterProviderHook` + `cli.providerDepsHook` 全局可变 var~~ — v0.3.4 已重构：`runExpand`/`runNewFlow` 用显式参数注入，测试直接构造 mock
 - 三个 factory 包（`llmfactory` / `searchfactory` / `readerfactory`）独立存在只为打破 import cycle——是 Go 标准做法但显得啰嗦
 
 ### 代码层（已清理）

@@ -46,7 +46,7 @@ Go CLI + 库。入口：`cmd/jianwu/main.go`。
 - **注释：** 导出的类型/函数写 doc comment（`// Foo does X.`）。设计决策可加交叉引用，如 `// Per decision Q2=B`。
 - **库包中不使用 init()**（`embed.go` 中的 `//go:embed` 除外）。无全局状态。
 - **小接口：** `Chatter`、`Embedder`、`Streamer` —— Go 风格的窄接口。
-- **provider 装配：** 通过 `ProviderDeps` 结构体 + 工厂函数构建；`chatterProviderHook` / `providerDepsHook` 是 test-only 全局可变 var（v0.3.4 重构）。
+- **provider 装配：** 通过 `ProviderDeps` 结构体 + 工厂函数构建；~~`chatterProviderHook` / `providerDepsHook`~~ 已清除，v0.3.4 用显式参数注入。
 
 ## 文档索引
 

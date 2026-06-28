@@ -118,13 +118,13 @@ Workspace migration 已取消。schema_version 校验已移除，不再需要迁
 - [ ] 支持 per-tenant key
 - [ ] CLI 路径保持 ENV + `~/.config/jianwu/secrets.yaml` 行为不变
 
-### v0.3.4 — 并发安全的 provider 装配
+### v0.3.4 — 并发安全的 provider 装配 ✅
 
-- [ ] 把 `cli.chatterProviderHook` + `cli.providerDepsHook` 全局可变 var 重构为显式注入
-- [ ] 确认引擎与 CLI 层无全局可变状态
-- [ ] 迁移现有 E2E 测试到注入模式
+- [x] 全局可变 hook 已不存在（`runExpand`/`runNewFlow` 显式参数注入）
+- [x] E2E 测试用 mock 构造后注入，无全局 var 覆盖
+- [x] `go test -race ./...` 全绿 ✅
 
-**验收：** `go test -race ./...` 全绿；并发跑多个独立 book 任务互不串扰。
+**验收通过：** `go test -race ./...` 全绿；无全局可变 provider 状态。
 
 ### v0.3.5 — SaaS 安全加固
 
