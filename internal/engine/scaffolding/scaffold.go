@@ -14,7 +14,24 @@ import (
 type Options struct {
 	// Concurrency limits parallel LLM calls. Zero or negative means default (5 per Q12.A1).
 	Concurrency int
+
+	// Progress is an optional callback fired when a chapter starts or completes.
+	// A nil callback is a no-op. The callback must not block.
+	Progress ScaffoldProgressCallback
 }
+
+// ScaffoldProgress describes progress for one scaffolded chapter.
+type ScaffoldProgress struct {
+	ChapterSlug string // e.g. "01-01"
+	Status      string // "running" | "done" | "failed"
+	PartIndex   int
+	ChapterIdx  int
+	Title       string
+	Err         error // non-nil only when Status == "failed"
+}
+
+// ScaffoldProgressCallback is an optional observer for scaffolding progress.
+type ScaffoldProgressCallback func(ScaffoldProgress)
 
 // Result captures the outcome of scaffolding one chapter.
 type Result struct {
@@ -95,6 +112,17 @@ func ScaffoldAll(
 				return nil
 			}
 
+			// Fire "running" progress.
+			if opts.Progress != nil {
+				opts.Progress(ScaffoldProgress{
+					ChapterSlug: j.key,
+					Status:      "running",
+					PartIndex:   j.partIdx,
+					ChapterIdx:  j.chIdx,
+					Title:       j.input.ChapterTitle,
+				})
+			}
+
 			out, err := GenerateChapter(gctx, chatter, j.input)
 
 			mu.Lock()
@@ -103,10 +131,29 @@ func ScaffoldAll(
 				results[j.key] = Result{
 					PartIndex: j.partIdx, ChapterIndex: j.chIdx, Err: err,
 				}
+				if opts.Progress != nil {
+					opts.Progress(ScaffoldProgress{
+						ChapterSlug: j.key,
+						Status:      "failed",
+						PartIndex:   j.partIdx,
+						ChapterIdx:  j.chIdx,
+						Title:       j.input.ChapterTitle,
+						Err:         err,
+					})
+				}
 				return nil // don't propagate — continue-on-error
 			}
 			results[j.key] = Result{
 				PartIndex: j.partIdx, ChapterIndex: j.chIdx, Chapter: out,
+			}
+			if opts.Progress != nil {
+				opts.Progress(ScaffoldProgress{
+					ChapterSlug: j.key,
+					Status:      "done",
+					PartIndex:   j.partIdx,
+					ChapterIdx:  j.chIdx,
+					Title:       j.input.ChapterTitle,
+				})
 			}
 			return nil
 		})

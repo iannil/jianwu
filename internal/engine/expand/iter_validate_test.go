@@ -33,7 +33,7 @@ func TestRunValidateParsesResult(t *testing.T) {
 	}
 	body, _ := json.Marshal(result)
 	p := mock.New(llm.ChatResponse{Content: string(body)})
-	out, err := RunValidate(context.Background(), p, "draft", ResearchNotes{}, "")
+	out, err := RunValidate(context.Background(), p, "draft", ResearchNotes{}, "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +50,7 @@ func TestRunValidateParsesResult(t *testing.T) {
 
 func TestRunValidateHandlesInvalidJSON(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: "invalid json"})
-	_, err := RunValidate(context.Background(), p, "draft", ResearchNotes{}, "")
+	_, err := RunValidate(context.Background(), p, "draft", ResearchNotes{}, "", nil)
 	if err == nil {
 		t.Error("expected error for invalid JSON")
 	}
@@ -63,7 +63,7 @@ func TestRunValidateWithEmptyDraft(t *testing.T) {
 	}
 	body, _ := json.Marshal(result)
 	p := mock.New(llm.ChatResponse{Content: string(body)})
-	out, err := RunValidate(context.Background(), p, "", ResearchNotes{}, "")
+	out, err := RunValidate(context.Background(), p, "", ResearchNotes{}, "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func TestRunValidateWithResearchNotes(t *testing.T) {
 		},
 		Candidates: []string{"https://example.com"},
 	}
-	out, err := RunValidate(context.Background(), p, "draft", notes, "")
+	out, err := RunValidate(context.Background(), p, "draft", notes, "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

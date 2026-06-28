@@ -10,11 +10,13 @@ import (
 
 // Generate runs all 3 iterations for one chapter.
 // tools may be nil (skips web search); webSearchEnabled controls iter 1 grounding.
+// progress is an optional callback for pipeline progress; pass nil to skip.
 func Generate(
 	ctx context.Context,
 	chatter llm.Chatter,
 	tools *ToolRegistry,
 	in ExpandInput,
+	progress ProgressCallback,
 ) (*ExpandOutput, error) {
 	// Resolve injection material once; archetype-miss fails fast (Q1, Q9).
 	dc, err := loadDraftContext(in.ArchetypeID)
@@ -22,30 +24,42 @@ func Generate(
 		return nil, fmt.Errorf("load draft context: %w", err)
 	}
 
+	fire := func(phase ProgressPhase, pct int, msg string) {
+		if progress != nil {
+			progress(ProgressEvent{Phase: phase, Percent: pct, Message: msg})
+		}
+	}
+
 	// Iter 1: research
+	fire(PhaseResearch, 0, "Starting research phase")
 	slog.Debug("expand: iter 1 research", "chapter", in.ChapterTitle)
-	notes, err := RunResearch(ctx, chatter, tools, in)
+	notes, err := RunResearch(ctx, chatter, tools, in, progress)
 	if err != nil {
 		return nil, fmt.Errorf("iter 1 research: %w", err)
 	}
 	slog.Debug("expand: iter 1 research complete", "chapter", in.ChapterTitle)
+	fire(PhaseResearch, 100, "Research complete")
 
 	// Iter 2: draft
+	fire(PhaseDraft, 0, "Starting draft phase")
 	slog.Debug("expand: iter 2 draft", "chapter", in.ChapterTitle)
-	draft, err := RunDraft(ctx, chatter, in, dc, notes)
+	draft, err := RunDraft(ctx, chatter, in, dc, notes, progress)
 	if err != nil {
 		return nil, fmt.Errorf("iter 2 draft: %w", err)
 	}
 	slog.Debug("expand: iter 2 draft complete", "chapter", in.ChapterTitle,
 		"length", len(draft))
+	fire(PhaseDraft, 100, "Draft complete")
 
 	// Iter 3: validate
+	fire(PhaseValidate, 0, "Starting validation phase")
 	slog.Debug("expand: iter 3 validate", "chapter", in.ChapterTitle)
-	validated, err := RunValidate(ctx, chatter, draft, notes, dc.StyleGuide)
+	validated, err := RunValidate(ctx, chatter, draft, notes, dc.StyleGuide, progress)
 	if err != nil {
 		return nil, fmt.Errorf("iter 3 validate: %w", err)
 	}
 	slog.Debug("expand: iter 3 validate complete", "chapter", in.ChapterTitle)
+	fire(PhaseValidate, 100, "Validation complete")
 
 	// Build output: parse footnotes from final markdown, merge with tool registry metadata.
 	finalMD := validated.RevisedMarkdown

@@ -20,6 +20,7 @@ func RunResearch(
 	chatter llm.Chatter,
 	tools *ToolRegistry,
 	in ExpandInput,
+	progress ProgressCallback,
 ) (ResearchNotes, error) {
 	var notes ResearchNotes
 

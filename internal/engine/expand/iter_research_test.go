@@ -18,7 +18,7 @@ func TestRunResearchParsesLLMResponse(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: string(body)})
 	out, err := RunResearch(context.Background(), p, nil, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", KeyConcepts: []string{"k"},
-	})
+	}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func TestRunResearchRejectsMalformed(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: "not json"})
 	_, err := RunResearch(context.Background(), p, nil, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", KeyConcepts: []string{"k"},
-	})
+	}, nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}

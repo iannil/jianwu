@@ -18,6 +18,7 @@ func RunDraft(
 	in ExpandInput,
 	dc DraftContext,
 	notes ResearchNotes,
+	progress ProgressCallback,
 ) (string, error) {
 	sys, user, err := buildDraftPrompts(in, dc, notes)
 	if err != nil {

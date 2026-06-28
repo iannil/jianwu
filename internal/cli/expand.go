@@ -165,7 +165,7 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *Provider
 	// Run expand.
 	fmt.Fprintf(out, "Expanding %s/%s...\n", slug, addr)
 	expandCtx, expandCancel := stageCtx(ws.Config, "expand")
-	result, err := expand.Generate(expandCtx, deps.Chatter, registry, expandIn)
+	result, err := expand.Generate(expandCtx, deps.Chatter, registry, expandIn, nil)
 	expandCancel()
 	if err != nil {
 		return wrapLLMError(err)

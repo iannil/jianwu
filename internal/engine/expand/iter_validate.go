@@ -16,6 +16,7 @@ func RunValidate(
 	draft string,
 	notes ResearchNotes,
 	styleGuide string,
+	progress ProgressCallback,
 ) (ValidationResult, error) {
 	sys, user, err := buildValidatePrompts(draft, notes, styleGuide)
 	if err != nil {

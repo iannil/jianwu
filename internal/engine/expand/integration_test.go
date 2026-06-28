@@ -54,7 +54,7 @@ func runLiveGenerate(t *testing.T, chatter llm.Chatter) {
 		ChapterTitle: "第一章 引言",
 		Abstract:     "本章导引全书主题，建立核心问题意识。",
 		KeyConcepts:  []string{"真实", "虚幻", "AI 时代"},
-	})
+	}, nil)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}

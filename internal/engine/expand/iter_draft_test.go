@@ -14,7 +14,7 @@ func TestRunDraftReturnsMarkdown(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: "# Heading\n\nBody[^1].\n\n[^1]: [X](https://x)"})
 	out, err := RunDraft(context.Background(), p, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", Language: "zh",
-	}, DraftContext{}, ResearchNotes{Candidates: []string{"https://x"}})
+	}, DraftContext{}, ResearchNotes{Candidates: []string{"https://x"}}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestRunDraftWithDefaultLanguage(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: "# Test\n\nContent."})
 	out, err := RunDraft(context.Background(), p, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", Language: "",
-	}, DraftContext{}, ResearchNotes{})
+	}, DraftContext{}, ResearchNotes{}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestRunDraftWithLengthHints(t *testing.T) {
 	p := mock.New(llm.ChatResponse{Content: "# Long\n\nContent."})
 	out, err := RunDraft(context.Background(), p, ExpandInput{
 		Topic: "T", ChapterTitle: "C", Abstract: "A", Language: "en", Length: "long",
-	}, DraftContext{}, ResearchNotes{})
+	}, DraftContext{}, ResearchNotes{}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
