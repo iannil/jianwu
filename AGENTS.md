@@ -52,6 +52,7 @@ Go CLI + 库。入口：`cmd/jianwu/main.go`。
 
 | 文档 | 用途 |
 |---|---|
+| `docs/CAPABILITIES.md` | 用户面向的功能概览（CLI 命令、引擎管线、Provider、配置、导出） |
 | `docs/PROJECT_STATUS.md` | LLM 友好的当前状态全景（更新至 v0.2.0 + 2026-06-28 审计修复） |
 | `docs/ROADMAP.md` | v0.1.x → v1.0 路线图（更新至 v0.2.x 实际状态） |
 | `docs/architecture/overview.md` | 架构图 + 数据流 + 关键接口 |
