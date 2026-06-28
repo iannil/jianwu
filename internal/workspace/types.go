@@ -8,9 +8,6 @@ const MarkerName = ".jianwu"
 // ConfigFileName is the workspace config file inside MarkerName.
 const ConfigFileName = "config.yaml"
 
-// SchemaVersionFileName is the workspace schema version file.
-// Kept as a constant for backward compatibility; no longer enforced.
-const SchemaVersionFileName = "schema_version"
 
 // CorpusDirName is the workspace-relative directory for synced corpus files.
 const CorpusDirName = "corpus"

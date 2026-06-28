@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='80' height='90' x='10' y='5' rx='6' fill='none' stroke='%231F2937' stroke-width='6'/><line x1='20' y1='30' x2='80' y2='30' stroke='%231F2937' stroke-width='4' stroke-linecap='round'/><line x1='20' y1='48' x2='65' y2='48' stroke='%239CA3AF' stroke-width='3' stroke-linecap='round'/><line x1='20' y1='60' x2='55' y2='60' stroke='%239CA3AF' stroke-width='3' stroke-linecap='round'/></svg>">
+  {{ $css := resources.Get "css/main.css" | resources.Minify | resources.Fingerprint }}
+  <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+</head>
+<body class="{{ if .IsHome }}mouqin-page{{ end }}">
+  {{ partial "header.html" . }}
+
+  <main>
+    {{ block "main" . }}{{ end }}
+  </main>
+
+  {{ partial "footer.html" . }}
+</body>
+</html>

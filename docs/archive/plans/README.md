@@ -36,6 +36,13 @@
 |---|---|---|---|
 | v0.2.0 | `2026-06-26-v0.2.0-factcheck.md` | factcheck + revise 命令，claims 自动复核 | ✅ v0.2.0 |
 
+### 后续切片（含 v0.2.1–v0.3.5，无独立计划文件）
+
+> v0.2.1（Ollama）、v0.2.2（章节迭代命令）、v0.2.3（corpus sync + embedding 索引）、
+> 后 3 个原型（micro-meso-macro / theory-dynamics-history-present / mindset-method-practice）、
+> v0.3.0–0.3.5（SaaS-ready 内核全线）均在单次大规模工程提交中交付，
+> **未生成独立的 SDD 计划文件**。功能详情见 `docs/PROJECT_STATUS.md`。
+
 总计：~66 个 task（v0.1.0）+ ~26 个 task（v0.1.x）+ ~8 个 task（v0.2.0），每个都单独 TDD + subagent-driven review。
 
 ## 用作模板

@@ -1,0 +1,45 @@
+{{ define "main" }}
+{{ $isDocs := or (hasPrefix .RelPermalink "/docs/") (hasPrefix .RelPermalink "/developers/") }}
+
+{{ if $isDocs }}
+<div class="container docs-layout">
+  <aside class="docs-sidebar">
+    <nav>
+      {{ if hasPrefix .RelPermalink "/docs/" }}
+      <div class="sidebar-label">文档</div>
+      <ul>
+        <li><a href="/docs/getting-started/"{{ if eq .RelPermalink "/docs/getting-started/" }} class="active"{{ end }}>快速开始</a></li>
+        <li><a href="/docs/commands/"{{ if eq .RelPermalink "/docs/commands/" }} class="active"{{ end }}>命令参考</a></li>
+        <li><a href="/docs/configuration/"{{ if eq .RelPermalink "/docs/configuration/" }} class="active"{{ end }}>配置指南</a></li>
+      </ul>
+      {{ else if hasPrefix .RelPermalink "/developers/" }}
+      <div class="sidebar-label">开发者</div>
+      <ul>
+        <li><a href="/developers/architecture/"{{ if eq .RelPermalink "/developers/architecture/" }} class="active"{{ end }}>架构概览</a></li>
+        <li><a href="/developers/contributing/"{{ if eq .RelPermalink "/developers/contributing/" }} class="active"{{ end }}>参与贡献</a></li>
+      </ul>
+      {{ end }}
+    </nav>
+  </aside>
+
+  <article class="docs-content page-content">
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+  </article>
+</div>
+
+{{ else }}
+<div class="container-narrow">
+  <header class="page-header">
+    {{ if .Date }}
+    <time class="blog-date" style="display:block;margin-bottom:var(--space-sm);font-family:var(--font-mono);font-size:0.8125rem;color:var(--color-text-tertiary);">{{ .Date.Format "2006-01-02" }}</time>
+    {{ end }}
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="page-desc">{{ . }}</p>{{ end }}
+  </header>
+  <article class="page-content">
+    {{ .Content }}
+  </article>
+</div>
+{{ end }}
+{{ end }}

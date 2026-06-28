@@ -1,0 +1,56 @@
+{{ define "main" }}
+<div class="container-narrow">
+  <header class="page-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="page-desc">{{ . }}</p>{{ end }}
+  </header>
+
+  <div class="page-content">
+    {{ .Content }}
+
+    {{ if eq .RelPermalink "/blog/" }}
+    <ul class="blog-list">
+      {{ range .Pages.ByDate.Reverse }}
+      <li>
+        <time class="blog-date">{{ .Date.Format "2006-01-02" }}</time>
+        <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        {{ with .Description }}<p class="blog-excerpt">{{ . }}</p>{{ end }}
+      </li>
+      {{ else }}
+      <li><p style="color:var(--color-text-tertiary);">暂无文章。</p></li>
+      {{ end }}
+    </ul>
+    {{ end }}
+
+    {{ if eq .RelPermalink "/docs/" }}
+    <div class="features-grid" style="margin-top:var(--space-lg);">
+      <a href="/docs/getting-started/" class="feature-card" style="text-decoration:none;color:inherit;">
+        <h3>快速开始 →</h3>
+        <p style="font-size:0.9375rem;">五分钟上手 jianwu，从安装到完成第一本书。</p>
+      </a>
+      <a href="/docs/commands/" class="feature-card" style="text-decoration:none;color:inherit;">
+        <h3>命令参考 →</h3>
+        <p style="font-size:0.9375rem;">所有 CLI 命令的完整说明和示例。</p>
+      </a>
+      <a href="/docs/configuration/" class="feature-card" style="text-decoration:none;color:inherit;">
+        <h3>配置指南 →</h3>
+        <p style="font-size:0.9375rem;">5 层配置体系详解：默认值、全局、工作区、环境变量、CLI 标志。</p>
+      </a>
+    </div>
+    {{ end }}
+
+    {{ if eq .RelPermalink "/developers/" }}
+    <div class="features-grid" style="margin-top:var(--space-lg);">
+      <a href="/developers/architecture/" class="feature-card" style="text-decoration:none;color:inherit;">
+        <h3>架构概览 →</h3>
+        <p style="font-size:0.9375rem;">项目架构、8 个关键内部包、数据流。</p>
+      </a>
+      <a href="/developers/contributing/" class="feature-card" style="text-decoration:none;color:inherit;">
+        <h3>参与贡献 →</h3>
+        <p style="font-size:0.9375rem;">代码规范、测试约定、PR 流程。</p>
+      </a>
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

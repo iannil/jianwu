@@ -121,7 +121,7 @@ type Chatter interface {
 type Embedder interface {
     Embed(ctx context.Context, req EmbedRequest) (*EmbedResponse, error)
 }
-// Streamer / Tooler 接口预留（v0.1.4 流式 / v0.1.x 工具调用）
+// Streamer 接口（v0.1.6 Streaming 已交付）
 
 // internal/provider/search/interface.go
 type Searcher interface {

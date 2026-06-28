@@ -4,7 +4,11 @@
 > 库 + CLI 部分。Web SaaS 包装层是独立仓库 `mouqin`。
 
 最后更新：2026-06-22
-状态：**v0.1.0 已交付**（tag 在 master）。当前文档反映 v0.1 锁定时的设计，实施进展以 `docs/PROJECT_STATUS.md` 为准。
+状态：**v0.1.0 已归档锁定**。本文档反映 v0.1 初始设计，大量细节已过时：
+> - 原型从 3 个扩展到 6 个，Ollama 已加入 provider 阵容
+> - workspace 不再使用 `grill.log` 和 `schema_version` 文件
+> - `--export zhurongshuo` 适配器未实现（改为 `corpus sync`）
+> - 当前正确信息以 `docs/PROJECT_STATUS.md` 为准
 
 ---
 

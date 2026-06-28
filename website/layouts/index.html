@@ -1,0 +1,263 @@
+{{ define "main" }}
+
+{{/* ── 1. 是什么 (Hero) — 某钦 ── */}}
+<section class="mq-hero">
+  <div class="mq-container">
+    <div class="mq-hero-body">
+      {{/* Ink-wash atmosphere */}}
+      <div class="mq-hero-ink" aria-hidden="true"></div>
+
+      <p class="mq-hero-eyebrow">AI 辅助中文非虚构写作平台</p>
+
+      <h1 class="mq-hero-title">
+        <span class="mq-hero-calligraphy">某钦</span>
+      </h1>
+
+      <div class="mq-hero-divider" aria-hidden="true">
+        <span class="mq-hero-divider-line"></span>
+        <span class="mq-hero-divider-dot"></span>
+        <span class="mq-hero-divider-line"></span>
+      </div>
+
+      <p class="mq-hero-latin">mouqin</p>
+
+      <p class="mq-hero-desc">
+        从想法到书稿，在浏览器中完成全流程。
+      </p>
+
+      <div class="mq-hero-actions">
+        <a href="#waitlist" class="mq-btn mq-btn-primary">开始写作</a>
+        <a href="/engine/" class="mq-btn mq-btn-ghost">了解引擎 &nbsp;→</a>
+      </div>
+    </div>
+
+    <div class="mq-hero-footer">
+      <span class="mq-hero-version">v0.3.5 · 开发中</span>
+      <a href="https://github.com/zhurongshuo/jianwu" target="_blank" rel="noopener noreferrer" class="mq-hero-github">GitHub ↗</a>
+    </div>
+  </div>
+</section>
+
+{{/* ── 2. 能做什么 (Capabilities) ── */}}
+<section class="mq-section" id="capabilities">
+  <div class="mq-container mq-container-narrow">
+    <p class="mq-section-eyebrow">能做什么</p>
+    <h2 class="mq-section-title">
+      从构思到成书，<br>
+      <span class="mq-section-title-accent">AI 全程协作</span>
+    </h2>
+
+    <div class="mq-features">
+      {{/* Card 1 */}}
+      <div class="mq-feature-card">
+        <div class="mq-feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div class="mq-feature-card-text">
+          <h3 class="mq-feature-card-title">项目管理</h3>
+          <p class="mq-feature-card-desc">多书稿并行管理，章节结构一目了然。进度追踪看板，随时掌握写作全局。</p>
+        </div>
+      </div>
+
+      {{/* Card 2 */}}
+      <div class="mq-feature-card">
+        <div class="mq-feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+            <path d="M15 5l4 4"/>
+          </svg>
+        </div>
+        <div class="mq-feature-card-text">
+          <h3 class="mq-feature-card-title">可视化编辑</h3>
+          <p class="mq-feature-card-desc">富文本与 Markdown 双模式编辑，实时预览排版效果。专注写作本身。</p>
+        </div>
+      </div>
+
+      {{/* Card 3 */}}
+      <div class="mq-feature-card">
+        <div class="mq-feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <div class="mq-feature-card-text">
+          <h3 class="mq-feature-card-title">多格式导出</h3>
+          <p class="mq-feature-card-desc">一键导出 Markdown、Word、PDF，满足从电子阅读到纸质出版的格式需求。</p>
+        </div>
+      </div>
+
+      {{/* Card 4 */}}
+      <div class="mq-feature-card">
+        <div class="mq-feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <div class="mq-feature-card-text">
+          <h3 class="mq-feature-card-title">AI 辅助</h3>
+          <p class="mq-feature-card-desc">基于肩吾引擎的 LLM 写作管线，从访谈、结构化到扩写、复核，全程 AI 协作。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{{/* ── 3. 怎么工作 (Process) ── */}}
+<section class="mq-section" id="process">
+  <div class="mq-container mq-container-narrow">
+    <p class="mq-section-eyebrow">怎么工作</p>
+    <h2 class="mq-section-title">
+      三步完成一本书
+    </h2>
+
+    <div class="mq-process">
+      {{/* Step 1 */}}
+      <div class="mq-process-step">
+        <div class="mq-process-step-header">
+          <span class="mq-process-step-num" aria-hidden="true">一</span>
+          <div class="mq-process-step-line" aria-hidden="true"></div>
+        </div>
+        <div class="mq-process-step-body">
+          <h3 class="mq-process-step-title">构思</h3>
+          <p class="mq-process-step-desc">AI 辅助访谈提炼观点，自动生成书稿大纲。理清思路，搭建骨架。</p>
+        </div>
+      </div>
+
+      {{/* Step 2 */}}
+      <div class="mq-process-step">
+        <div class="mq-process-step-header">
+          <span class="mq-process-step-num" aria-hidden="true">二</span>
+          <div class="mq-process-step-line" aria-hidden="true"></div>
+        </div>
+        <div class="mq-process-step-body">
+          <h3 class="mq-process-step-title">写作</h3>
+          <p class="mq-process-step-desc">AI 驱动调研、草稿生成与事实复核，持续迭代。边写边校验。</p>
+        </div>
+      </div>
+
+      {{/* Step 3 */}}
+      <div class="mq-process-step">
+        <div class="mq-process-step-header">
+          <span class="mq-process-step-num" aria-hidden="true">三</span>
+          <div class="mq-process-step-line mq-process-step-line-last" aria-hidden="true"></div>
+        </div>
+        <div class="mq-process-step-body">
+          <h3 class="mq-process-step-title">成书</h3>
+          <p class="mq-process-step-desc">统一排版、多格式导出，一键发布为网页或印刷稿。从数字到纸上。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{{/* ── 4. 加入 (Waitlist) — 邀请函 ── */}}
+<section class="mq-section" id="waitlist">
+  <div class="mq-container mq-container-narrow">
+    <div class="mq-waitlist-card">
+      <div class="mq-waitlist-seal-wrap">
+        <span class="mq-waitlist-seal" aria-hidden="true">邀</span>
+      </div>
+      <p class="mq-section-eyebrow">EARLY ACCESS</p>
+      <h2 class="mq-section-title">
+        成为第一批执笔者
+      </h2>
+
+      <form class="mq-form" id="waitlist-form" action="/api/waitlist" method="post">
+        <div class="mq-form-row" id="waitlist-row">
+          <input type="email" class="mq-input" id="waitlist-email" name="email" placeholder="your@email.com" required aria-label="邮箱地址">
+          <button type="submit" class="mq-submit" id="waitlist-submit">获取邀请</button>
+        </div>
+
+        {{/* Turnstile widget — site key from hugo.toml params */}}
+        <div class="mq-turnstile-wrap" id="turnstile-wrap">
+          <div class="cf-turnstile" data-sitekey="{{ .Site.Params.turnstileSiteKey }}" data-theme="auto"></div>
+        </div>
+
+        <div class="mq-form-feedback" id="waitlist-feedback" aria-live="polite" hidden></div>
+      </form>
+
+      <p class="mq-waitlist-note" id="waitlist-note">我们重视你的隐私，绝不会发送垃圾邮件。</p>
+
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+      <script>
+      (function() {
+        var form = document.getElementById('waitlist-form');
+        var row = document.getElementById('waitlist-row');
+        var emailInput = document.getElementById('waitlist-email');
+        var submitBtn = document.getElementById('waitlist-submit');
+        var feedback = document.getElementById('waitlist-feedback');
+        var note = document.getElementById('waitlist-note');
+        var turnstileWrap = document.getElementById('turnstile-wrap');
+
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+
+          var email = emailInput.value.trim();
+          if (!email) return;
+
+          // — 获取 Turnstile token —
+          var turnstileToken = '';
+          if (typeof turnstile !== 'undefined' && turnstile.getResponse) {
+            turnstileToken = turnstile.getResponse();
+          }
+
+          // — 加载状态 —
+          submitBtn.disabled = true;
+          submitBtn.textContent = '提交中…';
+          feedback.hidden = true;
+          feedback.className = 'mq-form-feedback';
+          row.classList.add('mq-form-row--loading');
+          if (turnstileWrap) turnstileWrap.style.opacity = '0.4';
+
+          fetch('/api/waitlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, turnstileToken: turnstileToken }),
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            row.classList.remove('mq-form-row--loading');
+            if (turnstileWrap) turnstileWrap.style.opacity = '1';
+            if (data.ok) {
+              // — 成功 —
+              row.classList.add('mq-form-row--success');
+              emailInput.value = '';
+              feedback.textContent = data.message || '感谢加入！我们会尽快联系你。';
+              feedback.className = 'mq-form-feedback mq-form-feedback--success';
+              feedback.hidden = false;
+              note.hidden = true;
+            } else {
+              // — 业务错误 —
+              submitBtn.disabled = false;
+              submitBtn.textContent = '获取邀请';
+              feedback.textContent = data.error || '提交失败，请稍后再试。';
+              feedback.className = 'mq-form-feedback mq-form-feedback--error';
+              feedback.hidden = false;
+            }
+          })
+          .catch(function() {
+            // — 网络错误 —
+            row.classList.remove('mq-form-row--loading');
+            if (turnstileWrap) turnstileWrap.style.opacity = '1';
+            submitBtn.disabled = false;
+            submitBtn.textContent = '获取邀请';
+            feedback.textContent = '网络错误，请稍后再试。';
+            feedback.className = 'mq-form-feedback mq-form-feedback--error';
+            feedback.hidden = false;
+          });
+        });
+      })();
+      </script>
+    </div>
+  </div>
+</section>
+
+{{ end }}

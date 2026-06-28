@@ -167,7 +167,7 @@ internal/
 <workspace>/
   .jianwu/
     config.yaml            # workspace 配置（覆盖全局）
-    schema_version         # "1"
+    schema_version         # "1"（已废弃，不再写入或校验）
     sessions/<id>.json     # 运行中的 grill 会话
   books/<slug>/
     meta.json              # id / slug / title / archetype / parameters / engine versions

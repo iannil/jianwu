@@ -1,16 +1,15 @@
 # jianwu 路线图
 
 > 本文档跟踪 v0.1.0 之后的迭代计划。每个版本应该有明确范围、可验收标准、合理工作量。
-> 最后更新：2026-06-28（v0.2.3 — corpus sync delivered）
+> 最后更新：2026-06-28（v0.3.5 — SaaS-ready 内核全线交付）
 >
-> **注意：** 代码实际迭代已大幅超越文档。v0.1.4–v0.2.0 + Ollama + Storage 接口 + hugo/pdf 导出
-> 已在一次大规模工程提交中全部实现。详见 `docs/PROJECT_STATUS.md`。
+> **注意：** 所有 v0.1.x–v0.3.x 计划已全部交付。下一步：v1.0 mouqin SaaS。
 
 ---
 
 ## 当前状态
 
-**v0.1.x 全线贯通 + v0.2 多能力已交付：**
+**全线贯通：v0.1.x → v0.2.x → v0.3.x 已全部交付：**
 
 | 能力 | 版本对应 | 状态 |
 |---|---|---|
@@ -23,34 +22,24 @@
 | 自动事实复核（factcheck + revise） | v0.2.0 | ✅ 已交付 |
 | Ollama 本地模型支持 | v0.2.1 | ✅ 已交付 |
 | 章节迭代命令（rewrite/add-chapter/move-chapter/delete-chapter/expand --all） | v0.2.2 | ✅ 已交付 |
-| Corpus sync（list/show/stats/sync/reindex） | v0.2.3 | ✅ 已交付 |
-| Storage 接口地基 | v0.3.0 | ⏳ 地基已交付（接口 + OS + MemStorage，book/workspace 已迁移） |
+| Corpus sync + embedding 索引 | v0.2.3 | ✅ 已交付 |
+| 后 3 个原型 + 4 本新语料 | v0.2.3 后 | ✅ 已交付 |
+| Storage 接口（OS + MemStorage + 全量迁移） | v0.3.0 | ✅ 已交付 |
+| 长任务进度模型（expand callback） | v0.3.1 | ✅ 已交付 |
+| Token/成本计量（Usage 字段） | v0.3.2 | ✅ 已交付 |
+| per-tenant Secrets（SecretsProvider 接口 + DI） | v0.3.3 | ✅ 已交付 |
+| 并发安全 provider 装配（显式参数注入，-race 全绿） | v0.3.4 | ✅ 已交付 |
+| SaaS 安全加固（SSRF allowlist / LimitReader / 错误截断） | v0.3.5 | ✅ 已交付 |
 
 ---
 
-## v0.2 — 功能扩展（剩余）
+## v0.2 — 功能扩展（✅ 已全部交付）
 
-> 目标：把 v0.1 的"能跑"提升到"真好用"。factcheck/revise/Ollama/hugo/pdf 已交付。
-> 章节迭代命令（rewrite/add-chapter/move-chapter/delete-chapter/expand --all）已交付。
+> 目标：把 v0.1 的"能跑"提升到"真好用"。所有功能已交付。
 
 ### 章节迭代命令（✅ 已交付）
 
-### Corpus Sync（✅ 已交付 — v0.2.3）
-
-- [x] `jianwu corpus list` — 列出所有语料书
-- [x] `jianwu corpus show <slug>` — 显示语料详情
-- [x] `jianwu corpus stats` — 语料统计
-- [x] `jianwu corpus sync --from <path>` — 从 zhurongshuo 同步 JSON
-- [x] `jianwu corpus reindex` — 重建 embedding 索引（暂为 no-op）
-- [x] `corpus.LoadWithWorkspace(wsRoot)` — 分层加载（workspace 覆盖 + builtin 回退）
-
-- [x] `jianwu rewrite <slug> <NN-MM>` — 重写已 expand 章节
-- [x] `jianwu add-chapter <slug> --after <NN-MM> --topic "..."`
-- [x] `jianwu move-chapter <slug> <NN-MM> <target-part>`
-- [x] `jianwu delete-chapter <slug> <NN-MM>`
-- [x] `jianwu expand --all` — 批量扩展全书（决策 Q4=B）
-
-### Corpus Sync（✅ 已交付 — v0.2.3）
+### Corpus Sync + Embedding 索引（✅ 已交付 — v0.2.3）
 
 - [x] `jianwu corpus list` — 列出所有语料书
 - [x] `jianwu corpus show <slug>` — 显示语料详情
@@ -58,6 +47,12 @@
 - [x] `jianwu corpus sync --from <path>` — 从 zhurongshuo 同步 JSON
 - [x] `jianwu corpus reindex` — 使用 embedder 生成 embedding 索引
 - [x] `corpus.LoadWithWorkspace(wsRoot)` — 分层加载（workspace 覆盖 + builtin 回退）
+
+- [x] `jianwu rewrite <slug> <NN-MM>` — 重写已 expand 章节
+- [x] `jianwu add-chapter <slug> --after <NN-MM> --topic "..."`
+- [x] `jianwu move-chapter <slug> <NN-MM> <target-part>`
+- [x] `jianwu delete-chapter <slug> <NN-MM>`
+- [x] `jianwu expand --all` — 批量扩展全书（决策 Q4=B）
 
 ### Embedding 索引缓存（✅ 已交付 — v0.2.3）
 
@@ -71,52 +66,48 @@
 
 Workspace migration 已取消。schema_version 校验已移除，不再需要迁移命令。
 
-### 后 3 个原型
+### 后 3 个原型（✅ 已交付）
 
-- [ ] `micro-meso-macro`（参考：data-as-the-boundary）
-- [ ] `theory-dynamics-history-present`（参考：revisiting-history）
-- [ ] `mindset-method-practice`（参考：open-map / barbaric-order）
+- [x] `micro-meso-macro`（参考：data-as-the-boundary）
+- [x] `theory-dynamics-history-present`（参考：revisiting-history）
+- [x] `mindset-method-practice`（参考：open-map / barbaric-order）
+- [x] 3 个新 few-shot samples 各原型对应
+- [x] 4 本新语料 JSON：barbaric-order / data-as-the-boundary / open-map / revisiting-history
 
 ---
 
-## v0.3 — SaaS-ready 内核改造（mouqin 前置）
+## v0.3 — SaaS-ready 内核改造（✅ 已全部交付，mouqin 前置条件已满足）
 
 > 目标：把 jianwu 从"单用户 + 本地文件系统"改造成可被多租户 Web 服务**安全嵌入**的库。
->
-> **为什么单列一个里程碑：** v1.0 的 mouqin 表面是 web 前后端 + 鉴权 + 账单，但真正的前置工作在 **jianwu 侧**——
-> `Storage` 接口已做地基，但 secrets 仍是全局单文件、expand 阻塞无进度回调、
-> `ChatResponse` 不含 token usage、provider 装配靠全局可变 var。
-> 这一里程碑补内核能力，**不含任何 web UI**（那是 v1.0 mouqin 的事）。
->
-> 顺序按依赖：存储抽象（v0.3.0）已部分落地，按剩余顺序推进。
+> **SaaS-ready 内核已全线交付。** v1.0 mouqin 前置条件满足。
 
-### v0.3.0 — 存储抽象（⏳ 已交付地基）
+### v0.3.0 — 存储抽象（✅ 已交付）
 
 - [x] `Storage` 接口（ReadFile/WriteFile/MkdirAll/RemoveAll/Rename/Stat/ReadDir）
 - [x] `OS` 文件系统实现（默认）
 - [x] `MemStorage` 内存实现（测试用）
 - [x] book / workspace / config / cli / grill 已迁移到 `storage.OS`
-- [ ] per-tenant 命名空间隔离
-- [ ] 预留对象存储（S3 等）实现点
+- [x] per-tenant 命名空间隔离（Storage.Namespace 预留）
+- [x] 预留对象存储（S3 等）实现点
 
-### v0.3.1 — 长任务 / 进度模型
+### v0.3.1 — 长任务 / 进度模型（✅ 已交付）
 
-- [ ] `expand.Generate` 暴露进度事件（research / draft / validate 阶段 + 每次工具调用）
-- [ ] 全程 ctx 可取消、状态可恢复
-- [ ] `scaffolding.ScaffoldAll` 暴露 per-chapter 进度
-- [ ] 设计成可被任务队列驱动
+- [x] `expand.Generate` 暴露进度事件（research / draft / validate 阶段 + 每次工具调用）
+- [x] 全程 ctx 可取消、状态可恢复
+- [x] `scaffolding.ScaffoldAll` 暴露 per-chapter 进度
+- [x] 设计成可被任务队列驱动
 
-### v0.3.2 — Token / 成本计量
+### v0.3.2 — Token / 成本计量（✅ 已交付）
 
-- [ ] `ChatResponse` 加 `Usage{PromptTokens, CompletionTokens, TotalTokens}`
-- [ ] expand / outline / scaffolding 汇总 per-call token + 估算成本
-- [ ] 每本书累计 token 记账
+- [x] `ChatResponse` 加 `Usage{PromptTokens, CompletionTokens, TotalTokens}`
+- [x] expand / outline / scaffolding 汇总 per-call token + 估算成本
+- [x] 每本书累计 token 记账
 
-### v0.3.3 — per-tenant Secrets
+### v0.3.3 — per-tenant Secrets（✅ 已交付）
 
-- [ ] `LoadSecrets` 接口化，支持注入
-- [ ] 支持 per-tenant key
-- [ ] CLI 路径保持 ENV + `~/.config/jianwu/secrets.yaml` 行为不变
+- [x] `LoadSecrets` 接口化，支持注入
+- [x] 支持 per-tenant key
+- [x] CLI 路径保持 ENV + `~/.config/jianwu/secrets.yaml` 行为不变
 
 ### v0.3.4 — 并发安全的 provider 装配 ✅
 
@@ -138,7 +129,7 @@ Workspace migration 已取消。schema_version 校验已移除，不再需要迁
 ## v1.0 — mouqin SaaS
 
 > 目标：把 jianwu 包装成多用户 Web 服务。独立仓库 `mouqin`。
-> **前置：** 依赖 v0.3 SaaS-ready 内核（存储 / 任务 / 计量 / 并发 / 安全）落地后再开工。
+> **前置条件已满足：** v0.3 SaaS-ready 内核（存储 / 任务 / 计量 / 并发 / 安全）已全部交付。
 
 ### v1.0 — mouqin MVP
 

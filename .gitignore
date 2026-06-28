@@ -22,3 +22,13 @@ vendor/
 # Jianwu runtime (if user inits a workspace in this repo)
 .jianwu/
 /jianwu
+
+# Website / deployment
+.wrangler/
+/node_modules/
+website/resources/
+website/public/
+website/.hugo_build.lock
+
+# Environment templates (copy to .env, never commit .env files)
+scripts/.env.mouqin

@@ -9,7 +9,7 @@
 
 jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。
 
-- **当前版本**：**v0.3.5**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代 + corpus sync + 3 原型 + v0.3 SaaS-ready 内核全线交付）
+- **当前版本**：**v0.3.5**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代 + corpus sync + 6 原型 + 10 本语料 + v0.3 SaaS-ready 内核全线交付）
 - **可用 CLI 命令**：`init` / `info` / `config get·set·list` / `new` / `expand`（含 `--all`）/ `review` / `finalize` / `export` / `status` / `factcheck` / `revise` / `rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `corpus list·show·stats·sync·reindex`
 - **库 API**：4 阶段引擎 `grill → outline → scaffolding → expand` + factcheck + revise
 - **LLM providers**：Gemini / GLM / Ollama（本地模型）/ Mock（单元测试）
@@ -29,7 +29,7 @@ jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + C
 
 | 仓库 | 角色 | 状态 |
 |---|---|---|
-| `jianwu` | 核心引擎（库 + CLI） | **v0.2.0 shipped**（v0.1.x 全线 + factcheck/revise + Ollama + Storage + hugo/pdf） |
+| `jianwu` | 核心引擎（库 + CLI） | **v0.3.5 shipped**（v0.1.x–v0.3.x 全线 + 6 原型 + 10 本语料 + SaaS-ready 内核） |
 | `mouqin` | Web SaaS（包装 jianwu） | v1.0 未启动，前置 v0.3 SaaS-ready 内核 |
 
 库优先：所有核心逻辑在 `jianwu` 库里，CLI 和未来的 Web 都包同一个库。
@@ -168,7 +168,6 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 <jianwu-workspace>/
   .jianwu/
     config.yaml              # workspace 配置（覆盖全局）
-    schema_version           # 内容 = "1"
     sessions/<id>.json       # 运行中的 grill 会话
   books/<slug>/
     meta.json                # Meta（含 ClaimWhitelist，跨章复用已验证声明）
@@ -222,7 +221,7 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 | `expand --all <slug>` | **v0.2.2** | errgroup 并行展开全书 scaffolded 章节 |
 | `corpus list/show/stats` | **v0.2.3** | 查看参考语料列表/详情/统计 |
 | `corpus sync --from <path>` | **v0.2.3** | 从 zhurongshuo 目录同步扩展语料到 workspace |
-| `corpus reindex` | **v0.2.3** | 重建 embedding 索引（暂为 no-op 占位） |
+| `corpus reindex` | **v0.2.3** | 调用 embedder 重建 embedding 索引并缓存 |
 
 **全局标志：** `--verbose` / `-L`（INFO 日志），`--debug`（DEBUG + LLM 请求/响应 dump），`--dir` / `-d`（指定 workspace 根目录，默认 CWD）
 
@@ -245,9 +244,9 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 - 5 个工厂函数（`llmfactory` / `searchfactory` / `readerfactory`）
 
 ### ✅ 数据资产（embed）
-- 3 个 archetype YAML（本体-认识-实践 / 诊断-解码-破局 / 基础-应用-实战）
-- 1 个 style-guide.md + 3 个 few-shot samples
-- 6 本 builtin corpus JSON
+- **6 个原型 YAML**（本体-认识-实践 / 诊断-解码-破局 / 基础-应用-实战 / 心法-方法-实践 / 理论-动力-历史-当下 / 宏-中-微）
+- 1 个 style-guide.md + **6 个 few-shot samples**（各原型对应）
+- **10 本 builtin corpus JSON**（含 4 本新增：barbaric-order / data-as-the-boundary / open-map / revisiting-history）
 
 ### ✅ Expand Prompt 注入（v0.1.2）
 - archetype YAML 整份注入 draft prompt
@@ -292,13 +291,20 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 - expand `ToolRegistry.LookupSimilarBook(slug, topN)` — 懒加载缓存索引，避免实时调用 embedder
 - `ToolRegistry.SetCorpusIndexPath(path)` / `CorpusIndexPathForWorkspace` — CLI 层在 buildToolRegistry 时自动配置
 
+### ✅ 后 3 个原型 + 新语料（v0.2.3 后）
+
+- **3 个新原型 YAML** — `micro-meso-macro`（宏-中-微）、`theory-dynamics-history-present`（理论-动力-历史-当下）、`mindset-method-practice`（心法-方法-实践）
+- **3 个新 few-shot samples** — 各原型对应
+- **4 本新增语料 JSON** — `barbaric-order`、`data-as-the-boundary`、`open-map`、`revisiting-history`
+- 结合原有 6 本语料，已覆盖 zhurongshuo 主要训练逻辑主题
+
 ### ✅ Corpus Sync（v0.2.3）
 
 - `jianwu corpus list` — 列出所有语料书（含 workspace 覆盖标记）
 - `jianwu corpus show <slug>` — 显示语料书详细信息（title、parts、chapters）
 - `jianwu corpus stats` — 统计总书数/部数/章节数/archetype 分布
 - `jianwu corpus sync --from <path>` — 从 zhurongshuo checkout 目录同步 JSON 到 `.jianwu/corpus/`，含 slug/title 校验
-- `jianwu corpus reindex` — 重建 embedding 索引（暂为 no-op，等 Embedding 索引缓存实现）
+- `jianwu corpus reindex` — 调用 embedder 生成 embedding 索引并缓存到 `.jianwu/corpus_index.json`
 - `corpus.LoadWithWorkspace(wsRoot)` — 分层加载：workspace 覆盖层 + builtin 回退
 
 ### ✅ Ollama 本地模型支持（v0.2.1）
@@ -308,19 +314,19 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 
 ## 10. 待做（v0.2 → v0.3 → v1.0）
 
-### v0.2（功能扩展 — 剩余）
+### v0.2（功能扩展 — ✅ 已全部交付）
 
 - [x] 章节迭代命令（`rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `expand --all`）
 - [x] `corpus sync` 扩展语料（重新从 zhurongshuo 拉取）
 - [x] Embedding 索引文件缓存（v0.1 是实时计算）
-- [ ] 后 3 个原型（micro-meso-macro / theory-dynamics-history-present / mindset-method-practice）
+- [x] 后 3 个原型（micro-meso-macro / theory-dynamics-history-present / mindset-method-practice）+ 4 本新语料
 
-### v0.3（SaaS-ready 内核改造，mouqin 前置）
+### v0.3（SaaS-ready 内核改造 — ✅ 已全部交付）
 
-> jianwu 当前全程假设"单用户 + 本地"——部分 `os.*` 文件调用仍需迁移、secrets 全局单文件、
-> provider 装配靠全局可变 var。v0.3 补这层内核能力，**不含任何 web UI**。
+> jianwu 原假设"单用户 + 本地"：全局单文件 secrets、部分 `os.*` 调用、无进度回调、无 token 计量。
+> v0.3.0–0.3.5 补全了这层内核能力，使 jianwu 可被多租户 Web 安全嵌入，**不含任何 web UI**。
 
-> **已交付地基：** `Storage` 接口（v0.3.0 核心）已在 `internal/storage/` 实现，book/workspace/config/cli/grill 已迁移。
+> **已交付：** `Storage` 接口（v0.3.0 地基）已在 `internal/storage/` 实现，book/workspace/config/cli/grill 已迁移。
 
 | 切片 | 内容 | 前置 | 状态 |
 |---|---|---|---|
@@ -330,6 +336,8 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 | v0.3.3 | per-tenant Secrets | — | ✅ 已交付 |
 | v0.3.4 | 并发安全 provider 装配 | — | ✅ 已交付（显式参数注入，`go test -race` 全绿） |
 | v0.3.5 | SaaS 安全加固（SSRF allowlist / LimitReader / 错误截断） | — | ✅ 已交付 |
+
+**v0.3 SaaS-ready 内核已全部交付。**
 
 ### v1.0（mouqin SaaS）
 
@@ -473,3 +481,25 @@ Grill 模块 4 个低风险修复（重复 walk 逻辑、Context 检查等）。
 - `revise` 引擎：基于 unverified claims + SuggestedRewrite，让 LLM 修订章节
 - ClaimWhitelist 跨章复用已验证声明
 - 伴随 v0.2.1：Ollama 本地模型支持 + hugo/pdf export targets + Storage 接口地基
+
+### v0.2.2 章节迭代命令（2026-06-28）
+
+- `rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `expand --all` 五个命令
+- 全书的章节生命周期管理（插入、删除、移动、重写、批量展开）
+
+### v0.2.3 Corpus Sync + Embedding 索引（2026-06-28）
+
+- `corpus list/show/stats/sync/reindex` 五个子命令
+- `corpus.BuildIndex` + `CorpusIndex.FindSimilar` 实现 embedding 缓存
+- Workspace 覆盖层 + builtin 回退分层加载
+
+### 后 3 个原型交付（v0.2.3 后）
+
+- 3 个新原型 YAML + 3 个新 few-shot samples + 4 本新语料 JSON
+- 至此 jianwu 共 6 个原型、10 本语料、6 个样例
+
+### v0.3.0–0.3.5 SaaS-ready 内核全线交付（2026-06-28）
+
+- 存储抽象（v0.3.0）、长任务进度模型（v0.3.1）、Token/成本计量（v0.3.2）
+- per-tenant Secrets（v0.3.3）、并发安全 provider 装配（v0.3.4）
+- SaaS 安全加固：SSRF allowlist + LimitReader + 错误截断（v0.3.5）

@@ -1,6 +1,6 @@
 # jianwu 功能概览
 
-> 当前版本：v0.2.2 | 最后更新：2026-06-28
+> 当前版本：v0.3.5 | 最后更新：2026-06-28
 
 ---
 
@@ -18,7 +18,7 @@
 | `review <slug> <NN-MM>` | v0.1.3 | 标记章节为已审阅 |
 | `finalize <slug> [--dry-run]` | v0.1.3 | 全书定稿 |
 | `export <slug> [--target md\|hugo\|pdf]` | v0.1.3 | 导出全书（markdown / Hugo / PDF） |
-| `status <slug>` | v0.1.3 | 章节进度概览 |
+| `status <slug>` | v0.1.3 | 章节进度概览 + 下一步提示 |
 | `factcheck <slug> <NN-MM>` | v0.2.0 | 自动事实复核 |
 | `revise <slug> <NN-MM>` | v0.2.0 | 基于事实复核结果修订章节 |
 | `rewrite <slug> <NN-MM>` | v0.2.2 | 重写章节（等价于 expand --force --force） |
@@ -26,6 +26,9 @@
 | `move-chapter <slug> <NN-MM> <target-part>` | v0.2.2 | 移动章节到其他 part |
 | `delete-chapter <slug> <NN-MM>` | v0.2.2 | 删除章节 |
 | `expand --all <slug>` | v0.2.2 | 批量展开全书 |
+| `corpus list/show/stats` | v0.2.3 | 查看参考语料列表/详情/统计 |
+| `corpus sync --from <path>` | v0.2.3 | 从 zhurongshuo 目录同步扩展语料 |
+| `corpus reindex` | v0.2.3 | 重建 embedding 索引（调用 embedder） |
 
 ---
 
@@ -42,7 +45,7 @@ grill → outline → scaffolding → expand → [factcheck → revise →] revi
 | **Grill** | `engine/grill` | 12 维度设计决策树问诊。LLM 逐维推荐，用户接受/修改/跳过。stateful session 可 Ctrl+C 恢复。 |
 | **Outline** | `engine/outline` | 单次 LLM 调用 + JSON Schema 强制输出，生成全书目录结构。 |
 | **Scaffolding** | `engine/scaffolding` | N 章并行生成章节框架（errgroup，continue-on-error），产出章节目录 + 关键概念。 |
-| **Expand** | `engine/expand` | 3 迭代 agent：① Research（web_search + read_url）→ ② Draft（注入 archetype + style + samples）→ ③ Validate（自检 + 修订）。产出带 `[^N]` 引用标记的 markdown。 |
+| **Expand** | `engine/expand` | 3 迭代 agent：① Research（web_search + read_url）→ ② Draft（注入 archetype + style + samples）→ ③ Validate（自检 + 修订）。产出带 `[^N]` 引用标记的 markdown。支持 streaming 输出。 |
 | **Factcheck** | `engine/factcheck` | 逐 claim 读取 cited URL，LLM 验证真实性。结果写入 `outline.json` + 跨章 `ClaimWhitelist`。 |
 | **Revise** | `engine/revise` | 基于 factcheck 的 `SuggestedRewrite`，LLM 修订未通过章节。 |
 
@@ -53,14 +56,6 @@ scaffolded → expanded → reviewed → final → export
 ```
 
 `outline.json` 为状态真相源，.md frontmatter 镜像同步。
-
-### 状态机命令
-
-| 命令 | 作用 |
-|---|---|
-| `review` | `expanded` → `reviewed` |
-| `finalize` | 全部 `reviewed` → `final` |
-| `export` | 任意状态可导出 |
 
 ---
 
@@ -75,7 +70,7 @@ scaffolded → expanded → reviewed → final → export
 | Ollama | HTTP REST（localhost:11434） | 本地模型（Qwen3、DeepSeek 等） |
 | Mock | 内存 mock | 单元测试 |
 
-**可靠性：** Retry 3 次（指数退避 + jitter）→ fallback provider 兜底。每个阶段 (`intake/outline/scaffolding/expand`) 可独立配置模型。
+**可靠性：** Retry 3 次（指数退避 + jitter）→ fallback provider 兜底。每个阶段可独立配置模型和超时。支持 streaming 逐 token 输出。
 
 ### 搜索
 
@@ -88,11 +83,11 @@ scaffolded → expanded → reviewed → final → export
 
 | Provider | 用途 |
 |---|---|
-| Jina Reader | URL → markdown |
+| Jina Reader | URL → markdown（含 SSRF 安全校验 + 10MB body 限制） |
 
 ### 工厂
 
-`llmfactory` / `searchfactory` / `readerfactory` — 独立包避免 import cycle。
+`llmfactory` / `searchfactory` / `readerfactory` — 独立包避免 import cycle。并发安全装配（显式参数注入，无全局可变 var）。
 
 ---
 
@@ -104,14 +99,14 @@ scaffolded → expanded → reviewed → final → export
 <jianwu-workspace>/
   .jianwu/
     config.yaml              # workspace 配置
-    schema_version           # 内容 = "1"
     sessions/<id>.json       # grill 运行中会话
+    corpus_index.json        # embedding 索引缓存（corpus reindex 生成）
   books/<slug>/
     meta.json                # 图书元数据（含 ClaimWhitelist）
     outline.json             # 目录 + 章节状态（含 Verdicts[]）
     .session.json            # grill 已完成会话（audit log）
     chapters/NN-MM.md        # 展开后的章节（YAML frontmatter + markdown）
-    export/                  # export 输出
+    export/                  # export 输出（md/hugo/pdf）
 ```
 
 ### 关键类型（`internal/book/types.go`）
@@ -135,19 +130,22 @@ scaffolded → expanded → reviewed → final → export
 4. 全局 `~/.config/jianwu/config.yaml`
 5. 编译时默认值
 
-**Secrets：** `~/.config/jianwu/secrets.yaml`（强制 0600 权限）或 ENV 变量（`GEMINI_API_KEY` / `GLM_API_KEY` / `BRAVE_API_KEY` 等）。ENV 高于文件。
+**Secrets：** `~/.config/jianwu/secrets.yaml`（强制 0600 权限）或 ENV 变量（`GEMINI_API_KEY` / `GLM_API_KEY` / `BRAVE_API_KEY` 等）。ENV 高于文件。支持 per-tenant SecretsProvider 注入（适用于 Web 多租户场景）。
 
 ---
 
 ## 数据资产（内置 embed）
 
-- **3 个 archetype YAML：**
+- **6 个 archetype YAML：**
   - `ontology-epistemology-practice`（本体-认识-实践）
-  - `diagnosis-decode-solution`（诊断-解码-破局）
-  - `basics-application-practice`（基础-应用-实战）
+  - `diagnosis-decoding-breakthrough`（诊断-解码-破局）
+  - `foundations-application-practice`（基础-应用-实战）
+  - `micro-meso-macro`（宏-中-微）
+  - `theory-dynamics-history-present`（理论-动力-历史-当下）
+  - `mindset-method-practice`（心法-方法-实践）
 - **风格指南** `style-guide.md`
-- **3 个 few-shot samples**（对应 archetype）
-- **6 本 builtin corpus JSON**（zhurongshuo 萃取）
+- **6 个 few-shot samples**（对应各 archetype）
+- **10 本 builtin corpus JSON**（zhurongshuo 萃取 + 扩展）
 
 ---
 
@@ -165,23 +163,20 @@ scaffolded → expanded → reviewed → final → export
 
 ## 质量基础设施
 
-- **27 个测试包**全绿，`go vet` 干净
-- **Storage 接口**（`OS` + `MemStorage`）抽象文件 I/O，16 个测试
+- **30+ 测试包**全绿，`go vet` 干净，`go test -race` 全绿
+- **Storage 接口**（`OS` + `MemStorage`）抽象文件 I/O
 - **表格驱动测试**风格（`in`/`want` 命名用例，不用 testify）
 - **错误分类：** `ErrNetwork` / `ErrRateLimit` / `ErrServer` → retry；`ErrLLMProvider` → 不重试
 - **退出码：** 0 成功 / 1 通用 / 2 用法 / 3 workspace 未找到 / 4 LLM 错 / 5 网络错
+- **SSRF 防护：** URL allowlist（仅 http/https，禁止 localhost/私有 IP）；`LimitReader`（10MB body + 4KB error body）
 
 ---
 
-## 下一迭代（v0.2 剩余）
+## 版本历史
 
-- corpus sync 扩展语料 ✅
-- Embedding 索引文件缓存 ✅
-- 后 3 个原型（micro-meso-macro / theory-dynamics-history-present / mindset-method-practice）
-- corpus sync 扩展语料 ✅
-- Embedding 索引文件缓存 ✅
-
-## 再往后（v0.3 → v1.0）
-
-- SaaS-ready 内核：多租户存储 / 任务进度 / Token 计量 / 并发安全装配
-- mouqin web app（多用户 / 鉴权 / 在线 grill-me / 协作）
+| 版本 | 关键交付 |
+|---|---|
+| v0.1.0–0.1.6 | 核心管线（grill→outline→scaffolding→expand）+ 状态机 + streaming + fallback + 超时 |
+| v0.2.0–0.2.3 | factcheck/revise + Ollama + 章节迭代命令 + corpus sync + embedding 索引 + 6 原型 + 10 语料 |
+| v0.3.0–0.3.5 | Storage 接口 + 长任务进度模型 + Token 计量 + per-tenant Secrets + 并发安全装配 + SaaS 安全加固 |
+| **v1.0** | **mouqin SaaS Web（下一站）** |

@@ -1,0 +1,30 @@
+baseURL = "/"
+languageCode = "zh-CN"
+title = "肩吾 — jianwu"
+# no theme — custom layouts only
+disableKinds = ["RSS", "sitemap", "robotsTXT", "taxonomy", "term"]
+
+[params]
+  description = "把 AI 的训练知识结构化为人类可阅读、可学习的图书"
+  githubRepo = "https://github.com/iannil/jianwu"
+  latestVersion = "v0.3.5"
+  turnstileSiteKey = "0x4AAAAAADsVRZpQKGKkO9Yh"  # ← 替换为你的真实 Turnstile Site Key
+
+[menu]
+  [[menu.main]]
+    name = "引擎"
+    url = "/engine/"
+    weight = 1
+  [[menu.main]]
+    name = "文档"
+    url = "/docs/"
+    weight = 2
+  [[menu.main]]
+    name = "博客"
+    url = "/blog/"
+    weight = 3
+  [[menu.main]]
+    name = "GitHub"
+    url = "https://github.com/iannil/jianwu"
+    weight = 4
+    params = { external = true }

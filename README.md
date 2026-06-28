@@ -167,7 +167,7 @@ internal/
 <workspace>/
   .jianwu/
     config.yaml            # workspace config (overrides global)
-    schema_version         # "1"
+    schema_version         # "1"（已废弃，不再写入或校验）
     sessions/<id>.json     # in-flight grill sessions
   books/<slug>/
     meta.json              # id / slug / title / archetype / parameters / engine versions

@@ -1,0 +1,21 @@
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="site-logo">
+      <span class="logo-cn">某钦</span>
+      <span class="logo-latin">mouqin</span>
+    </a>
+    <nav>
+      <ul class="nav-links">
+        {{- $current := .RelPermalink -}}
+        {{- range site.Menus.main }}
+          {{- $active := or (eq $current .URL) (and (ne .URL "/") (hasPrefix $current .URL)) }}
+          <li>
+            <a href="{{ .URL }}"{{ if .Params.external }} target="_blank" rel="noopener noreferrer"{{ end }}{{ if $active }} class="active" aria-current="page"{{ end }}>
+              {{ .Name }}
+            </a>
+          </li>
+        {{- end }}
+      </ul>
+    </nav>
+  </div>
+</header>
