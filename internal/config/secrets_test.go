@@ -51,8 +51,7 @@ func TestLoadSecretsReturnsEmptyIfNothingConfigured(t *testing.T) {
 	}
 }
 
-func TestLoadSecretsWarnsOnLooseFilePermissions(t *testing.T) {
-	tmpHome := t.TempDir()
+func TestLoadSecretsWarnsOnLooseFilePermissions(t *testing.T) {	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
 
 	secretsDir := filepath.Join(tmpHome, ".config", "jianwu")
@@ -67,5 +66,67 @@ func TestLoadSecretsWarnsOnLooseFilePermissions(t *testing.T) {
 	_, err := LoadSecrets()
 	if err == nil {
 		t.Error("expected warning/error for loose permissions, got nil")
+	}
+}
+
+// mockSecretsProvider returns fixed keys for testing.
+type mockSecretsProvider struct {
+	secrets  *Secrets
+	tenantDB map[string]*Secrets
+}
+
+func (m *mockSecretsProvider) LoadSecrets() (*Secrets, error) {
+	return m.secrets, nil
+}
+
+func (m *mockSecretsProvider) LoadSecretsFor(tenantID string) (*Secrets, error) {
+	if s, ok := m.tenantDB[tenantID]; ok {
+		return s, nil
+	}
+	return m.secrets, nil
+}
+
+func TestSetSecretsProviderInjection(t *testing.T) {
+	mock := &mockSecretsProvider{
+		secrets: &Secrets{GeminiAPIKey: "mock-global-key"},
+	}
+	SetSecretsProvider(mock)
+	defer SetSecretsProvider(defaultSecretsProvider{})
+
+	s, err := LoadSecrets()
+	if err != nil {
+		t.Fatalf("LoadSecrets: %v", err)
+	}
+	if s.GeminiAPIKey != "mock-global-key" {
+		t.Errorf("got %q, want %q", s.GeminiAPIKey, "mock-global-key")
+	}
+}
+
+func TestLoadSecretsForTenant(t *testing.T) {
+	mock := &mockSecretsProvider{
+		secrets: &Secrets{GeminiAPIKey: "global"},
+		tenantDB: map[string]*Secrets{
+			"tenant-a": {GeminiAPIKey: "tenant-a-key"},
+		},
+	}
+	SetSecretsProvider(mock)
+	defer SetSecretsProvider(defaultSecretsProvider{})
+
+	// Tenant-specific
+	sa, err := LoadSecretsFor("tenant-a")
+	if err != nil {
+		t.Fatalf("LoadSecretsFor: %v", err)
+	}
+	if sa.GeminiAPIKey != "tenant-a-key" {
+		t.Errorf("tenant-a: got %q, want %q", sa.GeminiAPIKey, "tenant-a-key")
+	}
+
+	// Unknown tenant falls back to global
+	sb, err := LoadSecretsFor("unknown")
+	if err != nil {
+		t.Fatalf("LoadSecretsFor: %v", err)
+	}
+	if sb.GeminiAPIKey != "global" {
+		t.Errorf("unknown tenant: got %q, want %q", sb.GeminiAPIKey, "global")
 	}
 }

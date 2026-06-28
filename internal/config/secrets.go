@@ -27,9 +27,51 @@ type Secrets struct {
 	JinaAPIKey   string `yaml:"jina_api_key"`
 }
 
-// LoadSecrets resolves API keys from ENV first, then ~/.config/jianwu/secrets.yaml.
-// Returns an error if the file exists with permissions looser than 0600.
+// SecretsProvider resolves API keys. The default implementation reads from
+// ENV and ~/.config/jianwu/secrets.yaml. Inject a custom provider for
+// per-tenant keys or test mocks.
+type SecretsProvider interface {
+	// LoadSecrets returns the global secrets.
+	LoadSecrets() (*Secrets, error)
+	// LoadSecretsFor returns secrets scoped to the given tenant.
+	// The default implementation ignores tenantID; inject a provider
+	// that uses it for per-tenant key isolation.
+	LoadSecretsFor(tenantID string) (*Secrets, error)
+}
+
+// defaultSecretsProvider is the built-in SecretsProvider.
+type defaultSecretsProvider struct{}
+
+func (defaultSecretsProvider) LoadSecrets() (*Secrets, error) {
+	return loadSecrets()
+}
+
+func (defaultSecretsProvider) LoadSecretsFor(_ string) (*Secrets, error) {
+	return loadSecrets()
+}
+
+// secretsProvider is the package-level provider. Override with SetSecretsProvider.
+var secretsProvider SecretsProvider = defaultSecretsProvider{}
+
+// SetSecretsProvider replaces the global secrets provider.
+// Used by tests and by SaaS tenants to provide per-tenant keys.
+func SetSecretsProvider(p SecretsProvider) {
+	secretsProvider = p
+}
+
+// LoadSecrets resolves API keys using the configured SecretsProvider.
 func LoadSecrets() (*Secrets, error) {
+	return secretsProvider.LoadSecrets()
+}
+
+// LoadSecretsFor resolves API keys for a specific tenant.
+// Falls back to global keys when no per-tenant provider is configured.
+func LoadSecretsFor(tenantID string) (*Secrets, error) {
+	return secretsProvider.LoadSecretsFor(tenantID)
+}
+
+// loadSecrets implements the default resolution: ENV first, then file.
+func loadSecrets() (*Secrets, error) {
 	s := &Secrets{}
 
 	home, err := os.UserHomeDir()
