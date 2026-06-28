@@ -57,7 +57,7 @@
 
 | # | 维度 | 决定 | 影响 |
 |---|---|---|---|
-| Q22 | init/migrate | 完整目录 init；bare 仅 `.jianwu/`；schema_version 独立文件；migrate 检查代码就位 | v0.2 加真 migrate 命令 |
+| Q22 | init | 完整目录 init；bare 仅 `.jianwu/` | 无 migration 计划 |
 | Q26 | init defaults | 完整模板+注释；全局首次自动创；init 不 prompt key | keys 在 secrets.yaml 或 ENV |
 
 ### 打包

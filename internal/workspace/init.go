@@ -8,8 +8,8 @@ import (
 )
 
 // Init creates a workspace at the given path.
-// Default (non-bare) layout: .jianwu/{config.yaml, schema_version} + books/ + exports/ + archive/.
-// Bare layout: only .jianwu/ with config.yaml + schema_version.
+// Default (non-bare) layout: .jianwu/{config.yaml} + books/ + exports/ + archive/.
+// Bare layout: only .jianwu/ with config.yaml.
 // Returns an error if a workspace already exists at the path.
 func Init(path string, opts InitOpts) error {
 	marker := filepath.Join(path, MarkerName)
@@ -19,14 +19,6 @@ func Init(path string, opts InitOpts) error {
 
 	if err := storage.OS.MkdirAll(marker, 0o755); err != nil {
 		return fmt.Errorf("create %s: %w", marker, err)
-	}
-
-	if err := storage.OS.WriteFile(
-		filepath.Join(marker, SchemaVersionFileName),
-		[]byte(CurrentSchemaVersion+"\n"),
-		0o644,
-	); err != nil {
-		return fmt.Errorf("write schema_version: %w", err)
 	}
 
 	cfg := defaultWorkspaceConfig()
@@ -56,7 +48,6 @@ func Init(path string, opts InitOpts) error {
 func defaultWorkspaceConfig() string {
 	return `# jianwu workspace configuration
 # Global config: ~/.config/jianwu/config.yaml (overrides here)
-schema_version: 1
 
 # Global LLM settings (per-stage overrides in models.<stage>.timeout)
 # llm:

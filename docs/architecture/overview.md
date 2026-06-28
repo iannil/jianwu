@@ -42,7 +42,7 @@ internal/cli ──────────┬─→ internal/engine/{outline, s
 [jianwu new]
     │
     ├─ workspace.FindWorkspace(".")  ← walk up 找 .jianwu/
-    ├─ workspace.Load(wsRoot)        ← 验证 schema_version + 加载 config
+    ├─ workspace.Load(wsRoot)        ← 加载 config
     ├─ config.LoadSecrets()          ← ENV > file（0600 强制）
     │
     ├─ offerResume(repo)             ← 列出 .jianwu/sessions/*.json 中 status=in_progress

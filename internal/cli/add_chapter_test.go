@@ -173,13 +173,9 @@ func TestAddChapterConflict(t *testing.T) {
 	}
 }
 
-// initWorkspace creates .jianwu/ marker + schema_version in root.
 func initWorkspace(t *testing.T, root string) {
 	t.Helper()
 	mkAll(t, filepath.Join(root, ".jianwu"))
-	if err := os.WriteFile(filepath.Join(root, ".jianwu", "schema_version"), []byte("1"), 0o644); err != nil {
-		t.Fatal(err)
-	}
 	// Write a minimal config so workspace.Load doesn't fail.
 	cfgPath := filepath.Join(root, ".jianwu", "config.yaml")
 	if err := os.WriteFile(cfgPath, []byte("models:\n  intake:\n    provider: mock\n    model: mock\n  outline:\n    provider: mock\n    model: mock\n  scaffolding:\n    provider: mock\n    model: mock\n  expand:\n    provider: mock\n    model: mock\n"), 0o644); err != nil {

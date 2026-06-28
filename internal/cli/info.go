@@ -46,7 +46,6 @@ func newInfoCmd() *cobra.Command {
 func printInfo(cmd *cobra.Command, ws *workspace.Workspace, s *config.Secrets) {
 	out := cmd.OutOrStdout()
 	fmt.Fprintf(out, "Workspace: %s\n", ws.Root)
-	fmt.Fprintf(out, "Schema:    v%d\n", ws.Config.SchemaVersion)
 	fmt.Fprintln(out)
 	fmt.Fprintln(out, "Models:")
 	fmt.Fprintf(out, "  intake:      %s/%s\n", ws.Config.Models.Intake.Provider, ws.Config.Models.Intake.Model)

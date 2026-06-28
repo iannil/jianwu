@@ -1,7 +1,7 @@
 # jianwu 项目状态
 
 > 本文档对 LLM 友好——任何接手后续迭代的 agent 读这一份就能理解项目当前形态、什么能用、什么没做、怎么扩展。
-> 最后更新：2026-06-28（v0.2.2 — 章节迭代命令 delivered + 代码审计修复）
+> 最后更新：2026-06-28（v0.2.3 — corpus sync delivered）
 
 ---
 
@@ -9,12 +9,12 @@
 
 jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。
 
-- **当前版本**：**v0.2.2**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代命令）
-- **可用 CLI 命令**：`init` / `info` / `config get·set·list` / `new` / `expand`（含 `--all`）/ `review` / `finalize` / `export` / `status` / `factcheck` / `revise` / `rewrite` / `add-chapter` / `move-chapter` / `delete-chapter`
+- **当前版本**：**v0.2.3**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代命令 + corpus sync）
+- **可用 CLI 命令**：`init` / `info` / `config get·set·list` / `new` / `expand`（含 `--all`）/ `review` / `finalize` / `export` / `status` / `factcheck` / `revise` / `rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `corpus list·show·stats·sync·reindex`
 - **库 API**：4 阶段引擎 `grill → outline → scaffolding → expand` + factcheck + revise
 - **LLM providers**：Gemini / GLM / Ollama（本地模型）/ Mock（单元测试）
 - **质量基线**：30+ 包测试全绿，`go vet` / `gofmt` 全清
-- **下一里程碑**：**v0.2.3** — corpus sync / Embedding 索引 / Workspace migration
+- **下一里程碑**：**v0.2.4** — Workspace migration / 后 3 个原型
 
 ---
 
@@ -220,6 +220,9 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 | `move-chapter <slug> <NN-MM> <target-part> [--after <NN-MM>]` | **v0.2.2** | 移动章节到其他 part |
 | `delete-chapter <slug> <NN-MM>` | **v0.2.2** | 删除章节（从 outline + 文件系统） |
 | `expand --all <slug>` | **v0.2.2** | errgroup 并行展开全书 scaffolded 章节 |
+| `corpus list/show/stats` | **v0.2.3** | 查看参考语料列表/详情/统计 |
+| `corpus sync --from <path>` | **v0.2.3** | 从 zhurongshuo 目录同步扩展语料到 workspace |
+| `corpus reindex` | **v0.2.3** | 重建 embedding 索引（暂为 no-op 占位） |
 
 **全局标志：** `--verbose` / `-L`（INFO 日志），`--debug`（DEBUG + LLM 请求/响应 dump），`--dir` / `-d`（指定 workspace 根目录，默认 CWD）
 
@@ -280,6 +283,24 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 - `storage.MemStorage` — 内存实现用于测试
 - book/workspace/config/cli/grill 已迁移到 `storage.OS` 调用
 
+### ✅ Embedding 索引缓存（v0.2.3）
+
+- `corpus.BuildIndex(ctx, embedder, model, books)` — 为所有语料书生成 embedding 向量
+- `corpus.SaveIndex(path, idx)` / `corpus.LoadIndex(path)` — 索引文件 I/O
+- `corpus.CorpusIndex.FindSimilar(slug, topN)` — 余弦相似度搜索
+- `corpus corpus reindex` 命令：加载 embedder，调用 BuildIndex，保存到 `.jianwu/corpus_index.json`
+- expand `ToolRegistry.LookupSimilarBook(slug, topN)` — 懒加载缓存索引，避免实时调用 embedder
+- `ToolRegistry.SetCorpusIndexPath(path)` / `CorpusIndexPathForWorkspace` — CLI 层在 buildToolRegistry 时自动配置
+
+### ✅ Corpus Sync（v0.2.3）
+
+- `jianwu corpus list` — 列出所有语料书（含 workspace 覆盖标记）
+- `jianwu corpus show <slug>` — 显示语料书详细信息（title、parts、chapters）
+- `jianwu corpus stats` — 统计总书数/部数/章节数/archetype 分布
+- `jianwu corpus sync --from <path>` — 从 zhurongshuo checkout 目录同步 JSON 到 `.jianwu/corpus/`，含 slug/title 校验
+- `jianwu corpus reindex` — 重建 embedding 索引（暂为 no-op，等 Embedding 索引缓存实现）
+- `corpus.LoadWithWorkspace(wsRoot)` — 分层加载：workspace 覆盖层 + builtin 回退
+
 ### ✅ Ollama 本地模型支持（v0.2.1）
 - `provider/llm/ollama/` — Chatter + Embedder + Streamer
 - 默认 `http://localhost:11434`，配置 `provider: ollama` 即可使用
@@ -290,9 +311,8 @@ type Streamer interface { Stream(ctx, ChatRequest) (<-chan StreamChunk, error) }
 ### v0.2（功能扩展 — 剩余）
 
 - [x] 章节迭代命令（`rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `expand --all`）
-- [ ] `corpus sync` 扩展语料（重新从 zhurongshuo 拉取）
-- [ ] Embedding 索引文件缓存（v0.1 是实时计算）
-- [ ] Workspace migration（schema v1 → v2）
+- [x] `corpus sync` 扩展语料（重新从 zhurongshuo 拉取）
+- [x] Embedding 索引文件缓存（v0.1 是实时计算）
 - [ ] 后 3 个原型（micro-meso-macro / theory-dynamics-history-present / mindset-method-practice）
 
 ### v0.3（SaaS-ready 内核改造，mouqin 前置）

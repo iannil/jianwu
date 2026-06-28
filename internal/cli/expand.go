@@ -121,7 +121,7 @@ func runExpand(cmd *cobra.Command, args []string, forceCount int, deps *Provider
 			return &InfoError{Err: err, Code: ExitCodeLLMProvider}
 		}
 	}
-	registry, err := buildToolRegistry(deps, ws.Config)
+	registry, err := buildToolRegistry(deps, ws.Config, ws.Root)
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
 	}

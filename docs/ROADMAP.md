@@ -1,7 +1,7 @@
 # jianwu 路线图
 
 > 本文档跟踪 v0.1.0 之后的迭代计划。每个版本应该有明确范围、可验收标准、合理工作量。
-> 最后更新：2026-06-26（v0.1.4–v0.2.0 + Ollama + Storage + hugo/pdf 已交付，v0.2 章节迭代命令为下一里程碑）
+> 最后更新：2026-06-28（v0.2.3 — corpus sync delivered）
 >
 > **注意：** 代码实际迭代已大幅超越文档。v0.1.4–v0.2.0 + Ollama + Storage 接口 + hugo/pdf 导出
 > 已在一次大规模工程提交中全部实现。详见 `docs/PROJECT_STATUS.md`。
@@ -23,6 +23,7 @@
 | 自动事实复核（factcheck + revise） | v0.2.0 | ✅ 已交付 |
 | Ollama 本地模型支持 | v0.2.1 | ✅ 已交付 |
 | 章节迭代命令（rewrite/add-chapter/move-chapter/delete-chapter/expand --all） | v0.2.2 | ✅ 已交付 |
+| Corpus sync（list/show/stats/sync/reindex） | v0.2.3 | ✅ 已交付 |
 | Storage 接口地基 | v0.3.0 | ⏳ 地基已交付（接口 + OS + MemStorage，book/workspace 已迁移） |
 
 ---
@@ -34,22 +35,41 @@
 
 ### 章节迭代命令（✅ 已交付）
 
+### Corpus Sync（✅ 已交付 — v0.2.3）
+
+- [x] `jianwu corpus list` — 列出所有语料书
+- [x] `jianwu corpus show <slug>` — 显示语料详情
+- [x] `jianwu corpus stats` — 语料统计
+- [x] `jianwu corpus sync --from <path>` — 从 zhurongshuo 同步 JSON
+- [x] `jianwu corpus reindex` — 重建 embedding 索引（暂为 no-op）
+- [x] `corpus.LoadWithWorkspace(wsRoot)` — 分层加载（workspace 覆盖 + builtin 回退）
+
 - [x] `jianwu rewrite <slug> <NN-MM>` — 重写已 expand 章节
 - [x] `jianwu add-chapter <slug> --after <NN-MM> --topic "..."`
 - [x] `jianwu move-chapter <slug> <NN-MM> <target-part>`
 - [x] `jianwu delete-chapter <slug> <NN-MM>`
 - [x] `jianwu expand --all` — 批量扩展全书（决策 Q4=B）
 
-### Corpus Sync
+### Corpus Sync（✅ 已交付 — v0.2.3）
 
-- [ ] `jianwu corpus list / show / stats`
-- [ ] `jianwu corpus sync --from <path>` — 从 zhurongshuo 同步扩展语料
-- [ ] `jianwu corpus reindex` — 重建 embedding 索引文件
+- [x] `jianwu corpus list` — 列出所有语料书
+- [x] `jianwu corpus show <slug>` — 显示语料详情
+- [x] `jianwu corpus stats` — 语料统计
+- [x] `jianwu corpus sync --from <path>` — 从 zhurongshuo 同步 JSON
+- [x] `jianwu corpus reindex` — 使用 embedder 生成 embedding 索引
+- [x] `corpus.LoadWithWorkspace(wsRoot)` — 分层加载（workspace 覆盖 + builtin 回退）
+
+### Embedding 索引缓存（✅ 已交付 — v0.2.3）
+
+- [x] `corpus.BuildIndex` — 为所有语料书生成 embedding 向量
+- [x] `corpus.LoadIndex` / `corpus.SaveIndex` — 索引文件 I/O
+- [x] `corpus.CorpusIndex.FindSimilar` — 余弦相似度相似搜索
+- [x] `expand.ToolRegistry.LookupSimilarBook` — 懒加载缓存索引，避免实时调用 embedder
+- [x] CLI 自动配置索引路径（`buildToolRegistry` 传递 wsRoot）
 
 ### Workspace Migration
 
-- [ ] `jianwu migrate` 命令（schema v1 → v2）
-- [ ] 检测旧 workspace + 升级
+Workspace migration 已取消。schema_version 校验已移除，不再需要迁移命令。
 
 ### 后 3 个原型
 

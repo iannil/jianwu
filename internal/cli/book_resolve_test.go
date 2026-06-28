@@ -14,9 +14,6 @@ func writeMinimalBook(t *testing.T, slug string) string {
 	if err := os.MkdirAll(filepath.Join(tmp, ".jianwu"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(tmp, ".jianwu", "schema_version"), []byte("1\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
 	bookDir := filepath.Join(tmp, "books", slug)
 	if err := os.MkdirAll(filepath.Join(bookDir, "chapters"), 0o755); err != nil {
 		t.Fatal(err)

@@ -5,7 +5,6 @@ package config
 // a field.
 func BuiltinDefaults() *Config {
 	return &Config{
-		SchemaVersion: 1,
 		LLM: LLMConfig{
 			TimeoutSeconds: 90,
 		},

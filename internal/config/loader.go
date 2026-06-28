@@ -59,9 +59,6 @@ func overlayYAML(cfg *Config, path string) error {
 // are merged field-by-field via mergeModelRef (not wholesale replaced).
 // Slices (Archetypes.Library, Style.Guide/Samples) are replaced wholesale.
 func mergeConfig(dst, src *Config) {
-	if src.SchemaVersion != 0 {
-		dst.SchemaVersion = src.SchemaVersion
-	}
 	if src.LLM.TimeoutSeconds != 0 {
 		dst.LLM.TimeoutSeconds = src.LLM.TimeoutSeconds
 	}

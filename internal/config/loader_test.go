@@ -37,7 +37,6 @@ func TestLoadWorkspaceOverridesDefaults(t *testing.T) {
 
 	wsRoot := t.TempDir()
 	wsConfig := `
-schema_version: 1
 models:
   outline: { provider: glm, model: glm-4.6 }
 scaffolding:
@@ -163,9 +162,10 @@ models:
 }
 
 func TestLLMTimeoutDefaults(t *testing.T) {
-	y := `schema_version: 1`
 	var cfg Config
-	if err := yaml.Unmarshal([]byte(y), &cfg); err != nil {
+	yamlBody := `llm:
+  timeout: 0`
+	if err := yaml.Unmarshal([]byte(yamlBody), &cfg); err != nil {
 		t.Fatalf("parse: %v", err)
 	}
 	// TimeoutSeconds is 0 when not set (defaults applied by BuiltinDefaults)

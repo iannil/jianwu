@@ -120,12 +120,16 @@ func buildProviderDeps(cfg *config.Config, secrets *config.Secrets) (*ProviderDe
 
 // buildToolRegistry assembles an expand.ToolRegistry from ProviderDeps.
 // Sets provider names from config for citation metadata (avoids hardcoded strings).
-func buildToolRegistry(deps *ProviderDeps, cfg *config.Config) (*expand.ToolRegistry, error) {
+// If wsRoot is non-empty, it configures the corpus index path for similar-book lookup.
+func buildToolRegistry(deps *ProviderDeps, cfg *config.Config, wsRoot string) (*expand.ToolRegistry, error) {
 	if deps == nil {
 		return nil, fmt.Errorf("deps is nil")
 	}
 	reg := expand.NewToolRegistry(deps.Searcher, deps.Reader, deps.Embedder)
 	reg.SearchProviderName = cfg.Search.Primary
 	reg.ReaderProviderName = cfg.Search.Reader
+	if wsRoot != "" {
+		reg.SetCorpusIndexPath(expand.CorpusIndexPathForWorkspace(wsRoot))
+	}
 	return reg, nil
 }

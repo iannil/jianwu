@@ -9,10 +9,11 @@ const MarkerName = ".jianwu"
 const ConfigFileName = "config.yaml"
 
 // SchemaVersionFileName is the workspace schema version file.
+// Kept as a constant for backward compatibility; no longer enforced.
 const SchemaVersionFileName = "schema_version"
 
-// CurrentSchemaVersion is the workspace schema version this build supports.
-const CurrentSchemaVersion = "1"
+// CorpusDirName is the workspace-relative directory for synced corpus files.
+const CorpusDirName = "corpus"
 
 // ErrWorkspaceNotFound is returned when no .jianwu/ is found walking up.
 var ErrWorkspaceNotFound = errors.New("workspace not found: no .jianwu/ in this or any parent directory")

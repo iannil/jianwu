@@ -175,13 +175,11 @@ scaffolded → expanded → reviewed → final → export
 
 ## 下一迭代（v0.2 剩余）
 
-- corpus sync 扩展语料
-- Embedding 索引文件缓存
-- Workspace migration（schema v1 → v2）
+- corpus sync 扩展语料 ✅
+- Embedding 索引文件缓存 ✅
 - 后 3 个原型（micro-meso-macro / theory-dynamics-history-present / mindset-method-practice）
-- `corpus sync` 扩展语料
-- Embedding 索引文件缓存
-- Workspace migration（schema v1 → v2）
+- corpus sync 扩展语料 ✅
+- Embedding 索引文件缓存 ✅
 
 ## 再往后（v0.3 → v1.0）
 

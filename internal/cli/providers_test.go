@@ -72,7 +72,7 @@ func TestBuildToolRegistryAssemblesAllProviders(t *testing.T) {
 	cfg := &config.Config{
 		Search: config.Search{Primary: "test-search", Reader: "test-reader"},
 	}
-	registry, err := buildToolRegistry(deps, cfg)
+	registry, err := buildToolRegistry(deps, cfg, "")
 	if err != nil {
 		t.Fatalf("buildToolRegistry: %v", err)
 	}

@@ -6,14 +6,13 @@ package config
 // Env var and CLI flag overrides are applied by the CLI layer; Load returns
 // the merged result of the three file-backed layers.
 type Config struct {
-	SchemaVersion int          `yaml:"schema_version"`
-	LLM           LLMConfig    `yaml:"llm"`
-	Models        Models       `yaml:"models"`
-	Search        Search       `yaml:"search"`
-	Archetypes    SourceOrder  `yaml:"archetypes"`
-	Style         StyleSources `yaml:"style"`
-	Scaffolding   Scaffolding  `yaml:"scaffolding"`
-	Logging       Logging      `yaml:"logging"`
+	LLM         LLMConfig    `yaml:"llm"`
+	Models      Models       `yaml:"models"`
+	Search      Search       `yaml:"search"`
+	Archetypes  SourceOrder  `yaml:"archetypes"`
+	Style       StyleSources `yaml:"style"`
+	Scaffolding Scaffolding  `yaml:"scaffolding"`
+	Logging     Logging      `yaml:"logging"`
 }
 
 // LLMConfig holds global LLM settings shared across stages.

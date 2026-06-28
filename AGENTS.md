@@ -5,11 +5,11 @@ Go CLI + 库。入口：`cmd/jianwu/main.go`。
 
 ## 项目
 
-- **当前版本：** v0.2.0（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf）
+- **当前版本：** v0.2.3（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代命令 + corpus sync）
 - **技术栈：** Go 1.25 + cobra (CLI) + spf13/pflag + YAML 配置 + gemini/glm/ollama LLM 提供商
 - **入口点：** `cmd/jianwu/main.go` → `cli.NewRootCmd()` → cobra 子命令
 - **工作区模型：** 每个项目 = 一个 git 仓库，包含 `.jianwu/` 配置 + `books/<slug>/` 输出
-- **下一迭代：** v0.2 章节迭代命令（rewrite / add-chapter / move-chapter / delete-chapter / expand --all）
+- **下一迭代：** v0.2.4 — 后 3 个原型
 
 ## 命令
 
