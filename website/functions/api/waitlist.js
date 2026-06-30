@@ -1,14 +1,22 @@
 /**
  * 某钦 waitlist — Cloudflare Pages Function
  *
- * POST /api/waitlist { "email": "..." }
+ * POST /api/waitlist { "email": "...", "turnstileToken": "..." }
  *   → 通过 Resend API 发送通知邮件到 hi@mouqin.com
  *
  * 环境变量（在 Cloudflare Pages Dashboard 中设置）:
- *   RESEND_API_KEY        — Resend API 密钥 (必填)
- *   TURNSTILE_SECRET_KEY  — Cloudflare Turnstile 密钥 (必填)
- *   WAITLIST_EMAIL        — 通知接收邮箱 (可选, 默认 hi@mouqin.com)
- *   WAITLIST_FROM         — 发件人地址 (可选, 默认 waitlist@mouqin.com)
+ *   RESEND_API_KEY        — Resend API 密钥（必填）
+ *   TURNSTILE_SECRET_KEY  — Cloudflare Turnstile 密钥（**必填**，未配置则 503 fail-closed）
+ *   WAITLIST_KV           — KV namespace 绑定（**推荐**，未绑定则跳过限流）
+ *   WAITLIST_EMAIL        — 通知接收邮箱（可选，默认 hi@mouqin.com）
+ *   WAITLIST_FROM         — 发件人地址（可选，默认 waitlist@mouqin.com）
+ *
+ * 安全防线（按顺序）：
+ *   1. 邮箱格式校验
+ *   2. KV 限流（10 分钟 / IP / 最多 3 次，防 Resend 配额烧光）
+ *   3. Turnstile 人机校验（fail-closed：未配置 secret 直接 503）
+ *   4. Resend API 调用
+ *   5. 所有用户输入在 HTML 邮件体中 HTML-escape，防邮件 HTML 注入
  */
 
 // 简单的邮箱格式校验
@@ -16,6 +24,16 @@ function isValidEmail(email) {
   if (typeof email !== 'string') return false;
   if (email.length > 320) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// HTML 转义 — 防止用户输入注入到 HTML 邮件体
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // CORS 头 — 允许同站表单提交
@@ -34,6 +52,10 @@ function jsonResponse(body, status = 200) {
     },
   });
 }
+
+// 10 分钟窗口内单 IP 最多提交次数
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_SECONDS = 600;
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -63,29 +85,59 @@ export async function onRequest(context) {
     return jsonResponse({ ok: false, error: '请提供有效的邮箱地址' }, 400);
   }
 
-  // ── Turnstile 校验 ──
-  const turnstileSecret = env.TURNSTILE_SECRET_KEY;
-  if (turnstileSecret) {
-    if (!turnstileToken) {
-      return jsonResponse({ ok: false, error: '请完成安全验证' }, 400);
-    }
-
-    const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: turnstileSecret,
-        response: turnstileToken,
-      }),
-    });
-
-    const verifyData = await verifyRes.json();
-    if (!verifyData.success) {
-      console.error('Turnstile 验证失败:', verifyData['error-codes']);
-      return jsonResponse({ ok: false, error: '安全验证未通过，请刷新后重试' }, 403);
+  // ── KV 限流（如绑定）──
+  // 未绑定 WAITLIST_KV 时跳过（仅记录警告），不阻断服务
+  if (env.WAITLIST_KV) {
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const key = `waitlist:${ip}`;
+    try {
+      const raw = await env.WAITLIST_KV.get(key);
+      const count = parseInt(raw || '0', 10);
+      if (count >= RATE_LIMIT_MAX) {
+        return jsonResponse(
+          { ok: false, error: '提交过于频繁，请稍后再试' },
+          429,
+        );
+      }
+      await env.WAITLIST_KV.put(key, String(count + 1), {
+        expirationTtl: RATE_LIMIT_WINDOW_SECONDS,
+      });
+    } catch (kvErr) {
+      // KV 故障不应阻断正常提交，记录后继续
+      console.error('KV 限流检查失败，跳过限流:', kvErr);
     }
   } else {
-    console.warn('TURNSTILE_SECRET_KEY 未配置，跳过 Turnstile 校验');
+    console.warn('WAITLIST_KV 未绑定，跳过限流（建议在 Dashboard 绑定 KV namespace）');
+  }
+
+  // ── Turnstile 校验（fail-closed）──
+  const turnstileSecret = env.TURNSTILE_SECRET_KEY;
+  if (!turnstileSecret) {
+    // fail-closed：未配置 secret 直接 503，避免静默退化为无验证
+    console.error('TURNSTILE_SECRET_KEY 未配置 — fail closed');
+    return jsonResponse(
+      { ok: false, error: '安全验证未配置，请联系管理员' },
+      503,
+    );
+  }
+
+  if (!turnstileToken) {
+    return jsonResponse({ ok: false, error: '请完成安全验证' }, 400);
+  }
+
+  const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      secret: turnstileSecret,
+      response: turnstileToken,
+    }),
+  });
+
+  const verifyData = await verifyRes.json();
+  if (!verifyData.success) {
+    console.error('Turnstile 验证失败:', verifyData['error-codes']);
+    return jsonResponse({ ok: false, error: '安全验证未通过，请刷新后重试' }, 403);
   }
 
   // 获取配置
@@ -97,6 +149,10 @@ export async function onRequest(context) {
 
   const toEmail = env.WAITLIST_EMAIL || 'hi@mouqin.com';
   const fromEmail = env.WAITLIST_FROM || 'waitlist@mouqin.com';
+
+  // HTML-escape 所有用户输入字段后再拼到邮件体
+  const safeEmail = escapeHtml(email);
+  const mailtoUrl = encodeURIComponent(email);
 
   try {
     // 通过 Resend API 发送通知邮件
@@ -124,7 +180,7 @@ export async function onRequest(context) {
               <tr>
                 <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 500; color: #6B7280; white-space: nowrap;">邮箱</td>
                 <td style="padding: 0.5rem 0; font-family: monospace; color: #1F2937;">
-                  <a href="mailto:${email}" style="color: #2563EB;">${email}</a>
+                  <a href="mailto:${mailtoUrl}" style="color: #2563EB;">${safeEmail}</a>
                 </td>
               </tr>
               <tr>

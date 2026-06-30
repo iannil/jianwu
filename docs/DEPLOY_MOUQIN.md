@@ -45,13 +45,27 @@ https://resend.com 注册 → 添加域名 `mouqin.com` → 按指引配置 DNS 
 
 在 Cloudflare Pages → `mouqin` → **设置** → **环境变量** → **生产环境**：
 
-| 变量名 | 值 |
-|--------|-----|
-| `RESEND_API_KEY` | `re_xxxxxxxxxxxx`（你的 Resend API 密钥） |
+| 变量名 | 必填 | 值 |
+|--------|------|-----|
+| `RESEND_API_KEY` | ✅ | `re_xxxxxxxxxxxx`（你的 Resend API 密钥） |
+| `TURNSTILE_SECRET_KEY` | ✅ | Cloudflare Turnstile 站点密钥（**未配置时 waitlist 返回 503 fail-closed**） |
+| `WAITLIST_EMAIL` | – | 通知接收邮箱（默认 `hi@mouqin.com`） |
+| `WAITLIST_FROM` | – | 发件人地址（默认 `waitlist@mouqin.com`） |
 
-（可选：`WAILIST_EMAIL` 和 `WAILIST_FROM` 已在 Function 中设了默认值）
+> **⚠️ Turnstile fail-closed：** v0.3 审计后，waitlist 函数在 `TURNSTILE_SECRET_KEY` 未配置时**直接返回 503**（不再静默跳过验证）。上线前必检此项。Turnstile 注册：https://dash.cloudflare.com → Turnstile → 添加站点（域名填 `mouqin.com`，模式选 Managed）→ 复制 Secret Key。
 
-### 2.3 Functions 兼容性
+### 2.3 绑定 KV Namespace（限流）
+
+为防止 Resend 配额被刷光（免费版 100/天），waitlist 函数用 KV 做 10 分钟 / IP / 最多 3 次的限流。
+
+1. Cloudflare Dashboard → **Workers & Pages** → **KV** → 创建 namespace `WAITLIST_KV`
+2. Pages → `mouqin` → **设置** → **Functions** → **KV namespace bindings**：
+   - 变量名：`WAITLIST_KV`
+   - KV namespace：选 `WAITLIST_KV`
+
+> **未绑定 KV 时：** 函数记录 warn 日志、跳过限流、继续处理提交。**不**fail-closed（限流是滥用防控，不是安全防线）。
+
+### 2.4 Functions 兼容性
 
 Cloudflare Pages Functions 默认兼容最新 Workers 运行时。无需额外配置。
 
