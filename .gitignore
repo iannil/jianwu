@@ -29,6 +29,7 @@ vendor/
 website/resources/
 website/public/
 website/.hugo_build.lock
+website/.dev.vars
 
 # Environment templates (copy to .env, never commit .env files)
 scripts/.env.mouqin
