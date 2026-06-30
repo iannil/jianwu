@@ -9,12 +9,13 @@
 
 jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + CLI。
 
-- **当前版本**：**v0.3.5**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代 + corpus sync + 6 原型 + 10 本语料 + v0.3 SaaS-ready 内核全线交付）
+- **当前版本**：**v0.3.5**（v0.1.x 全线贯通 + factcheck/revise + Ollama + Storage + hugo/pdf + 章节迭代 + corpus sync + 6 原型 + 10 本语料 + v0.3 SaaS-ready **单租户**内核全线交付）
 - **可用 CLI 命令**：`init` / `info` / `config get·set·list` / `new` / `expand`（含 `--all`）/ `review` / `finalize` / `export` / `status` / `factcheck` / `revise` / `rewrite` / `add-chapter` / `move-chapter` / `delete-chapter` / `corpus list·show·stats·sync·reindex`
 - **库 API**：4 阶段引擎 `grill → outline → scaffolding → expand` + factcheck + revise
 - **LLM providers**：Gemini / GLM / Ollama（本地模型）/ Mock（单元测试）
-- **质量基线**：30+ 包测试全绿，`go vet` / `gofmt` 全清
-- **下一里程碑**：**v1.0** — mouqin SaaS（v0.3 SaaS-ready 内核已交付）
+- **质量基线**：30+ 包测试全绿，`go vet` / `gofmt` 全清；`go test -race ./...` 全绿（v0.3.4 验证）
+- **下一里程碑**：**v0.3.6** — 发布流程（`--version` + `release.sh`）+ Token 累计扩展 + 测试补全
+- **v0.4（多租户接线）**：**触发式启动**，不在关键路径——mouqin 上线后由真实多租户需求触发。详见 `docs/decisions/27-v0.3-audit-decisions.md`
 
 ---
 
@@ -29,8 +30,9 @@ jianwu 是一个把 LLM 训练知识结构化为人类可读图书的 Go 库 + C
 
 | 仓库 | 角色 | 状态 |
 |---|---|---|
-| `jianwu` | 核心引擎（库 + CLI） | **v0.3.5 shipped**（v0.1.x–v0.3.x 全线 + 6 原型 + 10 本语料 + SaaS-ready 内核） |
-| `mouqin` | Web SaaS（包装 jianwu） | v1.0 未启动，前置 v0.3 SaaS-ready 内核 |
+| `jianwu` | 核心引擎（库 + CLI） | **v0.3.5 shipped**（v0.1.x–v0.3.x 全线 + 6 原型 + 10 本语料 + SaaS-ready 单租户内核） |
+| `jianwu`（同仓库） | mouqin.com 官网（Hugo 站 + waitlist API） | **已上线**（commit 07cd538）— co-hosted in jianwu repo |
+| `mouqin` | Web SaaS app（包装 jianwu） | v1.0 未启动；前置 v0.3 SaaS-ready 内核已交付，mouqin MVP 单租户运行（v0.4 多租户推迟） |
 
 库优先：所有核心逻辑在 `jianwu` 库里，CLI 和未来的 Web 都包同一个库。
 

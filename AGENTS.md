@@ -5,11 +5,12 @@ Go CLI + 库。入口：`cmd/jianwu/main.go`。
 
 ## 项目
 
-- **当前版本：** v0.3.5（SaaS-ready kernel 完成 + mouqin 独立仓库启动 + 全管线交付）
+- **当前版本：** v0.3.5（SaaS-ready 单租户内核 + mouqin.com 官网 co-hosted + 全管线交付）
 - **技术栈：** Go 1.25 + cobra (CLI) + spf13/pflag + YAML 配置 + gemini/glm/ollama LLM 提供商
 - **入口点：** `cmd/jianwu/main.go` → `cli.NewRootCmd()` → cobra 子命令
 - **工作区模型：** 每个项目 = 一个 git 仓库，包含 `.jianwu/` 配置 + `books/<slug>/` 输出
-- **下一迭代：** v0.2.4 — 后 3 个原型
+- **下一迭代：** v0.3.6 — 发布流程（`--version` + `release.sh`）+ Token 累计扩展 + 测试补全
+- **审计决策：** v0.3.5 ship 后审计（2026-06-30）— 见 `docs/decisions/27-v0.3-audit-decisions.md`（v0.3 重定义为 single-tenant SaaS-ready；v0.4 多租户推迟到 mouqin 上线后触发）
 
 ## 命令
 

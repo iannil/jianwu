@@ -1,9 +1,21 @@
 # jianwu 路线图
 
 > 本文档跟踪 v0.1.0 之后的迭代计划。每个版本应该有明确范围、可验收标准、合理工作量。
-> 最后更新：2026-06-28（v0.3.5 — SaaS-ready 内核全线交付）
+> 最后更新：2026-06-30（v0.3 审计后调整：v0.3 重定义为 single-tenant，v0.4 推迟到触发式启动，新增 v0.3.6）
 >
-> **注意：** 所有 v0.1.x–v0.3.x 计划已全部交付。下一步：v1.0 mouqin SaaS。
+> **注意：** v0.1.x–v0.3.5 已全部交付。下一步：v0.3.6（发布流程 + Token 扩展 + 测试补全）→ mouqin MVP（单租户）→ v0.4（触发式多租户）。
+
+---
+
+## v0.3 审计调整（2026-06-30）
+
+v0.3.5 ship 后整体审计发现 v0.3 "SaaS-ready" 表述与实现有偏差：3 个全局可变 var（`secretsProvider` / `DefaultStorage` / `cliWorkspaceDir`）+ `LoadSecretsFor(_)` stub 与"多租户安全嵌入"目标冲突。
+
+**调整决定（详见 `docs/decisions/27-v0.3-audit-decisions.md`）：**
+
+- v0.3 重定义为 **"single-tenant SaaS-ready"**（启动期注入安全、运行期不可变）
+- v0.4 多租户接线**改为触发式启动**（mouqin 上线后真实需求触发，不进关键路径）
+- 新增 **v0.3.6** 切片：发布流程 + Token 扩展 + 测试补全
 
 ---
 
@@ -123,6 +135,47 @@ Workspace migration 已取消。schema_version 校验已移除，不再需要迁
 - [x] Jina `io.ReadAll` 已用 `LimitReader`（10MB body + 4KB error body）
 - [x] Search 错误消息截断 — Brave + Serper 均限制为 4KB + `truncateErrBody`
 - [x] Citation / 外部 URL 做 SSRF 校验 — `reader.ValidateURL()` 集成到 Jina reader
+
+---
+
+## v0.3.6 — 发布流程 + Token 扩展 + 测试补全（**下一个切片**）
+
+> v0.3.5 审计发现的实施层缺口集中处理。详见 `docs/decisions/27-v0.3-audit-decisions.md` F1-F3、F5。
+
+- [ ] `jianwu --version` / `-v` flag + `jianwu version` 子命令
+- [ ] `scripts/release.sh`：`git describe` 推 version → `go build -ldflags "-X ...Version=$V"` → 打 tag → push tag
+- [ ] `Meta.TokenUsage` 字段持久化（meta.json）+ expand 命令累计 + `status` 显示
+- [ ] `outline` / `scaffolding` 命令加 `--tokens` flag（复用 `TrackingChatter` wrapper）
+- [ ] 补 `internal/engine/usage_test.go`（TokenTracker/TrackingChatter TDD）
+- [ ] 补 `internal/engine/expand/progress_test.go` + `scaffolding` progress test
+- [ ] **不**补打 v0.1.4–v0.3.5 缺失 tag；**不**上 GitHub Actions（YAGNI，等 mouqin 上线再评估）
+
+**验收标准：** `jianwu --version` 输出 v0.3.6+tag；`go test -race ./...` 全绿；`status` 显示全书累计 token；每章 expand 后 outline/scaffolding 也能 `--tokens`。
+
+---
+
+## v0.4 — 多租户接线（**触发式启动**，不在关键路径）
+
+> 启动条件：mouqin MVP 上线后由真实多租户需求触发（用户数据混杂事故、分账需求、单租户运维成本可见）。
+> 不预设范围。`internal/storage/namespace.go` 已实现，多租户地基已铺，真启动时工作量约 2-3 天。
+
+候选工作（触发时再确认范围）：
+
+- [ ] 3 个全局可变 var → 显式参数 DI（`config.secretsProvider` / `book.DefaultStorage` / `cli.cliWorkspaceDir`）
+- [ ] `defaultSecretsProvider.LoadSecretsFor(tenantID)` 真用 tenantID
+- [ ] mouqin SaaS app 在请求路径上传递 tenantID 到 Storage.Namespace / SecretsProvider
+- [ ] 审计所有 `os.IsNotExist` 调用点（CLI 3 处）对非 OS Storage 的兼容性
+
+---
+
+## 紧急 hotfix（2026-06-30，独立 commit）
+
+> v0.3 审计 F4：mouqin.com waitlist 生产代码安全洞，不等 v0.3.6。
+
+- [x] `website/functions/api/waitlist.js` HTML escape 邮件体（防邮件 HTML 注入）
+- [x] Turnstile fail-closed（未配置 secret → 503，不再静默跳过）
+- [x] KV 限流（10 min / IP / 最多 3 次，防 Resend 配额烧光）
+- [x] `docs/DEPLOY_MOUQIN.md` 加 `TURNSTILE_SECRET_KEY` + `WAITLIST_KV` 绑定说明
 
 ---
 
