@@ -5,8 +5,8 @@
 
 ## 项目
 
-- **当前版本：** 0.3.7（独立产品；可靠生成、显式引用、累计用量与本地发布；本地已构建，尚未打 tag）。版本号统一在 `internal/cli/version.go` 管理。
-- **技术栈：** Go 1.25 + cobra (CLI) + spf13/pflag + YAML 配置 + gemini/glm/ollama LLM 提供商 + net/http 内嵌 Web UI（`internal/server`）
+- **当前版本：** 0.3.8（独立产品；可靠生成、显式引用、累计用量与本地发布、Kimi/DeepSeek 提供商；本地已发布，尚未打 tag）。版本号统一在 `internal/cli/version.go` 管理。
+- **技术栈：** Go 1.25 + cobra (CLI) + spf13/pflag + YAML 配置 + gemini/glm/kimi/deepseek/ollama LLM 提供商 + net/http 内嵌 Web UI（`internal/server`）
 - **入口点：** `cmd/jianwu/main.go` → `cli.NewRootCmd()` → cobra 子命令；`jianwu serve` → `internal/server`（Web UI + `/api/v1` HTTP API）
 - **工作区模型：** 每个项目 = 一个本地目录（建议用 git 备份），包含 `.jianwu/` 配置 + `books/<slug>/` 输出
 - **下一迭代：** 完整样书与真实读者评估，见 `docs/EVALUATION.md`
@@ -34,7 +34,7 @@
   共享辅助函数在 `book_resolve.go`（`loadBook`/`findChapter`/`findPart`/`parseChapterAddr`/`mirrorChapterStatus`）。
 - **`internal/engine/`** — 7 个子包：`grill/`（访谈）、`outline/`（结构；参考语料经 `Input.CorpusBooks` 注入）、`scaffolding/`（框架）、`expand/`（3 轮迭代：调研 → 草稿 → 验证）、`factcheck/`（自动事实复核）、`revise/`（基于 verdicts 修订章节）、`collect/`（语料自动采集：搜索 → 阅读 → LLM 提取 → 校验）。核心创作 + 质量管线。
 - **`internal/book/`** — 领域类型：`Meta`（含 `TokenUsage`；旧 `ClaimWhitelist` 仅兼容读取）、`Outline`（含 `Verdicts[]`）、`Chapter`、`Claim`（显式引用 ID）、`ClaimVerdict`、slug。纯数据 + IO。
-- **`internal/provider/`** — 抽象层：`llm/`（Chatter/Embedder/Streamer 接口）、`search/`、`reader/`，以及工厂包。内置实现：gemini、glm、ollama、mock（llm）；brave、serper（搜索）；jina（阅读器）。
+- **`internal/provider/`** — 抽象层：`llm/`（Chatter/Embedder/Streamer 接口）、`search/`、`reader/`，以及工厂包。内置实现：gemini、glm、kimi、deepseek、ollama、mock（llm，其中 glm/kimi/deepseek 复用 `llm/openaicomp` 共享层）；brave、serper（搜索）；jina（阅读器）。
 - **`internal/storage/`** — `Storage` 接口（v0.3.0 地基）：ReadFile/WriteFile/MkdirAll/RemoveAll/Rename/Stat/ReadDir。默认 `OS` 实现 + `MemStorage` 测试实现（含 16 个测试）。book/workspace/config/cli/grill 已迁移。
 - **`internal/config/`** — 5 层合并配置（默认 → 全局 → 工作区 → 环境变量 → 命令行标志）。密钥在 `~/.config/jianwu/secrets.yaml`。
 - **`internal/workspace/`** — 工作区的初始化、检测、加载、状态管理（使用 `storage.OS`）。
