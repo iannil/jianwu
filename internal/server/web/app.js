@@ -287,7 +287,6 @@ const App = {
     v.innerHTML = `
       <div class="page-head">
         <div><h1>工作区</h1><div class="desc mono">${esc(this.ws.root)}</div></div>
-        <a class="btn primary" href="#/new">＋ 新建图书</a>
       </div>
       <div class="stats">
         ${stat(books.length, "本", "图书")}

@@ -122,13 +122,13 @@ h2 {
 
 /* --- cards & stats --- */
 .card {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 20px 22px; margin-bottom: 14px;
+  background: var(--panel);
+  border-radius: var(--radius); margin-bottom: 14px;
   box-shadow: var(--shadow-sm);
 }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(310px, 100%), 1fr)); gap: 16px; }
 .stats {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
   gap: 14px; margin-bottom: 30px;
 }
 .stat {
@@ -180,9 +180,6 @@ h2 {
 .tb-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .tb-sep { width: 1px; height: 20px; background: var(--line-strong); flex: none; }
 .tb-label { color: var(--muted); font-size: 12.5px; letter-spacing: .02em; margin-right: -2px; flex: none; }
-@media (max-width: 760px) {
-  .toolbar, .tb-group { justify-content: flex-start; }
-}
 .part-block { margin-bottom: 30px; }
 .part-title { font-family: var(--serif); font-size: 17px; font-weight: 700; margin-bottom: 10px; }
 table.chapters {
@@ -241,13 +238,13 @@ table.chapters a:hover { color: var(--seal-deep); text-decoration: underline; }
   animation: fade .2s ease;
 }
 .drawer {
-  position: fixed; top: 0; right: 0; bottom: 0; width: 440px; z-index: var(--z-drawer);
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); z-index: var(--z-drawer);
   background: var(--panel); border-left: 1px solid var(--line);
   box-shadow: -28px 0 70px rgba(0, 0, 0, .16);
   display: flex; flex-direction: column;
   animation: slidein .24s cubic-bezier(.2, .7, .3, 1);
 }
-.drawer.wide { width: min(700px, 94vw); }
+.drawer.wide { width: min(700px, 100vw); }
 .drawer-head {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 15px 20px; border-bottom: 1px solid var(--line); flex: none;
@@ -319,7 +316,7 @@ table.cfg input.field.num { width: 84px; min-width: 84px; }
 #toasts { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: var(--z-toast); display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .toast {
   background: #262626; color: #f5f5f5; border-radius: 10px; padding: 10px 20px;
-  font-size: 13.5px; box-shadow: var(--shadow-lg); max-width: 560px;
+  font-size: 13.5px; box-shadow: var(--shadow-lg); max-width: min(560px, calc(100vw - 40px));
   animation: rise .22s cubic-bezier(.2, .7, .3, 1);
 }
 .toast.err { background: #1c1c1c; color: #ffffff; }
@@ -352,6 +349,36 @@ table.cfg input.field.num { width: 84px; min-width: 84px; }
 
 .spin { display: inline-block; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- 移动端自适应（≤760px）：顶栏两行（品牌+操作 / 导航平分），内容收窄，表格横滚。
+   放在文件末尾，确保覆盖同优先级的基础规则（如 table.chapters 的 overflow） --- */
+@media (max-width: 760px) {
+  .topbar { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px 12px; }
+  .brand .name { font-size: 17px; }
+  .brand .sub { display: none; }
+  #main-nav { order: 3; flex-basis: 100%; gap: 2px; }
+  #main-nav a { flex: 1; text-align: center; padding: 7px 4px; font-size: 14px; }
+
+  main { padding: 22px 16px 72px; }
+  h1 { font-size: 23px; }
+  h2 { margin: 26px 0 12px; }
+  .page-head { margin-bottom: 18px; }
+  .page-head .desc, .kv .mono, .ch-meta .mono { overflow-wrap: anywhere; }
+
+  .toolbar, .tb-group { justify-content: flex-start; }
+
+  table.chapters { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.chapters th, table.chapters td { padding: 8px 10px; }
+  .cfg-grid { grid-template-columns: 1fr; }
+  .cfg-grid .field { width: 100%; }
+  .wizard { padding: 18px 16px; }
+  .answer-row { flex-wrap: wrap; }
+  .drawer-body { padding: 14px 16px; }
+  .modal-card { padding: 18px 18px 14px; }
+  .empty { padding: 40px 16px; }
+  .stat-num { font-size: 22px; }
+  .md-body { font-size: 15px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
