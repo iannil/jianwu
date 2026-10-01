@@ -188,6 +188,10 @@ table.chapters {
   border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm);
 }
 table.chapters th, table.chapters td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: middle; }
+/* 纯表格卡片（如语料列表）：表格自带边框/圆角/阴影，卡片去掉内边距避免双重框距 */
+.card:has(> table.chapters:only-child) {
+  padding: 0; border: none; background: none; box-shadow: none;
+}
 table.chapters th { background: var(--panel-2); color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: .08em; }
 table.chapters tr:last-child td { border-bottom: none; }
 table.chapters tr:hover td { background: #fafafa; }
