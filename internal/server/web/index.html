@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="肩吾 jianwu — 本地优先的图书创作工作台：访谈定题，AI 起草，引用可查。">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f7f7f7">
+  <title>肩吾 · jianwu</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231c1c1c'/><text x='32' y='45' font-size='36' text-anchor='middle' fill='%23fafafa' font-family='serif' font-weight='600'>肩</text></svg>">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip" href="#view">跳到主要内容</a>
+
+  <header class="topbar">
+    <div class="brand" onclick="location.hash='#/'" title="回到工作区">
+      <span class="seal" aria-hidden="true">肩</span>
+      <span class="name">肩吾</span>
+      <span class="sub" id="brand-version"></span>
+    </div>
+    <nav id="main-nav" aria-label="主导航">
+      <a href="#/" data-nav="dashboard">工作区</a>
+      <a href="#/books" data-nav="books">书籍</a>
+      <a href="#/new" data-nav="new">新建图书</a>
+      <a href="#/corpus" data-nav="corpus">语料</a>
+      <a href="#/config" data-nav="config">配置</a>
+    </nav>
+    <div class="topbar-right">
+      <button class="btn ghost" onclick="App.openJobs()" id="jobs-badge">任务</button>
+    </div>
+  </header>
+
+  <main id="view"></main>
+
+  <div id="drawer-backdrop" class="backdrop hidden" aria-hidden="true"></div>
+
+  <aside id="jobs-drawer" class="drawer hidden" role="dialog" aria-modal="true" aria-label="后台任务">
+    <div class="drawer-head">
+      <h3>后台任务</h3>
+      <button class="btn ghost" onclick="App.closeJobs()" aria-label="关闭">✕</button>
+    </div>
+    <div id="jobs-list" class="jobs-list"></div>
+  </aside>
+
+  <aside id="chapter-drawer" class="drawer wide hidden" role="dialog" aria-modal="true" aria-label="章节详情">
+    <div class="drawer-head">
+      <h3 id="chapter-drawer-title">章节</h3>
+      <button class="btn ghost" onclick="App.closeChapter()" aria-label="关闭">✕</button>
+    </div>
+    <div id="chapter-drawer-body" class="drawer-body"></div>
+  </aside>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <h3 id="modal-title"></h3>
+      <p id="modal-text" class="modal-text"></p>
+      <div id="modal-input-row" class="modal-input-row hidden">
+        <input type="text" id="modal-input" class="field" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn">取消</button>
+        <button id="modal-ok" class="btn primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <noscript><div style="padding:48px;text-align:center;color:#8a8070">肩吾 Web UI 需要启用 JavaScript。</div></noscript>
+
+  <script src="/app.js"></script>
+</body>
+</html>
