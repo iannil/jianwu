@@ -170,9 +170,17 @@ h2 {
 .progressbar span { height: 100%; transition: width .4s; }
 
 /* --- book detail --- */
-.toolbar { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+/* 工具栏：单行三组（章节操作 | 定稿 | 导出），窄屏整组换行 */
+.toolbar {
+  display: flex; align-items: center; justify-content: flex-end;
+  flex-wrap: wrap; gap: 8px 10px;
+}
 .tb-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-.tb-sep { width: 1px; height: 18px; background: var(--line-strong); margin: 0 4px; }
+.tb-sep { width: 1px; height: 20px; background: var(--line-strong); flex: none; }
+.tb-label { color: var(--muted); font-size: 12.5px; letter-spacing: .02em; margin-right: -2px; flex: none; }
+@media (max-width: 760px) {
+  .toolbar, .tb-group { justify-content: flex-start; }
+}
 .part-block { margin-bottom: 30px; }
 .part-title { font-family: var(--serif); font-size: 17px; font-weight: 700; margin-bottom: 10px; }
 table.chapters {

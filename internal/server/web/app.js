@@ -397,17 +397,19 @@ const App = {
           <div class="desc mono">${esc(slug)} · ${statusBadge(meta.status)} · ${esc(meta.archetype || "")} · ${fmtTokens(meta.token_usage)}</div>
         </div>
         <div class="toolbar">
-          <div class="tb-group">
+          <div class="tb-group" role="group" aria-label="章节操作">
             <button class="btn primary" onclick="App.expandAll('${esc(slug)}')">展开全部</button>
             <button class="btn" onclick="App.addChapter('${esc(slug)}')">＋ 章节</button>
           </div>
-          <div class="tb-group">
-            <button class="btn" onclick="App.finalize('${esc(slug)}')">定稿</button>
-            <span class="tb-sep" aria-hidden="true"></span>
-            <button class="btn" onclick="App.exportBook('${esc(slug)}','md')">导出 Markdown</button>
+          <span class="tb-sep" aria-hidden="true"></span>
+          <button class="btn" onclick="App.finalize('${esc(slug)}')">定稿</button>
+          <span class="tb-sep" aria-hidden="true"></span>
+          <div class="tb-group" role="group" aria-label="导出">
+            <span class="tb-label">导出</span>
+            <button class="btn" onclick="App.exportBook('${esc(slug)}','md')">Markdown</button>
             <button class="btn" onclick="App.exportBook('${esc(slug)}','hugo')">Hugo</button>
             <button class="btn" onclick="App.exportBook('${esc(slug)}','pdf')">PDF</button>
-            <button class="btn" onclick="App.downloadExport('${esc(slug)}','md')">下载</button>
+            <button class="btn" onclick="App.downloadExport('${esc(slug)}','md')">下载 .md</button>
           </div>
         </div>
       </div>
@@ -488,7 +490,7 @@ const App = {
   },
   exportBook(slug, target) {
     this.startJob(`/books/${encodeURIComponent(slug)}/export`, { target },
-      j => { if (j.slug === slug && j.status === "succeeded") toast("导出完成，可点击「下载」获取文件", "ok"); });
+      j => { if (j.slug === slug && j.status === "succeeded") toast("导出完成，可点击「下载 .md」获取文件", "ok"); });
   },
   downloadExport(slug, target) {
     window.open(`/api/v1/books/${encodeURIComponent(slug)}/export/file?target=${target}`, "_blank");
