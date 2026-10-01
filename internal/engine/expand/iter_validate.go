@@ -2,10 +2,10 @@ package expand
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/llmjson"
 )
 
 // RunValidate executes iteration 3: LLM self-checks and revises the draft.
@@ -34,7 +34,7 @@ func RunValidate(
 		return ValidationResult{}, fmt.Errorf("validate llm chat: %w", err)
 	}
 	var result ValidationResult
-	if err := json.Unmarshal([]byte(resp.Content), &result); err != nil {
+	if err := llmjson.Unmarshal(resp.Content, &result); err != nil {
 		return ValidationResult{}, fmt.Errorf("parse validation result: %w (content: %s)", err, truncate(resp.Content, 500))
 	}
 	finalMD := result.RevisedMarkdown

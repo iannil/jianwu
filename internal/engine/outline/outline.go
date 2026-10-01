@@ -2,7 +2,6 @@ package outline
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
@@ -12,6 +11,7 @@ import (
 	"github.com/iannil/jianwu/internal/corpus"
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/style"
+	"github.com/iannil/jianwu/internal/llmjson"
 )
 
 // Generate produces an outline for the given input by calling the LLM.
@@ -67,8 +67,16 @@ func Generate(ctx context.Context, chatter llm.Chatter, in Input) (*book.Outline
 	}
 
 	var outline book.Outline
-	if err := json.Unmarshal([]byte(resp.Content), &outline); err != nil {
+	if err := llmjson.Unmarshal(resp.Content, &outline); err != nil {
 		return nil, fmt.Errorf("parse outline JSON: %w (content was: %s)", err, truncate(resp.Content, 500))
+	}
+	// LLM-reported indices are unreliable (often all zero); renumber
+	// positionally so part/chapter addressing (NN-MM) stays unambiguous.
+	for i := range outline.Parts {
+		outline.Parts[i].Index = i + 1
+		for j := range outline.Parts[i].Chapters {
+			outline.Parts[i].Chapters[j].Index = j + 1
+		}
 	}
 	return &outline, nil
 }

@@ -2,13 +2,13 @@ package scaffolding
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
 
 	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/llmjson"
 )
 
 // GenerateChapter produces a scaffold for one chapter via LLM call.
@@ -51,7 +51,7 @@ func GenerateChapter(ctx context.Context, chatter llm.Chatter, in ChapterInput) 
 	}
 
 	var parsed chapterSchema
-	if err := json.Unmarshal([]byte(resp.Content), &parsed); err != nil {
+	if err := llmjson.Unmarshal(resp.Content, &parsed); err != nil {
 		return nil, fmt.Errorf("parse chapter JSON: %w (content was: %s)", err, truncate(resp.Content, 500))
 	}
 	return &ChapterOutput{

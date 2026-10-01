@@ -2,12 +2,12 @@ package factcheck
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
 
 	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/llmjson"
 )
 
 // verifyClaim asks the LLM to verify one claim against its cited source.
@@ -46,7 +46,7 @@ func verifyClaim(ctx context.Context, chatter llm.Chatter, claimText, sourceCont
 
 	// Parse the structured verdict.
 	var v ClaimVerdict
-	if err := json.Unmarshal([]byte(resp.Content), &v); err != nil {
+	if err := llmjson.Unmarshal(resp.Content, &v); err != nil {
 		return nil, fmt.Errorf("parse verdict: %w (content: %s)", err, truncate(resp.Content, 200))
 	}
 	v.CitationID = citationID

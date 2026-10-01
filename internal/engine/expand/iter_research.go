@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/llmjson"
 )
 
 // RunResearch executes iteration 1: query web_search for chapter-derived queries,
@@ -87,7 +88,7 @@ func RunResearch(
 	if err != nil {
 		return notes, fmt.Errorf("research llm chat: %w", err)
 	}
-	if err := json.Unmarshal([]byte(resp.Content), &notes); err != nil {
+	if err := llmjson.Unmarshal(resp.Content, &notes); err != nil {
 		return notes, fmt.Errorf("parse research notes: %w (content: %s)", err, truncate(resp.Content, 500))
 	}
 	return notes, nil

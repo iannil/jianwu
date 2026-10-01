@@ -87,3 +87,24 @@ func TestGenerateRejectsMalformedJSON(t *testing.T) {
 		t.Errorf("error should mention 'parse outline JSON', got: %v", err)
 	}
 }
+
+func TestGenerateRenumberIndices(t *testing.T) {
+	// GLM often returns all-zero indices; positional renumbering must fix them.
+	fenced := "```json\n{\"parts\":[{\"index\":0,\"title\":\"P\",\"role\":\"r\",\"chapters\":[{\"index\":0,\"title\":\"a\"},{\"index\":0,\"title\":\"b\"}]}]}\n```"
+	c := mock.New(llm.ChatResponse{Content: fenced})
+	out, err := Generate(context.Background(), c, Input{
+		ArchetypeID: "micro-meso-macro", Topic: "t", Audience: "beginner",
+		Depth: "intermediate", Goal: "understanding", Length: "medium", Language: "zh",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out.Parts[0].Index != 1 {
+		t.Errorf("part index = %d, want 1", out.Parts[0].Index)
+	}
+	for j, want := range []int{1, 2} {
+		if out.Parts[0].Chapters[j].Index != want {
+			t.Errorf("chapter %d index = %d, want %d", j, out.Parts[0].Chapters[j].Index, want)
+		}
+	}
+}

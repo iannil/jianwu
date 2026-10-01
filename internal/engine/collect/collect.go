@@ -9,7 +9,6 @@ package collect
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -22,6 +21,7 @@ import (
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/provider/reader"
 	"github.com/iannil/jianwu/internal/provider/search"
+	"github.com/iannil/jianwu/internal/llmjson"
 )
 
 // Limits bounding one collection run (cost control, mirrors expand's caps).
@@ -329,7 +329,7 @@ func extractBooks(ctx context.Context, chatter llm.Chatter, in Input, archIDs, p
 		return nil, fmt.Errorf("提取调用失败: %w", err)
 	}
 	var view extractionView
-	if err := json.Unmarshal([]byte(resp.Content), &view); err != nil {
+	if err := llmjson.Unmarshal(resp.Content, &view); err != nil {
 		return nil, fmt.Errorf("解析提取结果: %w (content: %s)", err, truncateRunes(resp.Content, 300))
 	}
 	return &view, nil

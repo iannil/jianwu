@@ -34,7 +34,7 @@ func New(cfg Config) (*Provider, error) {
 	}
 	return &Provider{
 		baseURL:      cfg.BaseURL,
-		http:         &http.Client{Timeout: 60 * time.Second},
+		http:         &http.Client{Timeout: 10 * time.Minute},
 		streamClient: &http.Client{}, // no timeout — ctx controls streaming cancellation
 	}, nil
 }
