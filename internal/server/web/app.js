@@ -693,17 +693,20 @@ const App = {
   async showCorpus(slug) {
     try {
       const b = await api("/corpus/" + encodeURIComponent(slug));
-      $("#chapter-drawer-title").textContent = b.title_zh || b.slug;
+      // 详情接口返回 corpus.Book 原始结构：标题是 {zh, en} 本地化对象
+      const titleOf = t => (t && (t.zh || t.en)) || "";
+      $("#chapter-drawer-title").textContent = titleOf(b.title) || b.slug;
       $("#chapter-drawer-body").innerHTML = `
         <div class="kv">
           <span class="k">slug</span><span class="mono">${esc(b.slug)}</span>
           <span class="k">原型</span><span class="mono">${esc(b.archetype)}</span>
           <span class="k">受众/深度</span><span>${esc(b.audience)} / ${esc(b.depth)}</span>
           <span class="k">摘要</span><span>${esc(b.abstract || "")}</span>
+          ${b.source?.url ? `<span class="k">来源</span><span><a href="${esc(b.source.url)}" target="_blank" rel="noopener">${esc(b.source.name || b.source.url)}</a></span>` : ""}
         </div>
         ${(b.parts || []).map(p => `
-          <h2>Part ${p.index} · ${esc(p.title_zh)}</h2>
-          <ul>${(p.chapters || []).map(c => `<li>${esc(c.title_zh || c.title)}</li>`).join("")}</ul>`).join("")}
+          <h2>Part ${p.index} · ${esc(titleOf(p.title))}</h2>
+          <ul>${(p.chapters || []).map(c => `<li>${esc(titleOf(c.title))}</li>`).join("")}</ul>`).join("")}
       `;
       $("#chapter-drawer").classList.remove("hidden");
       this.syncBackdrop();
