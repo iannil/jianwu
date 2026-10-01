@@ -122,8 +122,8 @@ h2 {
 
 /* --- cards & stats --- */
 .card {
-  background: var(--panel);
-  border-radius: var(--radius); margin-bottom: 14px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 20px 22px; margin-bottom: 14px;
   box-shadow: var(--shadow-sm);
 }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(310px, 100%), 1fr)); gap: 16px; }
