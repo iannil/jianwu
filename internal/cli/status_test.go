@@ -11,6 +11,17 @@ import (
 
 func TestStatus_FailedSurfaced(t *testing.T) {
 	tmp := writeBookWithChapters(t, "demo", book.StatusFailed, book.StatusReviewed)
+	// Give the failed chapter an abstract so it reads as an expand failure,
+	// not a scaffold failure.
+	bookDir := tmp + "/books/demo"
+	o, err := book.LoadOutline(bookDir + "/outline.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	o.Parts[0].Chapters[0].Abstract = "摘要"
+	if err := book.SaveOutline(bookDir+"/outline.json", o); err != nil {
+		t.Fatal(err)
+	}
 	chdir(t, tmp)
 
 	var buf strings.Builder
@@ -25,6 +36,23 @@ func TestStatus_FailedSurfaced(t *testing.T) {
 	}
 	if !strings.Contains(s, "re-run expand") {
 		t.Errorf("missing failed next-action hint:\n%s", s)
+	}
+}
+
+func TestStatus_ScaffoldFailedHint(t *testing.T) {
+	// No abstract on the failed chapter → scaffold-stage failure hint.
+	tmp := writeBookWithChapters(t, "demo", book.StatusFailed, book.StatusReviewed)
+	chdir(t, tmp)
+
+	var buf strings.Builder
+	cmd := &cobra.Command{}
+	cmd.SetOut(&buf)
+	if err := runStatus(cmd, []string{"demo"}); err != nil {
+		t.Fatalf("runStatus: %v", err)
+	}
+	s := buf.String()
+	if !strings.Contains(s, "scaffolding demo --retry-failed") {
+		t.Errorf("missing scaffold retry hint:\n%s", s)
 	}
 }
 

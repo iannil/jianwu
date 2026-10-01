@@ -3,6 +3,7 @@ package expand
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/iannil/jianwu/internal/provider/llm"
@@ -16,6 +17,12 @@ type stubSearcher struct {
 	err     error
 	calls   int
 }
+
+// usableTestMD is long enough to pass reader.ContentIssue (>= 500 runes).
+var usableTestMD = "This is a full-length test article body. " +
+	"It explains the protocol design in several detailed paragraphs so that " +
+	"the content-quality gate treats it as usable page content. " +
+	strings.Repeat("The quick brown fox jumps over the lazy dog while explaining QUIC handshakes. ", 12)
 
 func (s *stubSearcher) Search(ctx context.Context, query string, opts search.SearchOpts) ([]search.SearchResult, error) {
 	s.calls++
@@ -88,7 +95,7 @@ func TestReadURLCapExpires(t *testing.T) {
 		content: reader.Content{
 			URL:      "https://example.com",
 			Title:    "Test Page",
-			Markdown: "Test content",
+			Markdown: usableTestMD,
 		},
 	}
 	registry := NewToolRegistry(&stubSearcher{}, stubRdr, &stubEmbedder{})
@@ -118,7 +125,7 @@ func TestReadURLRegistersCitation(t *testing.T) {
 		content: reader.Content{
 			URL:      "https://example.com/test",
 			Title:    "Test Article",
-			Markdown: "This is a test article with some content",
+			Markdown: usableTestMD,
 		},
 	}
 	registry := NewToolRegistry(&stubSearcher{}, stubRdr, &stubEmbedder{})
@@ -305,5 +312,44 @@ func TestReadURLPropagatesReaderErrors(t *testing.T) {
 	citations := registry.Citations()
 	if len(citations) != 0 {
 		t.Fatalf("Expected 0 citations after error, got %d", len(citations))
+	}
+}
+
+func TestReadURLRejectsLoginWalledContent(t *testing.T) {
+	stubRdr := &stubReader{
+		content: reader.Content{
+			URL:      "https://zhuanlan.zhihu.com/p/1",
+			Title:    "深入剖析 HTTP/3 协议",
+			Markdown: "# 深入剖析 HTTP/3 协议\n\n请您登录后查看更多专业优质内容\n\n打开知乎 App，查看更多内容",
+		},
+	}
+	// Search registers the URL as candidate first (mirrors SearchAndRegister).
+	searcher := &stubSearcher{results: []search.SearchResult{
+		{URL: "https://zhuanlan.zhihu.com/p/1", Title: "深入剖析 HTTP/3 协议"},
+	}}
+	registry := NewToolRegistry(searcher, stubRdr, &stubEmbedder{})
+	if _, err := registry.SearchAndRegister(context.Background(), "quic"); err != nil {
+		t.Fatal(err)
+	}
+	before := registry.Citations()
+	found := false
+	for _, c := range before {
+		if c.URL == "https://zhuanlan.zhihu.com/p/1" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("candidate should be registered by search")
+	}
+
+	_, err := registry.ReadURL(context.Background(), "https://zhuanlan.zhihu.com/p/1")
+	if err == nil {
+		t.Fatal("ReadURL should reject login-walled content")
+	}
+	registry.DropCitation("https://zhuanlan.zhihu.com/p/1")
+	for _, c := range registry.Citations() {
+		if c.URL == "https://zhuanlan.zhihu.com/p/1" {
+			t.Fatal("dropped URL should no longer be a citation candidate")
+		}
 	}
 }

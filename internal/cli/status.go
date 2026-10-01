@@ -58,7 +58,25 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	switch {
 	case counts[book.StatusFailed] > 0:
-		fmt.Fprintf(out, "Next: re-run expand on %d failed chapter(s) — `jianwu expand %s <NN-MM>`\n", counts[book.StatusFailed], slug)
+		scaffoldFailed, expandFailed := 0, 0
+		for _, p := range bc.Outline.Parts {
+			for _, c := range p.Chapters {
+				if c.Status != book.StatusFailed {
+					continue
+				}
+				if c.Abstract == "" {
+					scaffoldFailed++
+				} else {
+					expandFailed++
+				}
+			}
+		}
+		if scaffoldFailed > 0 {
+			fmt.Fprintf(out, "Next: retry %d failed scaffold(s) — `jianwu scaffolding %s --retry-failed`\n", scaffoldFailed, slug)
+		}
+		if expandFailed > 0 {
+			fmt.Fprintf(out, "Next: re-run expand on %d failed chapter(s) — `jianwu expand %s <NN-MM>`\n", expandFailed, slug)
+		}
 	case counts[book.StatusExpanded] > 0:
 		fmt.Fprintf(out, "Next: review %d expanded chapter(s) — `jianwu review %s <NN-MM>`\n", counts[book.StatusExpanded], slug)
 	case total > 0 && counts[book.StatusReviewed] == total:

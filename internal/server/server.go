@@ -124,8 +124,9 @@ func (s *Server) Handler() http.Handler {
 	// Books.
 	mux.HandleFunc("GET /api/v1/books", s.handleBooksList)
 	mux.HandleFunc("GET /api/v1/books/{slug}", s.handleBookDetail)
-	mux.HandleFunc("POST /api/v1/books/{slug}/expand", s.handleExpandBook)     // {part, chapter, force} or {all, force}
-	mux.HandleFunc("POST /api/v1/books/{slug}/expand-all", s.handleExpandAll)  // {force}
+	mux.HandleFunc("POST /api/v1/books/{slug}/expand", s.handleExpandBook)    // {part, chapter, force} or {all, force}
+	mux.HandleFunc("POST /api/v1/books/{slug}/expand-all", s.handleExpandAll) // {force}
+	mux.HandleFunc("POST /api/v1/books/{slug}/scaffold-retry", s.handleScaffoldRetry)
 	mux.HandleFunc("POST /api/v1/books/{slug}/finalize", s.handleFinalize)     // {dry_run}
 	mux.HandleFunc("POST /api/v1/books/{slug}/export", s.handleExport)         // {target, dry_run}
 	mux.HandleFunc("GET /api/v1/books/{slug}/export/file", s.handleExportFile) // ?target=md|hugo|pdf

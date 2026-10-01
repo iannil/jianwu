@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
+	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
@@ -71,6 +73,14 @@ func Generate(
 	}
 	defs := ParseFootnotes(finalMD)
 	citations := mergeCitations(defs, tools)
+
+	// Backfill footnote dates from the recorded citation metadata; the draft
+	// LLM invents the "accessed DATE" tail (P3 fix).
+	accessed := make(map[string]time.Time, len(citations))
+	for _, c := range citations {
+		accessed[c.URL] = c.AccessedAt
+	}
+	finalMD = book.NormalizeFootnoteDates(finalMD, accessed)
 
 	// Count unverified claims.
 	var unverified []Claim

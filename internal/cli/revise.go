@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/iannil/jianwu/internal/engine"
 	"github.com/iannil/jianwu/internal/engine/expand"
 	"github.com/iannil/jianwu/internal/engine/revise"
+	"github.com/iannil/jianwu/internal/style"
 	"github.com/iannil/jianwu/internal/workspace"
 )
 
@@ -115,7 +117,14 @@ func runReviseWithDeps(cmd *cobra.Command, args []string, deps *ProviderDeps) (e
 		return &InfoError{Err: fmt.Errorf("revision returned empty prose"), Code: ExitCodeGeneric}
 	}
 
-	validated, err := expand.RunValidate(cmd.Context(), deps.Chatter, result.RevisedMarkdown, expand.ResearchNotes{}, "", nil)
+	// The post-revise validation rewrite must run under the same style guide
+	// as the main expand pipeline, or it strips prose quality (P2 fix).
+	guide, err := style.LoadGuide()
+	if err != nil {
+		slog.Warn("style guide unavailable, revising without it", "err", err)
+		guide = ""
+	}
+	validated, err := expand.RunValidate(cmd.Context(), deps.Chatter, result.RevisedMarkdown, expand.ResearchNotes{}, guide, nil)
 	if err != nil {
 		return &InfoError{Err: fmt.Errorf("validate revision: %w", err), Code: ExitCodeGeneric}
 	}
@@ -160,6 +169,14 @@ func runReviseWithDeps(cmd *cobra.Command, args []string, deps *ProviderDeps) (e
 		ch.ReviewedAt = nil
 		ch.ReviewedBy = ""
 		ch.Verdicts = nil
+
+		// Backfill footnote dates from the (rebuilt) citation metadata; the
+		// revise LLM invents the "accessed DATE" tail (P3 fix).
+		accessed := make(map[string]time.Time, len(ch.Citations))
+		for _, c := range ch.Citations {
+			accessed[c.URL] = c.AccessedAt
+		}
+		result.RevisedMarkdown = book.NormalizeFootnoteDates(result.RevisedMarkdown, accessed)
 
 		// Write revised chapter file with updated frontmatter.
 		// Preserve existing metadata (Model, EngineVersion, Citations, etc.)

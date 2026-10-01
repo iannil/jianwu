@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -202,27 +203,31 @@ func loadSecrets() (*Secrets, error) {
 		}
 	}
 
-	// ENV overrides file per field.
-	if v := os.Getenv(GeminiAPIKeyEnv); v != "" {
-		s.GeminiAPIKey = v
+	// ENV overrides file per field. A stale exported ENV silently beating a
+	// freshly updated secrets.yaml is a support trap, so warn on divergence
+	// (precedence is unchanged).
+	type envOverride struct {
+		env, field string
+		fileValue  *string
 	}
-	if v := os.Getenv(GLMAPIKeyEnv); v != "" {
-		s.GLMAPIKey = v
-	}
-	if v := os.Getenv(KimiAPIKeyEnv); v != "" {
-		s.KimiAPIKey = v
-	}
-	if v := os.Getenv(DeepSeekAPIKeyEnv); v != "" {
-		s.DeepSeekAPIKey = v
-	}
-	if v := os.Getenv(BraveAPIKeyEnv); v != "" {
-		s.BraveAPIKey = v
-	}
-	if v := os.Getenv(SerperAPIKeyEnv); v != "" {
-		s.SerperAPIKey = v
-	}
-	if v := os.Getenv(JinaAPIKeyEnv); v != "" {
-		s.JinaAPIKey = v
+	for _, o := range []envOverride{
+		{GeminiAPIKeyEnv, "gemini_api_key", &s.GeminiAPIKey},
+		{GLMAPIKeyEnv, "glm_api_key", &s.GLMAPIKey},
+		{KimiAPIKeyEnv, "kimi_api_key", &s.KimiAPIKey},
+		{DeepSeekAPIKeyEnv, "deepseek_api_key", &s.DeepSeekAPIKey},
+		{BraveAPIKeyEnv, "brave_api_key", &s.BraveAPIKey},
+		{SerperAPIKeyEnv, "serper_api_key", &s.SerperAPIKey},
+		{JinaAPIKeyEnv, "jina_api_key", &s.JinaAPIKey},
+	} {
+		v := os.Getenv(o.env)
+		if v == "" {
+			continue
+		}
+		if *o.fileValue != "" && *o.fileValue != v {
+			slog.Warn("secrets: ENV value differs from secrets.yaml; ENV wins (unset the env var to use the file value)",
+				"env", o.env, "field", o.field)
+		}
+		*o.fileValue = v
 	}
 
 	return s, nil

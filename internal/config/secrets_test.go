@@ -1,6 +1,8 @@
 package config
 
 import (
+	"bytes"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -222,5 +224,43 @@ func TestLoadSecretsForTenant(t *testing.T) {
 	}
 	if sb.GeminiAPIKey != "global" {
 		t.Errorf("unknown tenant: got %q, want %q", sb.GeminiAPIKey, "global")
+	}
+}
+
+func TestLoadSecretsWarnsOnEnvFileDivergence(t *testing.T) {
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+
+	secretsDir := filepath.Join(tmpHome, ".config", "jianwu")
+	if err := os.MkdirAll(secretsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	fileContent := "deepseek_api_key: file-key\nserper_api_key: same-key\n"
+	if err := os.WriteFile(filepath.Join(secretsDir, "secrets.yaml"), []byte(fileContent), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("DEEPSEEK_API_KEY", "env-key")    // diverges → warn
+	t.Setenv("SERPER_API_KEY", "same-key")     // identical → silent
+	t.Setenv("JINA_API_KEY", "env-only-value") // env only → silent
+
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+
+	s, err := LoadSecrets()
+	if err != nil {
+		t.Fatalf("LoadSecrets: %v", err)
+	}
+	if s.DeepSeekAPIKey != "env-key" {
+		t.Errorf("DeepSeekAPIKey = %q, want env-key (ENV wins)", s.DeepSeekAPIKey)
+	}
+	logs := buf.String()
+	if !strings.Contains(logs, "DEEPSEEK_API_KEY") {
+		t.Errorf("missing divergence warning for DEEPSEEK_API_KEY, log: %s", logs)
+	}
+	if strings.Contains(logs, "SERPER_API_KEY") || strings.Contains(logs, "JINA_API_KEY") {
+		t.Errorf("unexpected warning for matching/env-only keys, log: %s", logs)
 	}
 }

@@ -25,6 +25,10 @@ type Models struct {
 	Outline     ModelRef `yaml:"outline"`
 	Scaffolding ModelRef `yaml:"scaffolding"`
 	Expand      ModelRef `yaml:"expand"`
+	// Embedder optionally names a dedicated provider+model for embedding
+	// (corpus index, similar-book lookup). nil = derive from the stage model;
+	// set it when the chat provider has no embeddings endpoint (e.g. deepseek).
+	Embedder *ModelRef `yaml:"embedder,omitempty"`
 }
 
 // ModelRef names a provider+model for a stage.

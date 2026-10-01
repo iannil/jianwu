@@ -57,6 +57,7 @@ Design, draft, verify sources, review and export from your own workspace.`,
 	cmd.AddCommand(newInfoCmd())
 	cmd.AddCommand(newConfigCmd())
 	cmd.AddCommand(newNewCmd())
+	cmd.AddCommand(newScaffoldingCmd())
 	cmd.AddCommand(newExpandCmd())
 	cmd.AddCommand(newReviewCmd())
 	cmd.AddCommand(newFinalizeCmd())

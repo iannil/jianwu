@@ -224,3 +224,46 @@ models:
 		t.Errorf("Intake.TimeoutSeconds = %d, want 0 (default layer applies later)", cfg.Models.Intake.TimeoutSeconds)
 	}
 }
+
+func TestLoadEmbedderStageOverlay(t *testing.T) {
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+
+	wsRoot := t.TempDir()
+	wsConfig := `
+models:
+  expand: { provider: deepseek, model: deepseek-flash }
+  embedder: { provider: glm, model: embedding-3 }
+`
+	if err := os.MkdirAll(filepath.Join(wsRoot, ".jianwu"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(wsRoot, ".jianwu", "config.yaml"), []byte(wsConfig), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load(wsRoot)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Models.Embedder == nil {
+		t.Fatal("Models.Embedder: got nil, want overlay applied")
+	}
+	if cfg.Models.Embedder.Provider != "glm" || cfg.Models.Embedder.Model != "embedding-3" {
+		t.Errorf("Embedder = %+v, want glm/embedding-3", cfg.Models.Embedder)
+	}
+}
+
+func TestLoadEmbedderAbsentByDefault(t *testing.T) {
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+
+	wsRoot := t.TempDir()
+	cfg, err := Load(wsRoot)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Models.Embedder != nil {
+		t.Errorf("Models.Embedder = %+v, want nil by default", cfg.Models.Embedder)
+	}
+}

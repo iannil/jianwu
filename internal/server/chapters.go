@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/user"
@@ -18,6 +19,7 @@ import (
 	"github.com/iannil/jianwu/internal/engine/factcheck"
 	"github.com/iannil/jianwu/internal/engine/revise"
 	"github.com/iannil/jianwu/internal/storage"
+	"github.com/iannil/jianwu/internal/style"
 )
 
 // chapterView is the detail payload for one chapter: outline metadata plus
@@ -583,7 +585,14 @@ func (s *Server) runRevise(ctx context.Context, j *Job, slug string, partIdx, ch
 		return errors.Join(fmt.Errorf("修订返回空正文"), persistErr(bc, tracker))
 	}
 
-	validated, err := expand.RunValidate(ctx, chatter, result.RevisedMarkdown, expand.ResearchNotes{}, "", nil)
+	// The post-revise validation rewrite must run under the same style guide
+	// as the main expand pipeline, or it strips prose quality (P2 fix).
+	guide, gerr := style.LoadGuide()
+	if gerr != nil {
+		slog.Warn("style guide unavailable, revising without it", "err", gerr)
+		guide = ""
+	}
+	validated, err := expand.RunValidate(ctx, chatter, result.RevisedMarkdown, expand.ResearchNotes{}, guide, nil)
 	if err != nil {
 		if perr := persistUsage(bc.BookDir, bc.Meta, tracker.Snapshot()); perr != nil {
 			err = errors.Join(err, perr)
@@ -659,6 +668,14 @@ func (s *Server) applyRevision(bc *bookCtx, chapPath string, partIdx, chIdx int,
 	ch.ReviewedAt = nil
 	ch.ReviewedBy = ""
 	ch.Verdicts = nil
+
+	// Backfill footnote dates from the (rebuilt) citation metadata; the
+	// revise LLM invents the "accessed DATE" tail (P3 fix).
+	accessed := make(map[string]time.Time, len(ch.Citations))
+	for _, c := range ch.Citations {
+		accessed[c.URL] = c.AccessedAt
+	}
+	markdown = book.NormalizeFootnoteDates(markdown, accessed)
 
 	existingFM, _, readErr := book.ReadChapter(chapPath)
 	var fm book.ChapterFrontmatter

@@ -3,6 +3,7 @@ package factcheck
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/iannil/jianwu/internal/book"
@@ -32,7 +33,7 @@ func (s *stubReader) Read(ctx context.Context, url string) (reader.Content, erro
 
 func TestRunFactCheck(t *testing.T) {
 	chatter := mock.New(llm.ChatResponse{Content: `{"verified":true,"reasoning":"The source explicitly states this.","suggested_rewrite":""}`})
-	rd := &stubReader{content: "Source text that supports the claim."}
+	rd := &stubReader{content: "Source text that supports the claim. " + strings.Repeat("Padding body so the content gate passes. ", 20)}
 
 	out, err := Run(context.Background(), chatter, rd, Input{
 		ChapterTitle: "Test Chapter",
@@ -59,7 +60,7 @@ func TestRunFactCheck(t *testing.T) {
 
 func TestRunFactCheckReportsClaimWithoutCitation(t *testing.T) {
 	chatter := mock.New(llm.ChatResponse{Content: `{"verified":true}`})
-	rd := &stubReader{content: "irrelevant"}
+	rd := &stubReader{content: "irrelevant " + strings.Repeat("Padding body so the content gate passes. ", 20)}
 
 	out, err := Run(context.Background(), chatter, rd, Input{
 		ChapterTitle: "Test",
@@ -104,7 +105,7 @@ func TestRunFactCheckReaderError(t *testing.T) {
 
 func TestRunFactCheckLLMError(t *testing.T) {
 	chatter := mock.NewError(errors.New("LLM down"))
-	rd := &stubReader{content: "source text"}
+	rd := &stubReader{content: "source text " + strings.Repeat("Padding body so the content gate passes. ", 20)}
 
 	out, err := Run(context.Background(), chatter, rd, Input{
 		ChapterTitle: "Test",
@@ -129,7 +130,7 @@ func TestRunFactCheckLLMError(t *testing.T) {
 func TestRunFactCheckDoesNotTrustWhitelist(t *testing.T) {
 	// Chatter would error if called — but whitelisted claim should skip LLM.
 	chatter := mock.NewError(errors.New("should not be called"))
-	rd := &stubReader{content: "source text"}
+	rd := &stubReader{content: "source text " + strings.Repeat("Padding body so the content gate passes. ", 20)}
 
 	out, err := Run(context.Background(), chatter, rd, Input{
 		ChapterTitle: "Test",
@@ -169,7 +170,7 @@ func TestRunExplicitCitationIDs(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p := mock.New(llm.ChatResponse{Content: `{"verified":true}`})
-			rd := &stubReader{content: "source"}
+			rd := &stubReader{content: "source " + strings.Repeat("Padding body so the content gate passes. ", 20)}
 			out, err := Run(context.Background(), p, rd, Input{
 				Claims:    []book.Claim{{Text: "claim", HasCitation: true, CitationIDs: tc.ids}},
 				Citations: []book.Citation{{ID: "a", URL: "https://example.com/a"}, {ID: "b", URL: "https://example.com/b"}},
@@ -205,10 +206,11 @@ func TestRunUnavailableSourcesNeverVerify(t *testing.T) {
 		citations []book.Citation
 		rd        reader.Reader
 	}{
-		{"invalid URL", []book.Citation{{ID: "1", URL: "file:///private/source"}}, &stubReader{content: "supports"}},
+		{"invalid URL", []book.Citation{{ID: "1", URL: "file:///private/source"}}, &stubReader{content: "supports " + strings.Repeat("Padding body so the content gate passes. ", 20)}},
 		{"empty source", []book.Citation{{ID: "1", URL: "https://example.com"}}, &stubReader{}},
 		{"no reader", []book.Citation{{ID: "1", URL: "https://example.com"}}, nil},
-		{"duplicate ID", []book.Citation{{ID: "1", URL: "https://example.com"}, {ID: "1", URL: "https://other.example"}}, &stubReader{content: "supports"}},
+		{"duplicate ID", []book.Citation{{ID: "1", URL: "https://example.com"}, {ID: "1", URL: "https://other.example"}}, &stubReader{content: "supports " + strings.Repeat("Padding body so the content gate passes. ", 20)}},
+		{"login-walled source", []book.Citation{{ID: "1", URL: "https://zhuanlan.zhihu.com/p/1"}}, &stubReader{content: "# 标题\n\n请您登录后查看更多专业优质内容\n\n打开知乎 App"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out, err := Run(context.Background(), mock.New(llm.ChatResponse{Content: `{"verified":true}`}), tc.rd, Input{Claims: []book.Claim{{Text: "claim", CitationIDs: []string{"1"}}}, Citations: tc.citations})
@@ -219,5 +221,28 @@ func TestRunUnavailableSourcesNeverVerify(t *testing.T) {
 				t.Fatalf("unavailable source verified: %+v", out)
 			}
 		})
+	}
+}
+
+// TestRunLoginWalledSourceReasoning asserts the login-wall case is reported
+// as an unusable source (recorded in SourceErrors), not a content mismatch.
+func TestRunLoginWalledSourceReasoning(t *testing.T) {
+	rd := &stubReader{content: "# 标题\n\n请您登录后查看更多专业优质内容\n\n打开知乎 App"}
+	out, err := Run(context.Background(), mock.New(llm.ChatResponse{Content: `{"verified":true}`}), rd, Input{
+		Claims:    []book.Claim{{Text: "claim", CitationIDs: []string{"1"}}},
+		Citations: []book.Citation{{ID: "1", URL: "https://zhuanlan.zhihu.com/p/1"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(out.Verdicts) != 1 {
+		t.Fatalf("verdicts = %d, want 1", len(out.Verdicts))
+	}
+	v := out.Verdicts[0]
+	if !strings.Contains(v.Reasoning, "source unusable (login-walled)") {
+		t.Errorf("reasoning = %q, want login-walled unusable", v.Reasoning)
+	}
+	if len(out.SourceErrors) != 1 {
+		t.Errorf("SourceErrors = %v, want the walled URL recorded", out.SourceErrors)
 	}
 }

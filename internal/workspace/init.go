@@ -61,6 +61,9 @@ models:
     # fallback: { provider: glm, model: glm-4.6 }
   scaffolding:  { provider: gemini, model: gemini-2.5-flash }
   expand:       { provider: glm,    model: glm-4.6 }
+  # Dedicated embedding provider for corpus indexing / similar-book lookup.
+  # Set it when the chat provider has no embeddings endpoint (e.g. deepseek):
+  # embedder: { provider: glm, model: embedding-3 }
   # Per-stage fallback: uncomment fallback: under any stage to auto-switch
   # when the primary provider fails (retries exhausted). To skip fallback for a
   # stage, omit the field entirely. See docs/PROJECT_STATUS.md §v0.1.4.

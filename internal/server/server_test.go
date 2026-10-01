@@ -88,10 +88,13 @@ func (s *stageChatter) Chat(ctx context.Context, req llm.ChatRequest) (*llm.Chat
 	return &resp, nil
 }
 
+// fakeReaderBody is long enough to pass reader.ContentIssue.
+var fakeReaderBody = strings.Repeat("Detailed page content about the topic under expansion. ", 20)
+
 type fakeReader struct{}
 
 func (f *fakeReader) Read(ctx context.Context, url string) (reader.Content, error) {
-	return reader.Content{URL: url, Title: "Page", Markdown: "page content"}, nil
+	return reader.Content{URL: url, Title: "Page", Markdown: fakeReaderBody}, nil
 }
 
 // --- helpers ---

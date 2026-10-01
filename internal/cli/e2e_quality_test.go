@@ -20,7 +20,8 @@ type qualityReader struct{ urls []string }
 
 func (r *qualityReader) Read(_ context.Context, url string) (reader.Content, error) {
 	r.urls = append(r.urls, url)
-	return reader.Content{URL: url, Markdown: "The measured value is 20."}, nil
+	// Body is padded past the content-quality gate length threshold.
+	return reader.Content{URL: url, Markdown: "The measured value is 20. " + strings.Repeat("Supporting context for the measured claim. ", 20)}, nil
 }
 
 func TestE2EQualityPipeline(t *testing.T) {

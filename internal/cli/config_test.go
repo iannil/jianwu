@@ -106,3 +106,36 @@ func TestConfigGetUnknownKeyErrors(t *testing.T) {
 		t.Error("expected error for unknown key, got nil")
 	}
 }
+
+func TestConfigSetAllocatesPointerStage(t *testing.T) {
+	root := t.TempDir()
+	if err := runInit(root, false); err != nil {
+		t.Fatal(err)
+	}
+	oldWd, _ := os.Getwd()
+	defer os.Chdir(oldWd)
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := NewRootCmd()
+	cmd.SetArgs([]string{"config", "set", "models.embedder.provider", "glm"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("set models.embedder.provider: %v", err)
+	}
+	cmd.SetArgs([]string{"config", "set", "models.embedder.model", "embedding-3"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("set models.embedder.model: %v", err)
+	}
+
+	cmd2 := NewRootCmd()
+	out := &bytes.Buffer{}
+	cmd2.SetOut(out)
+	cmd2.SetArgs([]string{"config", "get", "models.embedder.provider"})
+	if err := cmd2.Execute(); err != nil {
+		t.Fatalf("get models.embedder.provider: %v", err)
+	}
+	if got := strings.TrimSpace(out.String()); got != "glm" {
+		t.Errorf("after set, got %q, want glm", got)
+	}
+}

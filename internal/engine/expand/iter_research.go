@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"text/template"
 
-	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/llmjson"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // RunResearch executes iteration 1: query web_search for chapter-derived queries,
@@ -42,7 +43,12 @@ func RunResearch(
 				if !looksLikeHTML(r.URL) {
 					continue
 				}
-				_, _ = tools.ReadURL(ctx, r.URL) // best effort
+				if _, err := tools.ReadURL(ctx, r.URL); err != nil {
+					// Read failed or content unusable (login wall, empty
+					// shell): drop the candidate so the draft cannot cite it.
+					slog.Debug("expand: drop unusable source", "url", r.URL, "err", err)
+					tools.DropCitation(r.URL)
+				}
 			}
 		}
 	}

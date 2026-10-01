@@ -124,6 +124,9 @@ func (t *ToolRegistry) ReadURL(ctx context.Context, url string) (reader.Content,
 	if err != nil {
 		return reader.Content{}, err
 	}
+	if issue := reader.ContentIssue(content.Markdown); issue != "" {
+		return reader.Content{}, fmt.Errorf("source unusable (%s): %s", issue, url)
+	}
 	// Record citation metadata per Q14.A3.
 	t.mu.Lock()
 	prov := t.ReaderProviderName
@@ -139,6 +142,15 @@ func (t *ToolRegistry) ReadURL(ctx context.Context, url string) (reader.Content,
 	}
 	t.mu.Unlock()
 	return content, nil
+}
+
+// DropCitation removes a URL from the citation candidates. Called when a
+// read fails or the content turns out unusable (login wall, empty shell) so
+// the draft phase no longer sees it.
+func (t *ToolRegistry) DropCitation(url string) {
+	t.mu.Lock()
+	delete(t.citations, url)
+	t.mu.Unlock()
 }
 
 // LookupSimilarBook returns the top N most similar corpus books to the given slug,

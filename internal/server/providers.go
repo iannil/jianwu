@@ -68,7 +68,13 @@ func (s *Server) resolveDeps(stage string, need depsNeed) (*Deps, error) {
 		deps.Reader = rd
 	}
 	if need.embedder && deps.Embedder == nil {
-		embedder, err := llmfactory.NewEmbedder(ws.Config.Models.Scaffolding, secrets)
+		// A dedicated models.embedder config wins over the stage model, so
+		// chat and embedding can use different providers (e.g. deepseek + glm).
+		ref := ws.Config.Models.Scaffolding
+		if ws.Config.Models.Embedder != nil {
+			ref = *ws.Config.Models.Embedder
+		}
+		embedder, err := llmfactory.NewEmbedder(ref, secrets)
 		if err != nil {
 			return nil, fmt.Errorf("embedder: %w", err)
 		}

@@ -143,6 +143,11 @@ func setConfigField(cfg any, key, value string) error {
 		if i == len(parts)-1 {
 			return assignField(f, value)
 		}
+		// Intermediate pointer field (e.g. models.embedder): allocate on
+		// first write so dotted paths below it can be set.
+		if f.Kind() == reflect.Pointer && f.IsNil() {
+			f.Set(reflect.New(f.Type().Elem()))
+		}
 		v = f
 	}
 	return nil

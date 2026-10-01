@@ -14,6 +14,7 @@
 | `info` | v0.1.0 | 工作区诊断信息 |
 | `config get/set/list` | v0.1.0 | 配置查询与修改 |
 | `new [--force]` | v0.1.0 | 完整创作流程：grill → outline → scaffolding |
+| `scaffolding <slug> --retry-failed` | v0.3.9 | 只重试框架失败的章节（`new` 后的恢复路径） |
 | `expand <slug> <NN-MM> [--force]` | v0.1.1 | 单章展开（research → draft → validate，支持 streaming） |
 | `review <slug> <NN-MM>` | v0.1.3 | 标记章节为已审阅 |
 | `finalize <slug> [--dry-run]` | v0.1.3 | 全书定稿 |
@@ -152,7 +153,9 @@ scaffolded → expanded → reviewed → final → export
 4. 全局 `~/.config/jianwu/config.yaml`
 5. 编译时默认值
 
-**Secrets：** `~/.config/jianwu/secrets.yaml`（强制 0600 权限）或 ENV 变量（`GEMINI_API_KEY` / `GLM_API_KEY` / `KIMI_API_KEY` / `DEEPSEEK_API_KEY` / `BRAVE_API_KEY` 等）。ENV 高于文件。SecretsProvider 是内部替换接口，不承诺多租户隔离。
+**Secrets：** `~/.config/jianwu/secrets.yaml`（强制 0600 权限）或 ENV 变量（`GEMINI_API_KEY` / `GLM_API_KEY` / `KIMI_API_KEY` / `DEEPSEEK_API_KEY` / `BRAVE_API_KEY` 等）。ENV 高于文件；两者同时存在且值不同时输出告警（不改优先级）。SecretsProvider 是内部替换接口，不承诺多租户隔离。
+
+**`models.embedder`（可选）：** 为语料索引 / similar-book 查找指定独立的 embedding provider。聊天 provider 无 embeddings 端点时（如 deepseek）配置它，即可用 glm/gemini/ollama 建索引而不影响聊天模型。缺省时从阶段模型推导（旧行为）。
 
 ---
 

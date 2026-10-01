@@ -310,7 +310,8 @@ func (s *Server) handleGrillGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.bookDirExists(slug) && !body.Force {
-		fail(w, http.StatusConflict, fmt.Sprintf("图书 %q 已存在；设置 force 覆盖", slug))
+		fail(w, http.StatusConflict, fmt.Sprintf(
+			"图书 %q 已存在；如上次生成留有失败章节，可 POST /api/v1/books/%s/scaffold-retry 只重试失败章节，或设置 force 重建", slug, slug))
 		return
 	}
 	deps, err := s.resolveDeps("outline", needChatterOnly)
@@ -434,16 +435,19 @@ func (s *Server) runNewBookJob(ctx context.Context, j *Job, session *grill.Sessi
 		return err
 	}
 
-	repo := grill.NewRepository(s.root())
-	if err := repo.Archive(session, slug); err != nil {
-		j.Logf("归档会话失败（不阻塞）: %v", err)
-	}
-
 	j.SetResult("slug", slug)
 	j.SetResult("chapters", total)
 	j.SetResult("failed", failed)
 	if failed > 0 {
+		// Keep the session un-archived so generate can be re-run; the saved
+		// outline carries the failed statuses for scaffold-retry to pick up.
+		j.Logf("有失败章节；POST /api/v1/books/%s/scaffold-retry 可只重试失败章节", slug)
 		return fmt.Errorf("%d 个章节框架生成失败", failed)
+	}
+
+	repo := grill.NewRepository(s.root())
+	if err := repo.Archive(session, slug); err != nil {
+		j.Logf("归档会话失败（不阻塞）: %v", err)
 	}
 	return nil
 }

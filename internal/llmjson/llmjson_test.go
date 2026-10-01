@@ -39,6 +39,31 @@ func TestUnmarshal(t *testing.T) {
 			in:      "```json\nnot-json\n```",
 			wantErr: true,
 		},
+		{
+			name: "unescaped quotes in chinese value",
+			in:   `{"abstract": "承担把读者从"掌握 QUIC"带到"理解协议演进方向"的角色"}`,
+			want: map[string]string{"abstract": `承担把读者从"掌握 QUIC"带到"理解协议演进方向"的角色`},
+		},
+		{
+			name: "unescaped quotes with following structure",
+			in:   `{"a": "value ends with "quoted" tail", "b": "x"}`,
+			want: map[string]string{"a": `value ends with "quoted" tail`, "b": "x"},
+		},
+		{
+			name: "fenced json with unescaped quotes",
+			in:   "```json\n" + `{"a": "从"零"到"一""}` + "\n```",
+			want: map[string]string{"a": `从"零"到"一"`},
+		},
+		{
+			name: "repair path preserves existing escapes",
+			in:   `{"a": "esc \"stay\" and "raw" x"}`,
+			want: map[string]string{"a": `esc "stay" and "raw" x`},
+		},
+		{
+			name:    "irreparable json returns original error",
+			in:      `{"a": "trailing comma soon",}`,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

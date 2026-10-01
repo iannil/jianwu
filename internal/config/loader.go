@@ -66,6 +66,14 @@ func mergeConfig(dst, src *Config) {
 	mergeModelRef(&dst.Models.Outline, &src.Models.Outline)
 	mergeModelRef(&dst.Models.Scaffolding, &src.Models.Scaffolding)
 	mergeModelRef(&dst.Models.Expand, &src.Models.Expand)
+	if src.Models.Embedder != nil {
+		if dst.Models.Embedder == nil {
+			cp := *src.Models.Embedder
+			dst.Models.Embedder = &cp
+		} else {
+			mergeModelRef(dst.Models.Embedder, src.Models.Embedder)
+		}
+	}
 	if src.Search.Primary != "" {
 		dst.Search.Primary = src.Search.Primary
 	}

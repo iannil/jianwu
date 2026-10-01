@@ -56,8 +56,13 @@ func buildChatter(cfg *config.Config, secrets *config.Secrets, stage string) (ll
 	return wrapped, nil
 }
 
-// buildEmbedder constructs an Embedder for the given stage.
+// buildEmbedder constructs an Embedder for the given stage. A dedicated
+// models.embedder config wins over the stage model, so chat and embedding can
+// use different providers (e.g. deepseek chat + glm embeddings).
 func buildEmbedder(cfg *config.Config, secrets *config.Secrets, stage string) (llm.Embedder, error) {
+	if cfg.Models.Embedder != nil {
+		return llmfactory.NewEmbedder(*cfg.Models.Embedder, secrets)
+	}
 	primary, err := stageModel(cfg, stage)
 	if err != nil {
 		return nil, err

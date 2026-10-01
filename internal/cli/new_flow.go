@@ -278,7 +278,7 @@ func runNewFlowWithChatters(
 		}
 	}
 	if failedCount > 0 {
-		fmt.Fprintf(prompt.Out, "warning: %d chapter(s) failed scaffolding; use `jianwu status <slug>` to see\n", failedCount)
+		fmt.Fprintf(prompt.Out, "warning: %d chapter(s) failed scaffolding; run `jianwu scaffolding <slug> --retry-failed` to retry\n", failedCount)
 	}
 	// Save outline with scaffolded chapters
 	if err := book.SaveOutline(filepath.Join(bookDir, "outline.json"), outline); err != nil {

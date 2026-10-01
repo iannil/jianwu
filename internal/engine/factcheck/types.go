@@ -81,6 +81,11 @@ func Run(ctx context.Context, chatter llm.Chatter, rd reader.Reader, in Input) (
 				if err != nil || strings.TrimSpace(content.Markdown) == "" {
 					out.SourceErrors = append(out.SourceErrors, c.URL)
 					v.Reasoning = "unverified: source could not be read"
+				} else if issue := reader.ContentIssue(content.Markdown); issue != "" {
+					// Non-empty but unusable (login wall, nav-only shell):
+					// distinguish from a genuine content mismatch.
+					out.SourceErrors = append(out.SourceErrors, c.URL)
+					v.Reasoning = fmt.Sprintf("unverified: source unusable (%s)", issue)
 				} else if chatter == nil {
 					v.Reasoning = "unverified: verifier unavailable"
 				} else {
