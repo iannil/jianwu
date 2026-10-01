@@ -19,6 +19,9 @@ vendor/
 *.swp
 .DS_Store
 
+# Local agent tooling artifacts
+.zcode/
+
 # Jianwu runtime (if user inits a workspace in this repo)
 .jianwu/
 /jianwu

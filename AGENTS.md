@@ -5,7 +5,7 @@
 
 ## 项目
 
-- **当前版本：** 0.3.8（独立产品；可靠生成、显式引用、累计用量与本地发布、Kimi/DeepSeek 提供商；本地已发布，尚未打 tag）。版本号统一在 `internal/cli/version.go` 管理。
+- **当前版本：** 0.3.9（独立产品；可靠生成、显式引用、累计用量与本地发布、Kimi/DeepSeek 提供商；本轮：scaffolding 失败重试命令、调研源质量门、revise 连贯性、脚注日期回填、models.embedder 独立配置；本地已发布，尚未打 tag）。版本号统一在 `internal/cli/version.go` 管理。
 - **技术栈：** Go 1.25 + cobra (CLI) + spf13/pflag + YAML 配置 + gemini/glm/kimi/deepseek/ollama LLM 提供商 + net/http 内嵌 Web UI（`internal/server`）
 - **入口点：** `cmd/jianwu/main.go` → `cli.NewRootCmd()` → cobra 子命令；`jianwu serve` → `internal/server`（Web UI + `/api/v1` HTTP API）
 - **工作区模型：** 每个项目 = 一个本地目录（建议用 git 备份），包含 `.jianwu/` 配置 + `books/<slug>/` 输出

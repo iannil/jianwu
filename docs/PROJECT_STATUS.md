@@ -1,6 +1,6 @@
 # jianwu 项目状态
 
-> 更新：2026-09-27。开发版本 **0.3.6-dev**，本轮修改尚未正式发布。
+> 更新：2026-10-01。开发版本 **0.3.9**，本轮修改尚未正式发布。
 
 ## 产品
 
@@ -11,10 +11,11 @@
 ## 当前实现
 
 - `new`：12 维访谈 → outline → 并行 scaffolding，6 个原型、10 本内置参考语料。
-- `expand`：调研 → 草稿 → 校验，保存完整 claims、脚注、章节状态与模型信息。
+- `scaffolding <slug> --retry-failed`：只重试框架失败章节（`new` 的恢复路径；serve 侧对应 `POST /api/v1/books/{slug}/scaffold-retry`）。
+- `expand`：调研 → 草稿 → 校验，保存完整 claims、脚注、章节状态与模型信息。调研阶段拒收登录墙/空壳源（reader.ContentIssue）。
 - `expand --all`：最多 5 个并发任务；大纲在生成期间只读；所有任务结束后逐个保存。失败返回非零退出码，独立成功章节保留。
-- `factcheck`：按 citation_ids 查找来源，不按位置关联。无关联、失效来源和读取失败保留未通过结论；同一论断的多个来源分别核对。
-- `revise`：改写后重新校验正文、重建 claims 和引用，并撤销旧审阅/verdict。仍需再次 factcheck 与人工 review。
+- `factcheck`：按 citation_ids 查找来源，不按位置关联。无关联、失效来源和读取失败保留未通过结论；登录墙/空壳源标记为 source unusable 并计入 SourceErrors；同一论断的多个来源分别核对。
+- `revise`：改写后重新校验正文（注入 style guide 保持行文连贯）、重建 claims 和引用，并撤销旧审阅/verdict；脚注日期按结构化引用数据回填。仍需再次 factcheck 与人工 review。
 - `review`/`finalize`：明确的人类确认与定稿。`review` 是人工批准，不代表系统保证事实正确。
 - `export`：Markdown、Hugo、PDF（后者依赖 pandoc/xelatex）。
 - Token：new/expand/factcheck/revise 累计 provider 报告的 LLM 用量；--tokens 控制即时显示，status 显示书级累计。失败响应、重试、fallback、流式均通过 tracking wrapper；未报告用量标为不完整。
