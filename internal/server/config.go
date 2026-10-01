@@ -16,7 +16,7 @@ import (
 // Provider name sets accepted by the config API. Keep in sync with the
 // factory switches (llmfactory / searchfactory / readerfactory).
 var (
-	llmProviders    = []string{"gemini", "glm", "ollama"}
+	llmProviders    = []string{"gemini", "glm", "kimi", "deepseek", "ollama"}
 	searchProviders = []string{"brave", "serper"}
 	readerProviders = []string{"jina"}
 	loggingLevels   = []string{"debug", "info", "warn", "error"}
@@ -273,11 +273,13 @@ type secretFieldView struct {
 // secretsView builds the masked view for all secret fields.
 func secretsView(secrets *config.Secrets) map[string]any {
 	values := map[string]string{
-		"gemini_api_key": secrets.GeminiAPIKey,
-		"glm_api_key":    secrets.GLMAPIKey,
-		"brave_api_key":  secrets.BraveAPIKey,
-		"serper_api_key": secrets.SerperAPIKey,
-		"jina_api_key":   secrets.JinaAPIKey,
+		"gemini_api_key":   secrets.GeminiAPIKey,
+		"glm_api_key":      secrets.GLMAPIKey,
+		"kimi_api_key":     secrets.KimiAPIKey,
+		"deepseek_api_key": secrets.DeepSeekAPIKey,
+		"brave_api_key":    secrets.BraveAPIKey,
+		"serper_api_key":   secrets.SerperAPIKey,
+		"jina_api_key":     secrets.JinaAPIKey,
 	}
 	fields := make([]secretFieldView, 0, len(config.SecretFieldNames))
 	for _, name := range config.SecretFieldNames {

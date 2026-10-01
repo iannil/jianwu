@@ -275,8 +275,17 @@ func TestSecretsViewJSONShape(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &raw); err != nil {
 		t.Fatalf("decode secrets view: %v", err)
 	}
-	if len(raw.Fields) != 5 {
-		t.Fatalf("fields = %d, want 5", len(raw.Fields))
+	if len(raw.Fields) != len(config.SecretFieldNames) {
+		t.Fatalf("fields = %d, want %d", len(raw.Fields), len(config.SecretFieldNames))
+	}
+	wantEnvByField := map[string]string{
+		"kimi_api_key":     "KIMI_API_KEY",
+		"deepseek_api_key": "DEEPSEEK_API_KEY",
+	}
+	for _, f := range raw.Fields {
+		if want, ok := wantEnvByField[f.Field]; ok && f.EnvVar != want {
+			t.Errorf("field %s env_var = %q, want %q", f.Field, f.EnvVar, want)
+		}
 	}
 	if raw.Fields[0].Field != "gemini_api_key" || raw.Fields[0].EnvVar != "GEMINI_API_KEY" {
 		t.Fatalf("first field = %+v", raw.Fields[0])

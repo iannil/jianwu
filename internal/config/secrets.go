@@ -13,20 +13,24 @@ import (
 
 // Env var names for API keys.
 const (
-	GeminiAPIKeyEnv = "GEMINI_API_KEY"
-	GLMAPIKeyEnv    = "GLM_API_KEY"
-	BraveAPIKeyEnv  = "BRAVE_API_KEY"
-	SerperAPIKeyEnv = "SERPER_API_KEY"
-	JinaAPIKeyEnv   = "JINA_API_KEY"
+	GeminiAPIKeyEnv   = "GEMINI_API_KEY"
+	GLMAPIKeyEnv      = "GLM_API_KEY"
+	KimiAPIKeyEnv     = "KIMI_API_KEY"
+	DeepSeekAPIKeyEnv = "DEEPSEEK_API_KEY"
+	BraveAPIKeyEnv    = "BRAVE_API_KEY"
+	SerperAPIKeyEnv   = "SERPER_API_KEY"
+	JinaAPIKeyEnv     = "JINA_API_KEY"
 )
 
 // Secrets holds resolved API keys. ENV > file precedence is applied per field.
 type Secrets struct {
-	GeminiAPIKey string `yaml:"gemini_api_key"`
-	GLMAPIKey    string `yaml:"glm_api_key"`
-	BraveAPIKey  string `yaml:"brave_api_key"`
-	SerperAPIKey string `yaml:"serper_api_key"`
-	JinaAPIKey   string `yaml:"jina_api_key"`
+	GeminiAPIKey   string `yaml:"gemini_api_key"`
+	GLMAPIKey      string `yaml:"glm_api_key"`
+	KimiAPIKey     string `yaml:"kimi_api_key"`
+	DeepSeekAPIKey string `yaml:"deepseek_api_key"`
+	BraveAPIKey    string `yaml:"brave_api_key"`
+	SerperAPIKey   string `yaml:"serper_api_key"`
+	JinaAPIKey     string `yaml:"jina_api_key"`
 }
 
 // SecretsProvider resolves API keys. The default implementation reads from
@@ -75,16 +79,19 @@ func LoadSecretsFor(tenantID string) (*Secrets, error) {
 // SecretFieldNames lists the editable secrets.yaml field names, in display
 // order. SetSecretValues accepts exactly these keys.
 var SecretFieldNames = []string{
-	"gemini_api_key", "glm_api_key", "brave_api_key", "serper_api_key", "jina_api_key",
+	"gemini_api_key", "glm_api_key", "kimi_api_key", "deepseek_api_key",
+	"brave_api_key", "serper_api_key", "jina_api_key",
 }
 
 // SecretEnvVars maps secrets.yaml field names to their ENV overrides.
 var SecretEnvVars = map[string]string{
-	"gemini_api_key": GeminiAPIKeyEnv,
-	"glm_api_key":    GLMAPIKeyEnv,
-	"brave_api_key":  BraveAPIKeyEnv,
-	"serper_api_key": SerperAPIKeyEnv,
-	"jina_api_key":   JinaAPIKeyEnv,
+	"gemini_api_key":   GeminiAPIKeyEnv,
+	"glm_api_key":      GLMAPIKeyEnv,
+	"kimi_api_key":     KimiAPIKeyEnv,
+	"deepseek_api_key": DeepSeekAPIKeyEnv,
+	"brave_api_key":    BraveAPIKeyEnv,
+	"serper_api_key":   SerperAPIKeyEnv,
+	"jina_api_key":     JinaAPIKeyEnv,
 }
 
 // SecretsFilePath returns the global secrets file location.
@@ -201,6 +208,12 @@ func loadSecrets() (*Secrets, error) {
 	}
 	if v := os.Getenv(GLMAPIKeyEnv); v != "" {
 		s.GLMAPIKey = v
+	}
+	if v := os.Getenv(KimiAPIKeyEnv); v != "" {
+		s.KimiAPIKey = v
+	}
+	if v := os.Getenv(DeepSeekAPIKeyEnv); v != "" {
+		s.DeepSeekAPIKey = v
 	}
 	if v := os.Getenv(BraveAPIKeyEnv); v != "" {
 		s.BraveAPIKey = v

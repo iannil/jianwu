@@ -1,4 +1,4 @@
-package glm
+package openaicomp
 
 import (
 	"bufio"
@@ -11,7 +11,7 @@ import (
 	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
-// Stream implements llm.Streamer via GLM's OpenAI-compatible SSE streaming.
+// Stream implements llm.Streamer via OpenAI-compatible SSE streaming.
 func (p *Provider) Stream(ctx context.Context, req llm.ChatRequest) (<-chan llm.StreamChunk, error) {
 	body := map[string]any{
 		"model":          req.Model,
@@ -34,7 +34,7 @@ func (p *Provider) Stream(ctx context.Context, req llm.ChatRequest) (<-chan llm.
 	if resp.StatusCode >= 400 {
 		b, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-		return nil, llm.ClassifyError(fmt.Errorf("glm: %s", string(b)), resp.StatusCode)
+		return nil, llm.ClassifyError(fmt.Errorf("%s: %s", p.cfg.Name, string(b)), resp.StatusCode)
 	}
 
 	ch := make(chan llm.StreamChunk)

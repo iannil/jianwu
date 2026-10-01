@@ -1,4 +1,4 @@
-package glm
+package openaicomp
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 )
 
 // client is a thin HTTP wrapper over an OpenAI-compatible chat/embeddings API.
-// Reusable for GLM, Qwen, Moonshot, DeepSeek, etc. — anything that mirrors OpenAI's shape.
 type client struct {
 	baseURL      string
 	apiKey       string
@@ -23,7 +22,7 @@ func newClient(baseURL, apiKey string) *client {
 	return &client{
 		baseURL:      baseURL,
 		apiKey:       apiKey,
-		http:         &http.Client{Timeout: 60 * time.Second},
+		http:         &http.Client{Timeout: 10 * time.Minute},
 		streamClient: &http.Client{}, // no timeout — ctx handles streaming cancellation
 	}
 }

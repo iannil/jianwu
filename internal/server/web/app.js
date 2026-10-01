@@ -730,17 +730,19 @@ const App = {
   // ----- config -----
 
   CFG: {
-    llmProviders: ["", "gemini", "glm", "ollama"],
+    llmProviders: ["", "gemini", "glm", "kimi", "deepseek", "ollama"],
     searchProviders: ["", "brave", "serper"],
     readerProviders: ["", "jina"],
     loggingLevels: ["", "debug", "info", "warn", "error"],
   },
   CFG_LABELS: {
-    "": "（默认）", gemini: "Gemini", glm: "智谱 GLM", ollama: "Ollama（本地）",
+    "": "（默认）", gemini: "Gemini", glm: "智谱 GLM", kimi: "Kimi", deepseek: "DeepSeek",
+    ollama: "Ollama（本地）",
     brave: "Brave", serper: "Serper", jina: "Jina",
   },
   SECRET_LABELS: {
-    gemini_api_key: "Gemini", glm_api_key: "智谱 GLM", brave_api_key: "Brave 搜索",
+    gemini_api_key: "Gemini", glm_api_key: "智谱 GLM", kimi_api_key: "Kimi",
+    deepseek_api_key: "DeepSeek", brave_api_key: "Brave 搜索",
     serper_api_key: "Serper 搜索", jina_api_key: "Jina 阅读器",
   },
 

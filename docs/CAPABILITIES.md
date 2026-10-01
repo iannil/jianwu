@@ -86,8 +86,10 @@ scaffolded → expanded → reviewed → final → export
 | Provider | 实现方式 | 用途 |
 |---|---|---|
 | Gemini | 官方 `google.golang.org/genai` SDK | outline、scaffolding |
-| GLM | OpenAI-compatible REST + SSE | intake、expand |
-| Ollama | HTTP REST（localhost:11434） | 本地模型（Qwen3、DeepSeek 等） |
+| GLM | OpenAI-compatible REST + SSE（共享 `openaicomp` 层，json_schema 严格输出） | intake、expand |
+| Kimi | OpenAI-compatible REST + SSE（api.moonshot.ai，K 系列支持 json_schema） | `kimi-k3` 等 |
+| DeepSeek | OpenAI-compatible REST + SSE（json_object 模式；无 embeddings 端点） | `deepseek-chat` / `deepseek-reasoner`（仅对话阶段） |
+| Ollama | HTTP REST（localhost:11434） | 本地模型（Qwen3 等） |
 | Mock | 内存 mock | 单元测试 |
 
 **可靠性：** Retry 3 次（指数退避 + jitter）→ fallback provider 兜底。每个阶段可独立配置模型和超时。支持 streaming 逐 token 输出。
@@ -150,7 +152,7 @@ scaffolded → expanded → reviewed → final → export
 4. 全局 `~/.config/jianwu/config.yaml`
 5. 编译时默认值
 
-**Secrets：** `~/.config/jianwu/secrets.yaml`（强制 0600 权限）或 ENV 变量（`GEMINI_API_KEY` / `GLM_API_KEY` / `BRAVE_API_KEY` 等）。ENV 高于文件。SecretsProvider 是内部替换接口，不承诺多租户隔离。
+**Secrets：** `~/.config/jianwu/secrets.yaml`（强制 0600 权限）或 ENV 变量（`GEMINI_API_KEY` / `GLM_API_KEY` / `KIMI_API_KEY` / `DEEPSEEK_API_KEY` / `BRAVE_API_KEY` 等）。ENV 高于文件。SecretsProvider 是内部替换接口，不承诺多租户隔离。
 
 ---
 

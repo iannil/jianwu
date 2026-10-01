@@ -5,8 +5,10 @@ import (
 
 	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/provider/llm"
+	"github.com/iannil/jianwu/internal/provider/llm/deepseek"
 	"github.com/iannil/jianwu/internal/provider/llm/gemini"
 	"github.com/iannil/jianwu/internal/provider/llm/glm"
+	"github.com/iannil/jianwu/internal/provider/llm/kimi"
 	"github.com/iannil/jianwu/internal/provider/llm/ollama"
 )
 
@@ -43,6 +45,16 @@ func newProvider(ref config.ModelRef, secrets *config.Secrets) (llm.ChatterEmbed
 			return nil, fmt.Errorf("glm provider requires GLM_API_KEY")
 		}
 		return glm.New(glm.Config{APIKey: secrets.GLMAPIKey})
+	case "kimi":
+		if secrets.KimiAPIKey == "" {
+			return nil, fmt.Errorf("kimi provider requires KIMI_API_KEY")
+		}
+		return kimi.New(kimi.Config{APIKey: secrets.KimiAPIKey})
+	case "deepseek":
+		if secrets.DeepSeekAPIKey == "" {
+			return nil, fmt.Errorf("deepseek provider requires DEEPSEEK_API_KEY")
+		}
+		return deepseek.New(deepseek.Config{APIKey: secrets.DeepSeekAPIKey})
 	case "ollama":
 		return ollama.New(ollama.Config{})
 	default:
