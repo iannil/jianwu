@@ -194,3 +194,33 @@ models:
 		t.Errorf("Outline timeout should be 0 (not set), got %d", cfg.Models.Outline.TimeoutSeconds)
 	}
 }
+
+func TestLoadMergesModelRefTimeout(t *testing.T) {
+	// Per-stage timeout must survive multi-layer merging: the workspace value
+	// (300) overrides the builtin default (600); unset stages keep the default.
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+
+	wsRoot := t.TempDir()
+	wsConfig := `
+models:
+  expand: { provider: glm, model: glm-4.6, timeout: 300 }
+`
+	if err := os.MkdirAll(filepath.Join(wsRoot, ".jianwu"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(wsRoot, ".jianwu", "config.yaml"), []byte(wsConfig), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load(wsRoot)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Models.Expand.TimeoutSeconds != 300 {
+		t.Errorf("Expand.TimeoutSeconds = %d, want 300 (workspace override)", cfg.Models.Expand.TimeoutSeconds)
+	}
+	if cfg.Models.Intake.TimeoutSeconds != 0 {
+		t.Errorf("Intake.TimeoutSeconds = %d, want 0 (default layer applies later)", cfg.Models.Intake.TimeoutSeconds)
+	}
+}

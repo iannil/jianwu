@@ -33,21 +33,41 @@ func (p *Provider) Stream(ctx context.Context, req llm.ChatRequest) (<-chan llm.
 		defer close(ch)
 		for resp, err := range p.client.Models.GenerateContentStream(ctx, req.Model, contents, config) {
 			if err != nil {
-				ch <- llm.StreamChunk{Err: llm.ClassifyError(err, 0), Done: true}
+				select {
+				case ch <- llm.StreamChunk{Err: llm.ClassifyError(err, 0), Done: true}:
+				case <-ctx.Done():
+					return
+				}
 				return
+			}
+			if resp.UsageMetadata != nil {
+				u := resp.UsageMetadata
+				select {
+				case ch <- llm.StreamChunk{Usage: &llm.Usage{PromptTokens: int(u.PromptTokenCount), CompletionTokens: int(u.CandidatesTokenCount), TotalTokens: int(u.TotalTokenCount)}}:
+				case <-ctx.Done():
+					return
+				}
 			}
 			if len(resp.Candidates) > 0 && resp.Candidates[0].Content != nil && len(resp.Candidates[0].Content.Parts) > 0 {
 				if text := resp.Candidates[0].Content.Parts[0].Text; text != "" {
 					select {
 					case <-ctx.Done():
-						ch <- llm.StreamChunk{Err: ctx.Err(), Done: true}
+						select {
+						case ch <- llm.StreamChunk{Err: ctx.Err(), Done: true}:
+						case <-ctx.Done():
+							return
+						}
 						return
 					case ch <- llm.StreamChunk{Content: text}:
 					}
 				}
 			}
 		}
-		ch <- llm.StreamChunk{Done: true}
+		select {
+		case ch <- llm.StreamChunk{Done: true}:
+		case <-ctx.Done():
+			return
+		}
 	}()
 	return ch, nil
 }

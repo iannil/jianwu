@@ -3,64 +3,38 @@ package corpus
 import (
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/iannil/jianwu/internal/storage"
 	"github.com/iannil/jianwu/internal/workspace"
 )
 
-// Load parses all embedded builtin corpus JSON files keyed by book slug.
-func Load() (map[string]*Book, error) {
-	entries, err := builtinFS.ReadDir("builtin")
-	if err != nil {
-		return nil, fmt.Errorf("read builtin dir: %w", err)
-	}
-	out := make(map[string]*Book)
-	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
-			continue
-		}
-		data, err := fs.ReadFile(builtinFS, "builtin/"+e.Name())
-		if err != nil {
-			return nil, fmt.Errorf("read %s: %w", e.Name(), err)
-		}
-		var b Book
-		if err := json.Unmarshal(data, &b); err != nil {
-			return nil, fmt.Errorf("parse %s: %w", e.Name(), err)
-		}
-		if b.Slug == "" {
-			return nil, fmt.Errorf("book in %s has empty slug", e.Name())
-		}
-		out[b.Slug] = &b
-	}
-	return out, nil
+// CorpusDir returns the workspace corpus directory (<wsRoot>/.jianwu/corpus).
+func CorpusDir(wsRoot string) string {
+	return filepath.Join(wsRoot, workspace.MarkerName, workspace.CorpusDirName)
 }
 
-// LoadWithWorkspace loads corpus books layered: workspace overrides + builtin fallback.
-// Workspace corpus files live in <wsRoot>/.jianwu/corpus/<slug>.json and
-// override builtin books with the same slug. Non-existent workspace corpus directory
-// is silently ignored.
-func LoadWithWorkspace(wsRoot string) (map[string]*Book, error) {
+// BookPath returns the corpus file path for one book slug.
+func BookPath(wsRoot, slug string) string {
+	return filepath.Join(CorpusDir(wsRoot), slug+".json")
+}
+
+// Load parses all workspace corpus JSON files keyed by book slug.
+// There is no builtin corpus: the workspace corpus is the only source, and it
+// is populated by `corpus sync`, `corpus collect`, or hand-authored files.
+// A missing corpus directory yields an empty map, not an error.
+func Load(wsRoot string) (map[string]*Book, error) {
 	out := make(map[string]*Book)
-
-	// Load workspace corpus first (lowest priority, will be overridden by builtin? No —
-	// workspace overrides mean user-synced data should WIN over builtin. So load
-	// builtin first, then overlay workspace on top.)
-	builtin, err := Load()
-	if err != nil {
-		return nil, fmt.Errorf("load builtin corpus: %w", err)
-	}
-	for k, v := range builtin {
-		out[k] = v
+	if wsRoot == "" {
+		return out, nil
 	}
 
-	// Load workspace corpus (overrides builtin)
-	corpusDir := filepath.Join(wsRoot, workspace.MarkerName, workspace.CorpusDirName)
+	corpusDir := CorpusDir(wsRoot)
 	entries, err := storage.OS.ReadDir(corpusDir)
 	if err != nil {
-		// Directory doesn't exist — that's fine, just use builtin.
+		// Directory doesn't exist — no corpus collected yet.
 		return out, nil
 	}
 
@@ -83,4 +57,44 @@ func LoadWithWorkspace(wsRoot string) (map[string]*Book, error) {
 	}
 
 	return out, nil
+}
+
+// List loads the workspace corpus and returns books sorted by slug, for
+// callers that need deterministic order (e.g. prompt rendering).
+func List(wsRoot string) ([]*Book, error) {
+	m, err := Load(wsRoot)
+	if err != nil {
+		return nil, err
+	}
+	slugs := make([]string, 0, len(m))
+	for slug := range m {
+		slugs = append(slugs, slug)
+	}
+	sort.Strings(slugs)
+	out := make([]*Book, 0, len(slugs))
+	for _, slug := range slugs {
+		out = append(out, m[slug])
+	}
+	return out, nil
+}
+
+// SaveBook marshals a corpus book and writes it into the workspace corpus
+// directory, creating the directory if needed. Overwrites existing files with
+// the same slug.
+func SaveBook(wsRoot string, b *Book) error {
+	if b.Slug == "" {
+		return fmt.Errorf("corpus book has empty slug")
+	}
+	data, err := json.MarshalIndent(b, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal corpus book %s: %w", b.Slug, err)
+	}
+	dir := CorpusDir(wsRoot)
+	if err := storage.OS.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("create corpus dir: %w", err)
+	}
+	if err := storage.OS.WriteFile(BookPath(wsRoot, b.Slug), data, 0o644); err != nil {
+		return fmt.Errorf("write corpus book %s: %w", b.Slug, err)
+	}
+	return nil
 }

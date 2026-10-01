@@ -98,3 +98,21 @@ func TestRunValidateWithResearchNotes(t *testing.T) {
 		t.Errorf("claims: got %d, want 1", len(out.Claims))
 	}
 }
+
+func TestRunValidateChecksFinalFootnoteIDs(t *testing.T) {
+	p := mock.New(llm.ChatResponse{Content: `{"revised_markdown":"fact[^7]\n\n[^7]: [Source](https://example.com)","claims":[{"text":"linked","has_citation":false,"citation_ids":["7"]},{"text":"missing","has_citation":true,"citation_ids":["1"]},{"text":"legacy","has_citation":true}]}`})
+	got, err := RunValidate(context.Background(), p, "old draft", ResearchNotes{}, "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Claims) != 3 || !got.Claims[0].HasCitation || got.Claims[1].HasCitation || got.Claims[2].HasCitation {
+		t.Fatalf("claims were not checked against final footnotes: %+v", got.Claims)
+	}
+	schema, err := JSONSchemaValidation()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(schema), `"citation_ids"`) {
+		t.Fatal("schema omits citation IDs")
+	}
+}

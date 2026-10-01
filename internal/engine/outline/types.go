@@ -20,6 +20,12 @@ type Input struct {
 	Length   string // "short" | "medium" | "long"
 	// Language: "zh" | "en" | "bilingual".
 	Language string
+	// CorpusBooks are workspace reference books supplied by the caller
+	// (loaded from .jianwu/corpus via corpus.Load). Books matching
+	// ArchetypeID are rendered as reference outlines in the prompt; nil or
+	// empty means no references. The engine never loads corpus itself —
+	// there is no builtin corpus.
+	CorpusBooks []*corpus.Book
 }
 
 // Output is the generated outline. Aliased here so callers don't need book package.

@@ -14,9 +14,10 @@ import (
 // Stream implements llm.Streamer via GLM's OpenAI-compatible SSE streaming.
 func (p *Provider) Stream(ctx context.Context, req llm.ChatRequest) (<-chan llm.StreamChunk, error) {
 	body := map[string]any{
-		"model":    req.Model,
-		"messages": req.Messages,
-		"stream":   true,
+		"model":          req.Model,
+		"messages":       req.Messages,
+		"stream":         true,
+		"stream_options": map[string]bool{"include_usage": true},
 	}
 	if req.Temperature != nil {
 		body["temperature"] = *req.Temperature
@@ -48,40 +49,61 @@ func (p *Provider) Stream(ctx context.Context, req llm.ChatRequest) (<-chan llm.
 			}
 			data := strings.TrimPrefix(line, "data: ")
 			if data == "[DONE]" {
-				ch <- llm.StreamChunk{Done: true}
+				select {
+				case ch <- llm.StreamChunk{Done: true}:
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 			var chunk streamChunk
 			if err := json.Unmarshal([]byte(data), &chunk); err != nil {
 				continue // skip malformed lines
 			}
+			if chunk.Usage != nil {
+				select {
+				case ch <- llm.StreamChunk{Usage: chunk.Usage}:
+				case <-ctx.Done():
+					return
+				}
+			}
 			if len(chunk.Choices) > 0 {
 				content := chunk.Choices[0].Delta.Content
 				if content != "" {
 					select {
 					case <-ctx.Done():
-						ch <- llm.StreamChunk{Err: ctx.Err(), Done: true}
+						select {
+						case ch <- llm.StreamChunk{Err: ctx.Err(), Done: true}:
+						case <-ctx.Done():
+							return
+						}
 						return
 					case ch <- llm.StreamChunk{Content: content}:
 					}
 				}
-				if chunk.Choices[0].FinishReason != "" {
-					ch <- llm.StreamChunk{Done: true}
-					return
-				}
+				// Continue through the trailing usage-only event after finish_reason.
 			}
 		}
 		if err := scanner.Err(); err != nil {
-			ch <- llm.StreamChunk{Err: llm.ClassifyError(err, 0), Done: true}
+			select {
+			case ch <- llm.StreamChunk{Err: llm.ClassifyError(err, 0), Done: true}:
+			case <-ctx.Done():
+				return
+			}
 			return
 		}
-		ch <- llm.StreamChunk{Done: true}
+		select {
+		case ch <- llm.StreamChunk{Done: true}:
+		case <-ctx.Done():
+			return
+		}
 	}()
 	return ch, nil
 }
 
 // streamChunk is the SSE delta format from OpenAI-compatible APIs.
 type streamChunk struct {
+	Usage   *llm.Usage `json:"usage"`
 	Choices []struct {
 		Delta struct {
 			Content string `json:"content"`

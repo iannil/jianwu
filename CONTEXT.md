@@ -1,7 +1,8 @@
 # jianwu (肩吾) — Domain Context
 
 > 将 LLM 的训练知识结构化为人类可阅读、可学习的图书。
-> Go CLI + 库。
+> 独立、本地优先的 Go CLI 产品；内部引擎不承诺公共 SDK。
+> 当前定位以 ADR 28（docs/decisions/28-independent-product.md）为准，取消 mouqin 服务路线。
 >
 > 本文档记录领域概念、术语表、关键决策及其背后的理由。
 > 修改代码前先读此文件，确保变更与领域模型一致。
@@ -49,11 +50,14 @@ workspace/
 
 ### 结构原型（Archetype）
 
-三种图书骨架，定义章节结构和展开方向：
+六种图书骨架，定义章节结构和展开方向：
 
 - **ontology-epistemology-practice**（本体论—认识论—实践）：从「是什么」到「怎么用」
 - **diagnosis-decoding-breakthrough**（诊断—解码—突破）：从「问题在哪」到「怎么做」
 - **foundations-application-practice**（基础—应用—实践）：从「需要知道什么」到「能做什么」
+- **micro-meso-macro**（宏—中—微）
+- **theory-dynamics-history-present**（理论—动力—历史—当下）
+- **mindset-method-practice**（心法—方法—实践）
 
 每个原型对应一个嵌入的 YAML 文件（`internal/archetypes/`）。
 
@@ -86,9 +90,9 @@ Reader   → 具体 provider (jina)
 
 | 术语 | 说明 |
 |---|---|
-| **workspace** | 一个 git 仓库 + `.jianwu/` 配置目录 |
+| **workspace** | 一个本地目录 + `.jianwu/` 配置目录（建议 git 备份） |
 | **slug** | 图书标识符，由 topic 推导，用作目录名 |
-| **archetype** | 图书结构原型（3 种），定义章节骨架 |
+| **archetype** | 图书结构原型（6 种），定义章节骨架 |
 | **grill** | 设计访谈阶段，12 维决策树 |
 | **scaffolding** | 并行生成各章框架（errgroup） |
 | **expand** | 逐章展开（research→draft→validate） |
@@ -109,7 +113,7 @@ Reader   → 具体 provider (jina)
 
 - 库代码：TDD（test-first），表格驱动测试
 - LLM-driven：test-after，Mock Provider + httptest
-- 跨切：E2E 用 `chatterProviderHook`（test-only 全局）注入 mock
+- 跨切：E2E 通过显式 ProviderDeps / chatterProvider 参数注入 mock
 - Live：API key 存在时跑真实 LLM，否则 SKIP
 - 测试文件与生产代码同级（非 `_test/` 包）
 - 不使用 testify/suite
@@ -118,6 +122,16 @@ Reader   → 具体 provider (jina)
 
 - Go 1.25+
 - Module path：`github.com/iannil/jianwu`
-- 无全局可变状态（除 `chatterProviderHook` / `providerDepsHook` — 标记废弃，计划 v0.2.6 重构）
+- 不新增全局可变状态；现有 DefaultStorage / secretsProvider / cliWorkspaceDir 限本地 CLI 使用，不承诺多租户安全。
 - 错误始终用 `fmt.Errorf("context: %w", err)` 包装（`%w`）
 - 导出的结构体加 JSON 标签（`json:"snake_case"`）
+
+## 0.3.6 数据与交付语义
+
+- Claim.citation_ids 显式关联 Citation.ID；has_citation 只表示脚注关联存在，不证明来源支持论断。
+- ExpandOutput 保留全部最终正文 claims，CLI 持久化。Factcheck 按 ID 逐来源验证，失败保留 verdict。
+- 旧 ClaimWhitelist 读取兼容，但不跳过当前来源验证。
+- 修订作废旧审阅和 verdict，用户再次运行 factcheck/review。
+- Meta.token_usage 累计已报告 LLM 消耗；旧书历史用量未知。
+- 批量生成只读大纲、限并发 5，全部任务结束后集中保存；普通 I/O 失败尝试恢复前态。
+- 不支持跨进程同书并发写入，也不保证跨文件断电事务。

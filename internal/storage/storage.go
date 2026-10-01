@@ -34,14 +34,14 @@ var OS Storage = osStorage{}
 
 type osStorage struct{}
 
-func (osStorage) ReadFile(path string) ([]byte, error)          { return os.ReadFile(path) }
+func (osStorage) ReadFile(path string) ([]byte, error) { return os.ReadFile(path) }
 func (osStorage) WriteFile(path string, data []byte, perm os.FileMode) error {
 	return os.WriteFile(path, data, perm)
 }
-func (osStorage) MkdirAll(path string, perm os.FileMode) error  { return os.MkdirAll(path, perm) }
-func (osStorage) RemoveAll(path string) error                   { return os.RemoveAll(path) }
-func (osStorage) Rename(oldPath, newPath string) error          { return os.Rename(oldPath, newPath) }
-func (osStorage) Stat(path string) (os.FileInfo, error)         { return os.Stat(path) }
+func (osStorage) MkdirAll(path string, perm os.FileMode) error { return os.MkdirAll(path, perm) }
+func (osStorage) RemoveAll(path string) error                  { return os.RemoveAll(path) }
+func (osStorage) Rename(oldPath, newPath string) error         { return os.Rename(oldPath, newPath) }
+func (osStorage) Stat(path string) (os.FileInfo, error)        { return os.Stat(path) }
 func (osStorage) ReadDir(name string) ([]os.DirEntry, error)   { return os.ReadDir(name) }
 
 // MemStorage is an in-memory Storage for tests.
@@ -152,10 +152,12 @@ type memDirEntry struct {
 	isDir   bool
 }
 
-func (e *memDirEntry) Name() string               { return e.name }
-func (e *memDirEntry) IsDir() bool                 { return e.isDir }
-func (e *memDirEntry) Type() os.FileMode           { return e.Mode().Type() }
-func (e *memDirEntry) Info() (os.FileInfo, error)  { return &memFileInfo{name: e.name, size: e.size, modTime: e.modTime}, nil }
+func (e *memDirEntry) Name() string      { return e.name }
+func (e *memDirEntry) IsDir() bool       { return e.isDir }
+func (e *memDirEntry) Type() os.FileMode { return e.Mode().Type() }
+func (e *memDirEntry) Info() (os.FileInfo, error) {
+	return &memFileInfo{name: e.name, size: e.size, modTime: e.modTime}, nil
+}
 func (e *memDirEntry) Mode() os.FileMode {
 	if e.isDir {
 		return os.ModeDir | 0o755

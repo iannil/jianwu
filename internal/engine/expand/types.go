@@ -42,6 +42,7 @@ type ExpandInput struct {
 type ExpandOutput struct {
 	Markdown         string // final prose with [^N] footnotes
 	Citations        []Citation
+	Claims           []Claim // all claims extracted from the final markdown
 	UnverifiedClaims []Claim
 	WordCount        int
 	Research         ResearchNotes
@@ -61,9 +62,11 @@ type Citation struct {
 
 // Claim is a factual statement the LLM self-reported.
 // has_citation=false counts toward UnverifiedClaims.
+// Claim links a factual statement to explicit footnote identifiers.
 type Claim struct {
-	Text        string `json:"text"`
-	HasCitation bool   `json:"has_citation"`
+	CitationIDs []string `json:"citation_ids"`
+	Text        string   `json:"text"`
+	HasCitation bool     `json:"has_citation"`
 }
 
 // ResearchNotes is what iter 1 produces after tool calls: digested findings.

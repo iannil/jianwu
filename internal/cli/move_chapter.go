@@ -82,7 +82,7 @@ func runMoveChapter(cmd *cobra.Command, slug, addr, targetPartStr, afterAddr str
 	}
 
 	// Determine new chapter index and insertion position.
-	newChIdx := chCopy.Index // default: keep index
+	newChIdx := chCopy.Index           // default: keep index
 	insertPos := len(targetP.Chapters) // default: append to end
 	if afterAddr != "" {
 		ap, ac, err := parseChapterAddr(afterAddr)

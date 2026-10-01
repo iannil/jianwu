@@ -12,7 +12,10 @@ import (
 
 	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/corpus"
+	"github.com/iannil/jianwu/internal/engine/collect"
 	"github.com/iannil/jianwu/internal/provider/llmfactory"
+	"github.com/iannil/jianwu/internal/provider/readerfactory"
+	"github.com/iannil/jianwu/internal/provider/searchfactory"
 	"github.com/iannil/jianwu/internal/storage"
 	"github.com/iannil/jianwu/internal/workspace"
 )
@@ -22,15 +25,18 @@ func newCorpusCmd() *cobra.Command {
 		Use:   "corpus",
 		Short: "Manage reference corpus books",
 		Long: `Manage jianwu's reference corpus — the collection of book outlines
-used as inspiration and reference during book creation.
+used as inspiration and reference during book creation (outline generation
+and the similar-book lookup during expand).
 
-Builtin corpus is compiled into the binary. Use "corpus sync" to extend
-the corpus from a zhurongshuo checkout or other JSON sources.`,
+There is no builtin corpus. Books come from the workspace (.jianwu/corpus/),
+populated by "corpus collect" (auto-collect from the web), "corpus sync"
+(from a local JSON directory), or hand-authored files.`,
 	}
 	cmd.AddCommand(newCorpusListCmd())
 	cmd.AddCommand(newCorpusShowCmd())
 	cmd.AddCommand(newCorpusStatsCmd())
 	cmd.AddCommand(newCorpusSyncCmd())
+	cmd.AddCommand(newCorpusCollectCmd())
 	cmd.AddCommand(newCorpusReindexCmd())
 	return cmd
 }
@@ -58,18 +64,14 @@ func runCorpusList(cmd *cobra.Command) error {
 	if ws != "" {
 		fmt.Fprintf(out, "Corpus books (workspace: %s):\n", ws)
 	} else {
-		fmt.Fprintln(out, "Corpus books (builtin):")
+		fmt.Fprintln(out, "Corpus books (empty — no workspace; use `jianwu corpus collect` or `corpus sync` to add):")
+	}
+	if len(m) == 0 {
+		fmt.Fprintln(out, "  (no corpus books)")
 	}
 	for _, slug := range sortedKeys(m) {
 		b := m[slug]
-		origin := "builtin"
-		if ws != "" {
-			corpusPath := filepath.Join(ws, workspace.MarkerName, workspace.CorpusDirName, slug+".json")
-			if _, err := storage.OS.Stat(corpusPath); err == nil {
-				origin = "workspace"
-			}
-		}
-		fmt.Fprintf(out, "  %s  %s (%s)\n", padSlug(slug), b.Title.Zh, origin)
+		fmt.Fprintf(out, "  %s  %s (workspace)\n", padSlug(slug), b.Title.Zh)
 	}
 	return nil
 }
@@ -299,7 +301,7 @@ func runCorpusReindex(cmd *cobra.Command, modelOverride string) error {
 		return &InfoError{Err: fmt.Errorf("load secrets: %w", err), Code: ExitCodeLLMProvider}
 	}
 
-	m, err := corpus.LoadWithWorkspace(wsRoot)
+	m, err := corpus.Load(wsRoot)
 	if err != nil {
 		return &InfoError{Err: fmt.Errorf("load corpus: %w", err), Code: ExitCodeGeneric}
 	}
@@ -347,19 +349,138 @@ func runCorpusReindex(cmd *cobra.Command, modelOverride string) error {
 	return nil
 }
 
+// --- collect ---
+
+func newCorpusCollectCmd() *cobra.Command {
+	var topic, audience string
+	var count int
+	var force bool
+	cmd := &cobra.Command{
+		Use:   "collect --topic <topic>",
+		Short: "Auto-collect reference corpus from the web for a topic",
+		Long: `Search the web, read the top pages and extract structured
+reference-book outlines with the LLM, saving them into the workspace corpus
+(.jianwu/corpus/). Then rebuilds the embedding index so outline generation
+and expand's similar-book lookup pick up the new corpus.
+
+Requires search (brave/serper), reader (jina) and LLM API keys.
+
+Example:
+  jianwu corpus collect --topic "时间的本质" --count 3
+`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if topic == "" {
+				return &InfoError{Err: fmt.Errorf("--topic is required"), Code: ExitCodeUsage}
+			}
+			return runCorpusCollect(cmd, topic, audience, count, force)
+		},
+	}
+	cmd.Flags().StringVar(&topic, "topic", "", "topic to collect corpus for")
+	cmd.Flags().StringVar(&audience, "audience", "", "optional audience hint (scholar, advanced-practitioner, educated-general, beginner)")
+	cmd.Flags().IntVar(&count, "count", 3, "target number of books (1-8)")
+	cmd.Flags().BoolVar(&force, "force", false, "overwrite existing corpus books with the same slug")
+	return cmd
+}
+
+func runCorpusCollect(cmd *cobra.Command, topic, audience string, count int, force bool) error {
+	wsRoot, err := workspace.FindWorkspace(findWorkspacePath())
+	if err != nil {
+		return &InfoError{Err: err, Code: ExitCodeWorkspaceNotFound}
+	}
+	ws, err := workspace.Load(wsRoot)
+	if err != nil {
+		return &InfoError{Err: fmt.Errorf("load workspace: %w", err), Code: ExitCodeGeneric}
+	}
+	secrets, err := config.LoadSecrets()
+	if err != nil {
+		return &InfoError{Err: fmt.Errorf("load secrets: %w", err), Code: ExitCodeLLMProvider}
+	}
+
+	// Collect uses the cheaper scaffolding-stage model for planning/extraction;
+	// it never needs an embedder (index rebuild happens after saving).
+	chatter, err := buildChatter(ws.Config, secrets, "scaffolding")
+	if err != nil {
+		return &InfoError{Err: fmt.Errorf("scaffolding chatter: %w", err), Code: ExitCodeLLMProvider}
+	}
+	searcher, err := searchfactory.New(ws.Config.Search.Primary, secrets)
+	if err != nil {
+		return &InfoError{Err: fmt.Errorf("search primary: %w", err), Code: ExitCodeLLMProvider}
+	}
+	rd, err := readerfactory.New(ws.Config.Search.Reader, secrets)
+	if err != nil {
+		return &InfoError{Err: fmt.Errorf("reader: %w", err), Code: ExitCodeLLMProvider}
+	}
+
+	out := cmd.OutOrStdout()
+	fmt.Fprintf(out, "开始采集语料（主题: %s，目标 %d 本）\n", topic, count)
+	res, err := collect.Run(context.Background(),
+		collect.Deps{Chatter: chatter, Searcher: searcher, Reader: rd},
+		collect.Input{Topic: topic, Audience: audience, Count: count}, nil)
+	if err != nil {
+		return &InfoError{Err: err, Code: ExitCodeLLMProvider}
+	}
+
+	saved, skipped := 0, 0
+	for _, b := range res.Books {
+		if !force {
+			if _, err := storage.OS.Stat(corpus.BookPath(wsRoot, b.Slug)); err == nil {
+				skipped++
+				fmt.Fprintf(out, "  跳过 %s（已存在，--force 可覆盖）\n", b.Slug)
+				continue
+			}
+		}
+		if err := corpus.SaveBook(wsRoot, b); err != nil {
+			res.Issues = append(res.Issues, fmt.Sprintf("保存 %s 失败: %v", b.Slug, err))
+			continue
+		}
+		saved++
+		fmt.Fprintf(out, "  已保存 %s  %s（%d parts / %d 章，来源 %s）\n",
+			b.Slug, b.Title.Zh, len(b.Parts), chapterCount(b), b.Source.URL)
+	}
+	for _, issue := range res.Issues {
+		fmt.Fprintf(out, "  注意: %s\n", issue)
+	}
+	if res.Usage.CallCount > 0 {
+		fmt.Fprintf(out, "LLM 用量: %d tokens（%d 次调用）\n", res.Usage.TotalTokens, res.Usage.CallCount)
+	}
+
+	// Best-effort index rebuild: corpus is saved either way; a failed rebuild
+	// is visible but not fatal.
+	idxOut := &strings.Builder{}
+	idxCmd := &cobra.Command{}
+	idxCmd.SetOut(idxOut)
+	if err := runCorpusReindex(idxCmd, ""); err != nil {
+		fmt.Fprintf(out, "警告: 索引重建失败（语料已保存）：%v\n可稍后运行 jianwu corpus reindex 重试。\n", err)
+	} else {
+		fmt.Fprint(out, idxOut.String())
+	}
+
+	fmt.Fprintf(out, "采集完成：保存 %d 本，跳过 %d 本\n", saved, skipped)
+	return nil
+}
+
+func chapterCount(b *corpus.Book) int {
+	n := 0
+	for _, p := range b.Parts {
+		n += len(p.Chapters)
+	}
+	return n
+}
+
 // --- helpers ---
 
-// loadCorpus loads corpus books, detecting workspace if available.
-// Returns books, workspace root (empty if none), and error.
+// loadCorpus loads the workspace corpus when a workspace is available.
+// There is no builtin corpus — without a workspace (or with no collected
+// books) the corpus is empty. Returns books, workspace root (empty if none),
+// and error.
 func loadCorpus() (map[string]*corpus.Book, string, error) {
 	wsRoot, err := workspace.FindWorkspace(findWorkspacePath())
-	if err == nil {
-		m, err := corpus.LoadWithWorkspace(wsRoot)
-		return m, wsRoot, err
+	if err != nil {
+		return map[string]*corpus.Book{}, "", nil
 	}
-	// No workspace — load builtin only
-	m, err := corpus.Load()
-	return m, "", err
+	m, err := corpus.Load(wsRoot)
+	return m, wsRoot, err
 }
 
 // sortedKeys returns sorted string keys from a map.

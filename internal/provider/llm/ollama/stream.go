@@ -52,21 +52,37 @@ func (p *Provider) Stream(ctx context.Context, req llm.ChatRequest) (<-chan llm.
 			if chunk.Message.Content != "" {
 				select {
 				case <-ctx.Done():
-					ch <- llm.StreamChunk{Err: ctx.Err(), Done: true}
+					select {
+					case ch <- llm.StreamChunk{Err: ctx.Err(), Done: true}:
+					case <-ctx.Done():
+						return
+					}
 					return
 				case ch <- llm.StreamChunk{Content: chunk.Message.Content}:
 				}
 			}
 			if chunk.Done {
-				ch <- llm.StreamChunk{Done: true}
+				select {
+				case ch <- llm.StreamChunk{Done: true, Usage: &llm.Usage{PromptTokens: chunk.PromptEvalCount, CompletionTokens: chunk.EvalCount, TotalTokens: chunk.PromptEvalCount + chunk.EvalCount}}:
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 		}
 		if err := scanner.Err(); err != nil {
-			ch <- llm.StreamChunk{Err: llm.ClassifyError(err, 0), Done: true}
+			select {
+			case ch <- llm.StreamChunk{Err: llm.ClassifyError(err, 0), Done: true}:
+			case <-ctx.Done():
+				return
+			}
 			return
 		}
-		ch <- llm.StreamChunk{Done: true}
+		select {
+		case ch <- llm.StreamChunk{Done: true}:
+		case <-ctx.Done():
+			return
+		}
 	}()
 	return ch, nil
 }

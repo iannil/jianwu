@@ -83,6 +83,7 @@ func Generate(
 	return &ExpandOutput{
 		Markdown:         finalMD,
 		Citations:        citations,
+		Claims:           validated.Claims,
 		UnverifiedClaims: unverified,
 		WordCount:        CountWords(finalMD),
 		Research:         notes,

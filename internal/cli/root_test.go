@@ -2,12 +2,26 @@ package cli
 
 import (
 	"bytes"
+	"os"
 	"testing"
+
+	"github.com/iannil/jianwu/internal/workspace"
 )
+
+// TestMain neutralizes ambient workspace-resolution inputs for the whole
+// package. ResolveRoot precedence is flag > JIANWU_WORKSPACE > global config
+// `workspace:` key > CWD; a developer shell often has the env var or global
+// key set, which would break the CWD-based resolution most tests rely on.
+func TestMain(m *testing.M) {
+	os.Unsetenv(workspace.EnvWorkspace)
+	os.Setenv("HOME", os.TempDir())
+	os.Exit(m.Run())
+}
 
 func TestRootCmdHasVersionFlag(t *testing.T) {
 	cmd := NewRootCmd()
-	flag := cmd.PersistentFlags().Lookup("version")
+	cmd.InitDefaultVersionFlag()
+	flag := cmd.Flags().Lookup("version")
 	if flag == nil {
 		t.Error("--version flag not registered")
 	}

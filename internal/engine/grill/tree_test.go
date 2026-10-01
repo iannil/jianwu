@@ -98,18 +98,18 @@ func TestNextPendingAfterPartialAnswers(t *testing.T) {
 func TestNextPendingReturnsNilWhenComplete(t *testing.T) {
 	tree := DefaultTree()
 	answers := map[string]string{
-		"topic":           "X",
-		"audience":        "scholar",
-		"goal":            "understanding",
-		"archetype":       "ontology-epistemology-practice",
-		"depth":           "advanced",
-		"length":          "long",
-		"language":        "zh",
-		"scope":           "single",
-		"example_type":    "mixed",
-		"citation_style":  "academic",
-		"visualization":   "tables",
-		"timeliness":      "timeless",
+		"topic":          "X",
+		"audience":       "scholar",
+		"goal":           "understanding",
+		"archetype":      "ontology-epistemology-practice",
+		"depth":          "advanced",
+		"length":         "long",
+		"language":       "zh",
+		"scope":          "single",
+		"example_type":   "mixed",
+		"citation_style": "academic",
+		"visualization":  "tables",
+		"timeliness":     "timeless",
 	}
 	d := tree.NextPending(answers)
 	if d != nil {
@@ -165,10 +165,10 @@ func TestValidateDetectsDuplicateID(t *testing.T) {
 func TestValidateAnswer(t *testing.T) {
 	tree := DefaultTree()
 	tests := []struct {
-		name     string
-		dimID    string
-		answer   string
-		valid    bool
+		name   string
+		dimID  string
+		answer string
+		valid  bool
 	}{
 		{"topic accepts any", "topic", "anything at all", true},
 		{"audience accepts valid option", "audience", "scholar", true},

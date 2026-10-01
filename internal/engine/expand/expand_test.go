@@ -54,7 +54,7 @@ func TestGenerateChainsIterations(t *testing.T) {
 	validateJSON, _ := json.Marshal(ValidationResult{
 		RevisedMarkdown: draftMD,
 		Claims: []Claim{
-			{Text: "fact", HasCitation: true},
+			{Text: "fact", HasCitation: true, CitationIDs: []string{"1"}},
 			{Text: "unverified", HasCitation: false},
 		},
 	})
@@ -83,6 +83,9 @@ func TestGenerateChainsIterations(t *testing.T) {
 	}
 	if len(out.UnverifiedClaims) != 1 {
 		t.Errorf("unverified: %d", len(out.UnverifiedClaims))
+	}
+	if len(out.Claims) != 2 || len(out.Claims[0].CitationIDs) != 1 {
+		t.Fatalf("lost final claims: %+v", out.Claims)
 	}
 	if out.WordCount == 0 {
 		t.Error("zero word count")

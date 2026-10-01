@@ -37,6 +37,20 @@ func RunValidate(
 	if err := json.Unmarshal([]byte(resp.Content), &result); err != nil {
 		return ValidationResult{}, fmt.Errorf("parse validation result: %w (content: %s)", err, truncate(resp.Content, 500))
 	}
+	finalMD := result.RevisedMarkdown
+	if finalMD == "" {
+		finalMD = draft
+	}
+	defs := ParseFootnotes(finalMD)
+	for i := range result.Claims {
+		c := &result.Claims[i]
+		c.HasCitation = len(c.CitationIDs) > 0
+		for _, id := range c.CitationIDs {
+			if d, ok := defs[id]; !ok || d.URL == "" {
+				c.HasCitation = false
+			}
+		}
+	}
 	return result, nil
 }
 

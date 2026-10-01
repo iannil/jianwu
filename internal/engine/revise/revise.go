@@ -12,10 +12,10 @@ import (
 // Input carries the chapter content and fact-check results for revision.
 type Input struct {
 	ChapterTitle string
-	Markdown     string               // current chapter markdown
-	Citations    []book.Citation      // all citations
-	Unverified   []book.Claim         // claims that failed fact-check
-	Verdicts     []book.ClaimVerdict  // fact-check verdicts with suggested_rewrites
+	Markdown     string              // current chapter markdown
+	Citations    []book.Citation     // all citations
+	Unverified   []book.Claim        // claims that failed fact-check
+	Verdicts     []book.ClaimVerdict // fact-check verdicts with suggested_rewrites
 }
 
 // Output is the revised chapter.

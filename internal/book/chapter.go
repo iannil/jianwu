@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/iannil/jianwu/internal/storage"
 )
 
 // ChapterFrontmatter is the YAML frontmatter schema for chapters/NN-MM.md.
@@ -54,7 +56,7 @@ func WriteChapter(bookDir string, partIdx, chIdx int, fm ChapterFrontmatter, mar
 
 	path := ChapterPath(bookDir, partIdx, chIdx)
 	content := fmt.Sprintf("---\n%s---\n\n%s\n", string(yamlBytes), markdown)
-	if err := DefaultStorage.WriteFile(path, []byte(content), 0o644); err != nil {
+	if err := storage.WriteFileAtomic(DefaultStorage, path, []byte(content), 0o644); err != nil {
 		return "", fmt.Errorf("write chapter: %w", err)
 	}
 	return path, nil

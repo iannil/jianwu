@@ -107,4 +107,7 @@ func mergeModelRef(dst, src *ModelRef) {
 			mergeModelRef(dst.Fallback, src.Fallback)
 		}
 	}
+	if src.TimeoutSeconds != 0 {
+		dst.TimeoutSeconds = src.TimeoutSeconds
+	}
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/config"
 	"github.com/iannil/jianwu/internal/engine/grill"
 	"github.com/iannil/jianwu/internal/provider/llm"
@@ -216,6 +217,14 @@ func TestRunNewFlowWithChattersHappyPath(t *testing.T) {
 		t.Errorf("meta.json not created in %s", bookDir)
 	}
 
+	meta, err := book.LoadMeta(filepath.Join(bookDir, "meta.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if meta.TokenUsage.CallCount < 3 || meta.TokenUsage.MissingUsageCalls != meta.TokenUsage.CallCount {
+		t.Fatalf("all three stages must record unreported calls: %+v", meta.TokenUsage)
+	}
+
 	// Check outline.json exists
 	if _, err := os.Stat(filepath.Join(bookDir, "outline.json")); os.IsNotExist(err) {
 		t.Errorf("outline.json not created in %s", bookDir)
@@ -234,5 +243,117 @@ func TestRunNewFlowWithChattersHappyPath(t *testing.T) {
 	}
 	if len(activeEntries) != 0 {
 		t.Errorf("expected no active sessions, found %d", len(activeEntries))
+	}
+}
+
+type failedUsageChatter struct{}
+
+func (failedUsageChatter) Chat(context.Context, llm.ChatRequest) (*llm.ChatResponse, error) {
+	return &llm.ChatResponse{Usage: llm.Usage{TotalTokens: 11}}, llm.ErrLLMProvider
+}
+func TestNewIntakeFailurePreservesUsageInSession(t *testing.T) {
+	ws := t.TempDir()
+	if err := workspace.Init(ws, workspace.InitOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	prompt := &TerminalPrompt{In: strings.NewReader(""), Out: &bytes.Buffer{}}
+	_, session, err := runNewFlowWithChatters(ws, &config.Config{}, prompt, false, chatterProvider{intake: failedUsageChatter{}})
+	if err == nil || session == nil {
+		t.Fatalf("session=%v err=%v", session, err)
+	}
+	pending, err := grill.NewRepository(ws).ListIncomplete()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pending) != 1 || pending[0].TokenUsage.TotalTokens != 11 {
+		t.Fatalf("pending usage: %+v", pending)
+	}
+}
+
+func TestNewOutlineFailurePersistsBookUsage(t *testing.T) {
+	ws := t.TempDir()
+	if err := workspace.Init(ws, workspace.InitOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	session := grill.NewSession()
+	session.Answers = map[string]string{"topic": "usage-failure", "audience": "scholar", "goal": "understanding", "archetype": "ontology-epistemology-practice", "depth": "advanced", "length": "medium", "language": "zh", "scope": "single", "example_type": "case", "visualization": "tables", "timeliness": "timeless", "citation_style": "academic"}
+	session.TokenUsage.TotalTokens = 5
+	session.TokenUsage.CallCount = 1
+	if err := grill.NewRepository(ws).Save(session); err != nil {
+		t.Fatal(err)
+	}
+	_, _, err := runNewFlowWithChatters(ws, &config.Config{}, &TerminalPrompt{In: strings.NewReader("1\n"), Out: &bytes.Buffer{}}, false, chatterProvider{intake: failedUsageChatter{}, outline: failedUsageChatter{}})
+	if err == nil {
+		t.Fatal("expected outline failure")
+	}
+	dir := filepath.Join(ws, "books", "usage-failure")
+	meta, err := book.LoadMeta(filepath.Join(dir, "meta.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if meta.TokenUsage.TotalTokens != 16 || meta.TokenUsage.CallCount != 2 {
+		t.Fatalf("usage = %+v", meta.TokenUsage)
+	}
+	if _, err := book.LoadOutline(filepath.Join(dir, "outline.json")); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNewRepeatedOutlineFailuresAccumulate(t *testing.T) {
+	ws := t.TempDir()
+	if err := workspace.Init(ws, workspace.InitOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	session := grill.NewSession()
+	session.Answers = map[string]string{"topic": "retry-usage", "audience": "scholar", "goal": "understanding", "archetype": "ontology-epistemology-practice", "depth": "advanced", "length": "medium", "language": "zh", "scope": "single", "example_type": "case", "visualization": "tables", "timeliness": "timeless", "citation_style": "academic"}
+	session.TokenUsage = book.TokenUsage{TotalTokens: 5, CallCount: 1}
+	repo := grill.NewRepository(ws)
+	if err := repo.Save(session); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		_, _, err := runNewFlowWithChatters(ws, &config.Config{}, &TerminalPrompt{In: strings.NewReader("1\n"), Out: &bytes.Buffer{}}, i > 0, chatterProvider{intake: failedUsageChatter{}, outline: failedUsageChatter{}})
+		if err == nil {
+			t.Fatal("expected outline failure")
+		}
+		meta, err := book.LoadMeta(filepath.Join(ws, "books", "retry-usage", "meta.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if meta.TokenUsage.TotalTokens != 5+11*(i+1) || meta.TokenUsage.CallCount != i+2 {
+			t.Fatalf("attempt %d usage=%+v", i, meta.TokenUsage)
+		}
+	}
+}
+
+func TestForceNewUsageSessionCheckpoints(t *testing.T) {
+	dir := t.TempDir()
+	previous := &book.Meta{TokenUsage: book.TokenUsage{TotalTokens: 100, CallCount: 10}, SessionUsage: map[string]book.TokenUsage{"first": {TotalTokens: 5, CallCount: 1}}}
+	for _, tc := range []struct {
+		name, id              string
+		pending               book.TokenUsage
+		wantTokens, wantCalls int
+	}{
+		{name: "same session imported once", id: "first", pending: book.TokenUsage{TotalTokens: 5, CallCount: 1}, wantTokens: 100, wantCalls: 10},
+		{name: "new session independent usage", id: "second", pending: book.TokenUsage{TotalTokens: 7, CallCount: 1}, wantTokens: 107, wantCalls: 11},
+		{name: "first session gains pending usage", id: "first", pending: book.TokenUsage{TotalTokens: 8, CallCount: 2}, wantTokens: 110, wantCalls: 12},
+		{name: "second session resumes again", id: "second", pending: book.TokenUsage{TotalTokens: 7, CallCount: 1}, wantTokens: 110, wantCalls: 12},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			session := grill.NewSession()
+			session.ID = tc.id
+			session.TokenUsage = tc.pending
+			if err := writeBookMetaWithUsage(dir, "retry", session, previous); err != nil {
+				t.Fatal(err)
+			}
+			saved, err := book.LoadMeta(filepath.Join(dir, "meta.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if saved.TokenUsage.TotalTokens != tc.wantTokens || saved.TokenUsage.CallCount != tc.wantCalls {
+				t.Fatalf("usage=%+v", saved.TokenUsage)
+			}
+			previous = saved
+		})
 	}
 }

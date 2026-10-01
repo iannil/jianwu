@@ -128,11 +128,11 @@ func (p *Provider) do(ctx context.Context, cl *http.Client, path string, body an
 // Ollama API response shapes.
 
 type chatResponse struct {
-	Model           string      `json:"model"`
-	Message         message     `json:"message"`
-	Done            bool        `json:"done"`
-	PromptEvalCount int         `json:"prompt_eval_count"`
-	EvalCount       int         `json:"eval_count"`
+	Model           string  `json:"model"`
+	Message         message `json:"message"`
+	Done            bool    `json:"done"`
+	PromptEvalCount int     `json:"prompt_eval_count"`
+	EvalCount       int     `json:"eval_count"`
 }
 
 type message struct {

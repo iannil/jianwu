@@ -1,5 +1,17 @@
 # jianwu 架构总览
 
+> 2026-09-27：jianwu 为独立、本地优先的 CLI 产品，不再服务 mouqin；无公共 SDK 承诺。下文保留核心阶段的数据流说明，当前交付边界见 PROJECT_STATUS.md 和 ADR 28。
+
+## 0.3.6 可靠性与质量管线
+
+- 批量展开：最多 5 个并发任务读取稳定大纲；全部结束后由协调者依次合并保存，失败返回非零退出码。
+- ExpandOutput 保留完整 claims；citation_ids 显式引用 Citation.ID，不按数组位置猜测来源。
+- Factcheck 对每个 claim/source 关联产生 verdict，缺失/失效来源保留未通过结果；旧文本白名单不绕过验证。
+- Revise 重建最终正文 claims/引用，清除旧 review/verdict，用户重新 factcheck 后审阅。
+- 书级 token_usage 累计可观测的 LLM 响应；流式、重试、fallback 纳入 tracking wrapper，缺失用量单列。
+- 单文件临时文件加 rename；展开和修订在普通 I/O 失败时恢复之前的文件。无跨文件崩溃事务，不支持多个 CLI 并发修改同一本书。
+- DefaultStorage / secretsProvider / cliWorkspaceDir 为单进程默认值；Namespace 仅加路径前缀，不是安全沙箱。
+
 > 本文档给 LLM 一份"如果只读一个文件就要能改 jianwu 代码"的架构地图。
 > 详细 API 见 `PROJECT_STATUS.md` + 各包的 godoc。
 
@@ -183,7 +195,7 @@ os.Exit(1)
 
 - 库代码：TDD（test-first）
 - LLM-driven：test-after，Mock Provider + httptest
-- 跨切：E2E 用 `chatterProviderHook`（test-only 全局）注入 mock
+- 跨切：E2E 用显式 ProviderDeps / chatterProvider 参数注入 mock
 - Live：`GEMINI_API_KEY` / `GLM_API_KEY` 设置时跑真 API，否则 SKIP
 
 ## 配置加载顺序

@@ -6,11 +6,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/engine"
 	"github.com/iannil/jianwu/internal/workspace"
 )
 
 func newNewCmd() *cobra.Command {
 	var force bool
+	var showTokens bool
 	cmd := &cobra.Command{
 		Use:   "new",
 		Short: "Start a new book (interactive grill → outline → scaffolding)",
@@ -42,6 +44,10 @@ Use --force to overwrite an existing book with the same slug.`,
 			if err != nil {
 				return &InfoError{Err: err, Code: ExitCodeLLMProvider}
 			}
+			cp.tracker = &engine.TokenTracker{}
+			if showTokens {
+				defer func() { printTokenUsage(out, cp.tracker.Snapshot()) }()
+			}
 			outline, err := runNewFlow(wsRoot, ws.Config, secrets, prompt, force, cp)
 			if err != nil {
 				return err
@@ -72,5 +78,6 @@ Use --force to overwrite an existing book with the same slug.`,
 		},
 	}
 	cmd.Flags().BoolVar(&force, "force", false, "overwrite existing book with same slug")
+	cmd.Flags().BoolVar(&showTokens, "tokens", false, "show provider-reported token usage")
 	return cmd
 }

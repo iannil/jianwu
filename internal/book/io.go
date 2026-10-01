@@ -57,7 +57,7 @@ func writeJSON(path string, v any) error {
 		return fmt.Errorf("marshal: %w", err)
 	}
 	data = append(data, '\n')
-	if err := DefaultStorage.WriteFile(path, data, 0o644); err != nil {
+	if err := storage.WriteFileAtomic(DefaultStorage, path, data, 0o644); err != nil {
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil

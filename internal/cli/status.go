@@ -29,6 +29,8 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintf(out, "%s (%s)\n", bc.Meta.Title, slug)
 	fmt.Fprintf(out, "Book status: %s\n\n", bc.Meta.Status)
+	printTokenUsage(out, bc.Meta.TokenUsage)
+	fmt.Fprintln(out)
 
 	counts := map[string]int{}
 	total := 0

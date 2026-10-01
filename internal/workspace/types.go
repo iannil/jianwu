@@ -8,7 +8,6 @@ const MarkerName = ".jianwu"
 // ConfigFileName is the workspace config file inside MarkerName.
 const ConfigFileName = "config.yaml"
 
-
 // CorpusDirName is the workspace-relative directory for synced corpus files.
 const CorpusDirName = "corpus"
 

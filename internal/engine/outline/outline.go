@@ -125,12 +125,8 @@ func buildPromptData(in Input) (promptData, error) {
 		sampleText = "(no samples for this archetype)"
 	}
 
-	books, err := corpus.Load()
-	if err != nil {
-		return promptData{}, fmt.Errorf("load corpus: %w", err)
-	}
 	var matches []*corpus.Book
-	for _, b := range books {
+	for _, b := range in.CorpusBooks {
 		if b.Archetype == in.ArchetypeID {
 			matches = append(matches, b)
 		}

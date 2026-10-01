@@ -3,6 +3,8 @@ package factcheck
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/provider/llm"
@@ -14,8 +16,7 @@ type Input struct {
 	ChapterTitle string
 	Claims       []book.Claim
 	Citations    []book.Citation
-	// ClaimWhitelist contains claim texts that have been verified in other chapters.
-	// Claims found in this set are auto-verified without an LLM call.
+	// ClaimWhitelist is retained for compatibility and never bypasses source verification.
 	ClaimWhitelist map[string]bool
 }
 
@@ -34,61 +35,68 @@ type Output struct {
 	SourceErrors []string // URLs that failed to read
 }
 
-// Run executes fact-check: for each claim with HasCitation=true, find its
-// matching citation (by index), read the source URL, and ask LLM to verify.
-// v1 limitation: claims match citations by position (claim[i] ↔ citation[i]).
-func Run(
-	ctx context.Context,
-	chatter llm.Chatter,
-	rd reader.Reader,
-	in Input,
-) (*Output, error) {
+// Run verifies each explicit claim/source association. Legacy unlinked claims
+// remain visibly unverified; citation array order never establishes an association.
+func Run(ctx context.Context, chatter llm.Chatter, rd reader.Reader, in Input) (*Output, error) {
 	out := &Output{}
-
-	for i, claim := range in.Claims {
-		if !claim.HasCitation {
-			continue
+	byID := make(map[string]book.Citation)
+	duplicate := make(map[string]bool)
+	for _, c := range in.Citations {
+		if _, ok := byID[c.ID]; ok {
+			duplicate[c.ID] = true
 		}
-
-		// Check whitelist: if this claim was already verified in another chapter, skip LLM call.
-		if in.ClaimWhitelist != nil && in.ClaimWhitelist[claim.Text] {
-			out.Verdicts = append(out.Verdicts, ClaimVerdict{
-				ClaimText:  claim.Text,
-				Verified:   true,
-				Reasoning:  "previously verified in another chapter (whitelist)",
-				CitationID: fmt.Sprintf("%d", i+1),
-			})
-			continue
-		}
-
-		if i >= len(in.Citations) {
-			continue // no matching citation
-		}
-		c := in.Citations[i]
-		if c.URL == "" {
-			continue
-		}
-
-		// Read the source content (best-effort).
-		content, err := rd.Read(ctx, c.URL)
-		if err != nil {
-			out.SourceErrors = append(out.SourceErrors, c.URL)
-			continue
-		}
-
-		// Ask LLM to verify the claim against the source.
-		verdict, err := verifyClaim(ctx, chatter, claim.Text, content.Markdown, c.ID)
-		if err != nil {
-			out.Verdicts = append(out.Verdicts, ClaimVerdict{
-				ClaimText:  claim.Text,
-				Verified:   false,
-				Reasoning:  fmt.Sprintf("fact-check LLM error: %v", err),
-				CitationID: c.ID,
-			})
-			continue
-		}
-		out.Verdicts = append(out.Verdicts, *verdict)
+		byID[c.ID] = c
 	}
-
+	for _, claim := range in.Claims {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		if len(claim.CitationIDs) == 0 {
+			out.Verdicts = append(out.Verdicts, ClaimVerdict{ClaimText: claim.Text, Reasoning: "unverified: no explicit citation IDs; re-expand legacy chapters"})
+			continue
+		}
+		seen := make(map[string]bool)
+		for _, id := range claim.CitationIDs {
+			if seen[id] {
+				continue
+			}
+			seen[id] = true
+			v := ClaimVerdict{ClaimText: claim.Text, CitationID: id}
+			c, ok := byID[id]
+			u, parseErr := url.Parse(c.URL)
+			switch {
+			case !ok || id == "":
+				v.Reasoning = "unverified: citation ID is missing from chapter sources"
+			case duplicate[id]:
+				v.Reasoning = "unverified: duplicate citation ID"
+			case parseErr != nil || u.Host == "" || (u.Scheme != "https" && u.Scheme != "http"):
+				v.Reasoning = "unverified: source URL is missing or invalid"
+			case rd == nil:
+				v.Reasoning = "unverified: source reader unavailable"
+			default:
+				content, err := rd.Read(ctx, c.URL)
+				if ctx.Err() != nil {
+					return nil, ctx.Err()
+				}
+				if err != nil || strings.TrimSpace(content.Markdown) == "" {
+					out.SourceErrors = append(out.SourceErrors, c.URL)
+					v.Reasoning = "unverified: source could not be read"
+				} else if chatter == nil {
+					v.Reasoning = "unverified: verifier unavailable"
+				} else {
+					verified, err := verifyClaim(ctx, chatter, claim.Text, content.Markdown, id)
+					if ctx.Err() != nil {
+						return nil, ctx.Err()
+					}
+					if err != nil {
+						v.Reasoning = fmt.Sprintf("fact-check LLM error: %v", err)
+					} else {
+						v = *verified
+					}
+				}
+			}
+			out.Verdicts = append(out.Verdicts, v)
+		}
+	}
 	return out, nil
 }

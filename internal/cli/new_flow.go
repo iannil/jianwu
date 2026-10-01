@@ -17,6 +17,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/config"
+	"github.com/iannil/jianwu/internal/corpus"
+	"github.com/iannil/jianwu/internal/engine"
 	"github.com/iannil/jianwu/internal/engine/grill"
 	"github.com/iannil/jianwu/internal/engine/outline"
 	"github.com/iannil/jianwu/internal/engine/scaffolding"
@@ -123,6 +125,7 @@ func buildChatterProvider(cfg *config.Config, secrets *config.Secrets) (chatterP
 
 // chatterProvider bundles the three chatters needed by runNewFlow.
 type chatterProvider struct {
+	tracker                      *engine.TokenTracker
 	intake, outline, scaffolding llm.Chatter
 }
 
@@ -134,7 +137,14 @@ func runNewFlowWithChatters(
 	prompt *TerminalPrompt,
 	force bool,
 	cp chatterProvider,
-) (*book.Outline, *grill.Session, error) {
+) (result *book.Outline, resultSession *grill.Session, resultErr error) {
+	tracker := cp.tracker
+	if tracker == nil {
+		tracker = &engine.TokenTracker{}
+	}
+	cp.intake = engine.NewTrackingChatter(cp.intake, tracker)
+	cp.outline = engine.NewTrackingChatter(cp.outline, tracker)
+	cp.scaffolding = engine.NewTrackingChatter(cp.scaffolding, tracker)
 	tree := grill.DefaultTree()
 	repo := grill.NewRepository(wsRoot)
 
@@ -146,6 +156,28 @@ func runNewFlowWithChatters(
 	if session == nil {
 		session = grill.NewSession()
 	}
+	// Before a book exists, keep usage with the resumable interview.
+	var bookDir string
+	defer func() {
+		if bookDir == "" {
+			if resultErr != nil {
+				session.Status = grill.SessionInProgress
+			}
+			session.TokenUsage.Add(tracker.Snapshot())
+			resultErr = errors.Join(resultErr, repo.Save(session))
+			return
+		}
+		meta, err := book.LoadMeta(filepath.Join(bookDir, "meta.json"))
+		if err == nil {
+			err = persistTokenUsage(bookDir, meta, tracker)
+		}
+		resultErr = errors.Join(resultErr, err)
+		if resultErr != nil {
+			// A completed interview may still need its generation stages retried.
+			session.Status = grill.SessionInProgress
+			resultErr = errors.Join(resultErr, repo.Save(session))
+		}
+	}()
 
 	// 2. Grill: walk tree, ask each dim
 	for {
@@ -175,12 +207,35 @@ func runNewFlowWithChatters(
 		}
 	}
 
+	// Read cumulative usage before --force removes the previous book files.
+	newBookDir := filepath.Join(wsRoot, "books", slug)
+	var previous *book.Meta
+	if force {
+		previous, err = book.LoadMeta(filepath.Join(newBookDir, "meta.json"))
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return nil, session, fmt.Errorf("preserve previous token usage: %w", err)
+		}
+	}
 	// 4. Check slug conflict
 	if err := checkSlugConflict(wsRoot, slug, force); err != nil {
 		return nil, session, &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
 
-	// 5. Outline
+	// Create metadata before generation so failed outline calls remain accounted for.
+	if err := writeBookMetaWithUsage(newBookDir, slug, session, previous); err != nil {
+		return nil, session, &InfoError{Err: err, Code: ExitCodeGeneric}
+	}
+	bookDir = newBookDir
+	// Keep status usable even if the outline request fails.
+	if err := book.SaveOutline(filepath.Join(bookDir, "outline.json"), &book.Outline{}); err != nil {
+		return nil, session, &InfoError{Err: err, Code: ExitCodeGeneric}
+	}
+	// 5. Outline. Workspace corpus (collected via `corpus collect`/`sync`)
+	// feeds reference outlines; empty corpus degrades gracefully.
+	corpusBooks, err := corpus.List(wsRoot)
+	if err != nil {
+		return nil, session, &InfoError{Err: fmt.Errorf("load corpus: %w", err), Code: ExitCodeGeneric}
+	}
 	outlineCtx, outlineCancel := stageCtx(cfg, "outline")
 	outline, err := outline.Generate(outlineCtx, cp.outline, outline.Input{
 		ArchetypeID: session.Answers["archetype"],
@@ -190,6 +245,7 @@ func runNewFlowWithChatters(
 		Goal:        session.Answers["goal"],
 		Length:      session.Answers["length"],
 		Language:    session.Answers["language"],
+		CorpusBooks: corpusBooks,
 	})
 	outlineCancel()
 	if err != nil {
@@ -197,10 +253,6 @@ func runNewFlowWithChatters(
 	}
 
 	// 6. Save book meta + outline
-	bookDir := filepath.Join(wsRoot, "books", slug)
-	if err := writeBookMeta(bookDir, slug, session); err != nil {
-		return nil, session, &InfoError{Err: err, Code: ExitCodeGeneric}
-	}
 	if err := book.SaveOutline(filepath.Join(bookDir, "outline.json"), outline); err != nil {
 		return nil, session, &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
@@ -244,18 +296,24 @@ func runNewFlowWithChatters(
 
 // writeBookMeta writes meta.json for the new book.
 func writeBookMeta(bookDir, slug string, session *grill.Session) error {
+	return writeBookMetaWithUsage(bookDir, slug, session, nil)
+}
+
+func writeBookMetaWithUsage(bookDir, slug string, session *grill.Session, previous *book.Meta) error {
 	if err := storage.OS.MkdirAll(bookDir, 0o755); err != nil {
 		return fmt.Errorf("mkdir book dir: %w", err)
 	}
 	meta := &book.Meta{
-		ID:        uuid.NewString(),
-		Slug:      slug,
-		Title:     session.Answers["topic"],
-		Archetype: session.Answers["archetype"],
-		Language:  session.Answers["language"],
-		Status:    book.BookStatusDraft,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		TokenUsage:   session.TokenUsage,
+		SessionUsage: map[string]book.TokenUsage{session.ID: session.TokenUsage},
+		ID:           uuid.NewString(),
+		Slug:         slug,
+		Title:        session.Answers["topic"],
+		Archetype:    session.Answers["archetype"],
+		Language:     session.Answers["language"],
+		Status:       book.BookStatusDraft,
+		CreatedAt:    time.Now().UTC(),
+		UpdatedAt:    time.Now().UTC(),
 		Parameters: book.Parameters{
 			Audience: session.Answers["audience"],
 			Depth:    session.Answers["depth"],
@@ -265,6 +323,25 @@ func writeBookMeta(bookDir, slug string, session *grill.Session) error {
 		Engine: book.EngineMeta{
 			JianwuVersion: Version,
 		},
+	}
+	if previous != nil {
+		meta.TokenUsage = previous.TokenUsage
+		meta.SessionUsage = previous.SessionUsage
+		if meta.SessionUsage == nil {
+			meta.SessionUsage = make(map[string]book.TokenUsage)
+		}
+		imported := meta.SessionUsage[session.ID]
+		pending := session.TokenUsage
+		// Session totals are monotonic. Add only usage not already transferred.
+		meta.TokenUsage.Add(book.TokenUsage{
+			PromptTokens:      max(0, pending.PromptTokens-imported.PromptTokens),
+			CompletionTokens:  max(0, pending.CompletionTokens-imported.CompletionTokens),
+			TotalTokens:       max(0, pending.TotalTokens-imported.TotalTokens),
+			CallCount:         max(0, pending.CallCount-imported.CallCount),
+			CachedCount:       max(0, pending.CachedCount-imported.CachedCount),
+			MissingUsageCalls: max(0, pending.MissingUsageCalls-imported.MissingUsageCalls),
+		})
+		meta.SessionUsage[session.ID] = session.TokenUsage
 	}
 	return book.SaveMeta(filepath.Join(bookDir, "meta.json"), meta)
 }
@@ -299,7 +376,8 @@ func stageCtx(cfg *config.Config, stage string) (context.Context, context.Cancel
 		timeout = m.TimeoutSeconds
 	}
 	if timeout > 0 {
-		return context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		timed, timeoutCancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		return timed, func() { timeoutCancel(); cancel() }
 	}
 	return ctx, cancel
 }

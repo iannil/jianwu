@@ -17,6 +17,8 @@ type Embedder interface {
 // StreamChunk is a single token from a streaming chat response.
 // The channel is closed after the final chunk.
 type StreamChunk struct {
+	// Usage is the latest cumulative provider report for this call, not a delta.
+	Usage   *Usage
 	Content string // text fragment (may be empty on Done/Err)
 	Done    bool   // true when stream is complete (all tokens received)
 	Err     error  // non-nil if stream terminated with error; implies Done

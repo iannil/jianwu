@@ -38,9 +38,9 @@ type ModelRef struct {
 }
 
 type Search struct {
-	Primary  string `yaml:"primary"`
-	Fallback string `yaml:"fallback"`
-	Reader   string `yaml:"reader"`
+	Primary  string `yaml:"primary" json:"primary"`
+	Fallback string `yaml:"fallback" json:"fallback"`
+	Reader   string `yaml:"reader" json:"reader"`
 }
 
 type SourceOrder struct {

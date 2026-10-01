@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/storage"
 )
 
 // Session is the persisted state of a grill interview.
 type Session struct {
+	TokenUsage      book.TokenUsage   `json:"token_usage"`
 	ID              string            `json:"id"`
 	StartedAt       time.Time         `json:"started_at"`
 	UpdatedAt       time.Time         `json:"updated_at"`

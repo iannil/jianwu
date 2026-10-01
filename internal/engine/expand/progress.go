@@ -4,9 +4,9 @@ package expand
 type ProgressPhase int
 
 const (
-	PhaseResearch  ProgressPhase = iota + 1 // Research iteration
-	PhaseDraft                              // Draft iteration
-	PhaseValidate                           // Validate iteration
+	PhaseResearch ProgressPhase = iota + 1 // Research iteration
+	PhaseDraft                             // Draft iteration
+	PhaseValidate                          // Validate iteration
 )
 
 // ProgressEvent describes a progress update from the expand pipeline.

@@ -5,20 +5,22 @@ import "time"
 // Meta is the top-level book metadata, serialized to meta.json.
 // Schema mirrors DESIGN.md §4.2.
 type Meta struct {
-	ID         string     `json:"id"`
-	Slug       string     `json:"slug"`
-	Title      string     `json:"title"`
-	Subtitle   string     `json:"subtitle,omitempty"`
-	Archetype  string     `json:"archetype"`
-	Parameters Parameters `json:"parameters"`
-	Language   string     `json:"language"`
-	Status     string     `json:"status"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	Engine     EngineMeta            `json:"engine"`
-	// ClaimWhitelist records claim texts that have been verified in any chapter.
-	// When fact-checking a new chapter, claims in this set are auto-verified
-	// without an LLM call. Key is the claim text; value is true.
+	// SessionUsage checkpoints interview usage already included in TokenUsage.
+	SessionUsage map[string]TokenUsage `json:"session_usage,omitempty"`
+	TokenUsage   TokenUsage            `json:"token_usage"`
+	ID           string                `json:"id"`
+	Slug         string                `json:"slug"`
+	Title        string                `json:"title"`
+	Subtitle     string                `json:"subtitle,omitempty"`
+	Archetype    string                `json:"archetype"`
+	Parameters   Parameters            `json:"parameters"`
+	Language     string                `json:"language"`
+	Status       string                `json:"status"`
+	CreatedAt    time.Time             `json:"created_at"`
+	UpdatedAt    time.Time             `json:"updated_at"`
+	Engine       EngineMeta            `json:"engine"`
+	// ClaimWhitelist preserves legacy metadata. Text-only entries never bypass
+	// verification against the current chapter's explicit citation IDs.
 	ClaimWhitelist map[string]bool `json:"claim_whitelist,omitempty"`
 }
 
@@ -51,37 +53,39 @@ type OutlinePart struct {
 }
 
 type OutlineChapter struct {
-	Index              int           `json:"index"`
-	Title              string        `json:"title"`
-	Abstract           string        `json:"abstract,omitempty"`
-	KeyConcepts        []string      `json:"key_concepts,omitempty"`
-	LearningObjectives []string      `json:"learning_objectives,omitempty"`
-	SuggestedExamples  []string      `json:"suggested_examples,omitempty"`
-	Claims             []Claim       `json:"claims,omitempty"`
-	Status             string        `json:"status"`
-	WordCountTarget    int           `json:"word_count_target,omitempty"`
-	WordCount          int           `json:"word_count,omitempty"`
-	CitationsCount     int           `json:"citations_count,omitempty"`
-	UnverifiedClaims   int           `json:"unverified_claims,omitempty"`
-	CoherenceScore     *float64      `json:"coherence_score,omitempty"`
-	ExpandedWith       *ExpandedWith `json:"expanded_with,omitempty"`
-	ReviewedAt         *time.Time    `json:"reviewed_at,omitempty"`
-	ReviewedBy         string        `json:"reviewed_by,omitempty"`
-	Citations          []Citation    `json:"citations,omitempty"`
+	Index              int            `json:"index"`
+	Title              string         `json:"title"`
+	Abstract           string         `json:"abstract,omitempty"`
+	KeyConcepts        []string       `json:"key_concepts,omitempty"`
+	LearningObjectives []string       `json:"learning_objectives,omitempty"`
+	SuggestedExamples  []string       `json:"suggested_examples,omitempty"`
+	Claims             []Claim        `json:"claims,omitempty"`
+	Status             string         `json:"status"`
+	WordCountTarget    int            `json:"word_count_target,omitempty"`
+	WordCount          int            `json:"word_count,omitempty"`
+	CitationsCount     int            `json:"citations_count,omitempty"`
+	UnverifiedClaims   int            `json:"unverified_claims,omitempty"`
+	CoherenceScore     *float64       `json:"coherence_score,omitempty"`
+	ExpandedWith       *ExpandedWith  `json:"expanded_with,omitempty"`
+	ReviewedAt         *time.Time     `json:"reviewed_at,omitempty"`
+	ReviewedBy         string         `json:"reviewed_by,omitempty"`
+	Citations          []Citation     `json:"citations,omitempty"`
 	Verdicts           []ClaimVerdict `json:"verdicts,omitempty"`
 }
 
+// Claim links a factual statement to explicit footnote identifiers.
 type Claim struct {
-	Text        string `json:"text"`
-	HasCitation bool   `json:"has_citation"`
+	CitationIDs []string `json:"citation_ids,omitempty"`
+	Text        string   `json:"text"`
+	HasCitation bool     `json:"has_citation"`
 }
 
 // ClaimVerdict records the result of verifying one claim against its cited source.
 // Populated by the factcheck command; empty means not yet fact-checked.
 type ClaimVerdict struct {
 	ClaimText        string `json:"claim_text"`
-	Verified         bool   `json:"verified"`          // does the source support this?
-	Reasoning        string `json:"reasoning"`         // LLM's explanation
+	Verified         bool   `json:"verified"`                    // does the source support this?
+	Reasoning        string `json:"reasoning"`                   // LLM's explanation
 	SuggestedRewrite string `json:"suggested_rewrite,omitempty"` // proposed revision if unverified
 	CitationID       string `json:"citation_id,omitempty"`       // which [^N] this was checked against
 }

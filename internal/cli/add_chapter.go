@@ -139,13 +139,13 @@ func runAddChapter(cmd *cobra.Command, slug, afterAddr, topic, asAddr string) er
 
 	// Write stub chapter file.
 	fm := book.ChapterFrontmatter{
-		Title:        topic,
-		PartIndex:    newPart,
-		ChapterIndex: newCh,
-		Status:       book.StatusScaffolded,
-		WordCount:    0,
-		GeneratedAt:  time.Now().UTC(),
-		Model:        "",
+		Title:         topic,
+		PartIndex:     newPart,
+		ChapterIndex:  newCh,
+		Status:        book.StatusScaffolded,
+		WordCount:     0,
+		GeneratedAt:   time.Now().UTC(),
+		Model:         "",
 		EngineVersion: Version,
 	}
 	chapPath, err := book.WriteChapter(bc.BookDir, newPart, newCh, fm, "")

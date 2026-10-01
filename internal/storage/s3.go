@@ -43,13 +43,15 @@ func (s *S3Storage) pathToKey(path string) string {
 	return s.prefix + path
 }
 
-func (s *S3Storage) ReadFile(path string) ([]byte, error)                 { return nil, ErrS3NotImplemented }
-func (s *S3Storage) WriteFile(path string, data []byte, _ os.FileMode) error { return ErrS3NotImplemented }
-func (s *S3Storage) MkdirAll(_ string, _ os.FileMode) error    { return ErrS3NotImplemented }
-func (s *S3Storage) RemoveAll(_ string) error                  { return ErrS3NotImplemented }
-func (s *S3Storage) Rename(_, _ string) error                  { return ErrS3NotImplemented }
-func (s *S3Storage) Stat(_ string) (os.FileInfo, error)        { return nil, ErrS3NotImplemented }
-func (s *S3Storage) ReadDir(_ string) ([]os.DirEntry, error)   { return nil, ErrS3NotImplemented }
+func (s *S3Storage) ReadFile(path string) ([]byte, error) { return nil, ErrS3NotImplemented }
+func (s *S3Storage) WriteFile(path string, data []byte, _ os.FileMode) error {
+	return ErrS3NotImplemented
+}
+func (s *S3Storage) MkdirAll(_ string, _ os.FileMode) error  { return ErrS3NotImplemented }
+func (s *S3Storage) RemoveAll(_ string) error                { return ErrS3NotImplemented }
+func (s *S3Storage) Rename(_, _ string) error                { return ErrS3NotImplemented }
+func (s *S3Storage) Stat(_ string) (os.FileInfo, error)      { return nil, ErrS3NotImplemented }
+func (s *S3Storage) ReadDir(_ string) ([]os.DirEntry, error) { return nil, ErrS3NotImplemented }
 
 // compile-time interface check
 var _ Storage = (*S3Storage)(nil)

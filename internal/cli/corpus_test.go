@@ -11,7 +11,8 @@ import (
 	"github.com/iannil/jianwu/internal/workspace"
 )
 
-func TestCorpusListBuiltinOnly(t *testing.T) {
+func TestCorpusListWithoutWorkspaceEmpty(t *testing.T) {
+	// No workspace: corpus is empty (there is no builtin corpus any more).
 	var buf strings.Builder
 	cmd := &cobra.Command{}
 	cmd.SetOut(&buf)
@@ -19,11 +20,11 @@ func TestCorpusListBuiltinOnly(t *testing.T) {
 		t.Fatalf("runCorpusList: %v", err)
 	}
 	s := buf.String()
-	if !strings.Contains(s, "reality-construction") {
-		t.Errorf("expected reality-construction in output:\n%s", s)
+	if !strings.Contains(s, "Corpus books") {
+		t.Errorf("expected list header:\n%s", s)
 	}
-	if !strings.Contains(s, "builtin") {
-		t.Errorf("expected 'builtin' origin marker:\n%s", s)
+	if strings.Contains(s, "builtin") {
+		t.Errorf("builtin origin should no longer exist:\n%s", s)
 	}
 }
 
@@ -62,6 +63,27 @@ func TestCorpusListWithWorkspaceOverride(t *testing.T) {
 }
 
 func TestCorpusShowExisting(t *testing.T) {
+	tmp := t.TempDir()
+	wsDir := filepath.Join(tmp, "ws")
+	createWorkspace(t, wsDir)
+	addCorpusBook(t, wsDir, "reality-construction", `{
+		"slug": "reality-construction",
+		"title": {"zh": "实在建构", "en": "Reality Construction"},
+		"archetype": "ontology-epistemology-practice",
+		"audience": "educated-general",
+		"depth": "advanced",
+		"goal": "understanding",
+		"length": "long",
+		"language": ["zh"],
+		"source": {"name": "user", "url": "", "accessed_at": "2026-06-28"},
+		"abstract": "参考书",
+		"parts": [{"index": 1, "title": {"zh": "第一部分"}, "role": "ontology", "chapters": [{"index": 1, "title": {"zh": "第一章"}}]}]
+	}`)
+
+	oldDir := cliWorkspaceDir
+	cliWorkspaceDir = wsDir
+	defer func() { cliWorkspaceDir = oldDir }()
+
 	var buf strings.Builder
 	cmd := &cobra.Command{}
 	cmd.SetOut(&buf)
@@ -172,6 +194,19 @@ func TestCorpusReindex(t *testing.T) {
 	tmp := t.TempDir()
 	wsDir := filepath.Join(tmp, "ws")
 	createWorkspace(t, wsDir)
+	addCorpusBook(t, wsDir, "some-book", `{
+		"slug": "some-book",
+		"title": {"zh": "某书"},
+		"archetype": "ontology-epistemology-practice",
+		"audience": "educated-general",
+		"depth": "intermediate",
+		"goal": "understanding",
+		"length": "medium",
+		"language": ["zh"],
+		"source": {"name": "user", "url": "", "accessed_at": "2026-06-28"},
+		"abstract": "",
+		"parts": []
+	}`)
 
 	oldDir := cliWorkspaceDir
 	cliWorkspaceDir = wsDir
@@ -180,8 +215,8 @@ func TestCorpusReindex(t *testing.T) {
 	var buf strings.Builder
 	cmd := &cobra.Command{}
 	cmd.SetOut(&buf)
-	// Without API keys, the embedder factory will fail with an LLM provider error.
-	// That validates the workspace + corpus loading succeeded (would return different errors).
+	// Corpus exists but no API keys: the embedder factory fails with an LLM
+	// provider error, proving workspace + corpus loading succeeded.
 	err := runCorpusReindex(cmd, "")
 	if err == nil {
 		t.Fatal("expected error (no API keys in test)")
@@ -192,6 +227,27 @@ func TestCorpusReindex(t *testing.T) {
 		}
 	} else {
 		t.Errorf("expected *InfoError, got %T: %v", err, err)
+	}
+}
+
+func TestCorpusReindexEmptyCorpus(t *testing.T) {
+	tmp := t.TempDir()
+	wsDir := filepath.Join(tmp, "ws")
+	createWorkspace(t, wsDir)
+
+	oldDir := cliWorkspaceDir
+	cliWorkspaceDir = wsDir
+	defer func() { cliWorkspaceDir = oldDir }()
+
+	var buf strings.Builder
+	cmd := &cobra.Command{}
+	cmd.SetOut(&buf)
+	err := runCorpusReindex(cmd, "")
+	if err == nil {
+		t.Fatal("expected error for empty corpus")
+	}
+	if ie, ok := err.(*InfoError); ok && ie.Code != ExitCodeGeneric {
+		t.Errorf("expected ExitCodeGeneric, got %d (%v)", ie.Code, ie)
 	}
 }
 

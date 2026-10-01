@@ -52,6 +52,9 @@ func RunDraft(
 				break
 			}
 		}
+		if err := ctx.Err(); err != nil {
+			return "", fmt.Errorf("draft stream: %w", err)
+		}
 		return sb.String(), nil
 	}
 
