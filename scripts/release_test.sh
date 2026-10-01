@@ -16,7 +16,8 @@ expect_failure() {
     exit 1
   fi
 }
-expect_failure 'VERSION must be' bash "$root/scripts/release.sh"
+# No-arg VERSION derivation is exercised in the sandbox below (the real repo
+# has internal/cli/version.go, so a bare run here would start the full gates).
 for version in v0.3.6 01.3.6 0.3 '0.3.6 injected'; do
   expect_failure 'VERSION must be' bash "$root/scripts/release.sh" "$version" --dry-run
 done
@@ -28,11 +29,22 @@ cp "$root/scripts/release.sh" "$root/scripts/release-fingerprint.sh" "$sandbox/r
 git -C "$sandbox/repo" init -q
 git -C "$sandbox/repo" add scripts
 git -C "$sandbox/repo" -c user.name=Test -c user.email=test@example.invalid commit -qm initial
+# Bare run without internal/cli/version.go cannot derive a version.
+expect_failure 'internal/cli/version.go' bash "$sandbox/repo/scripts/release.sh" --dry-run
+# A prerelease Version in the file is rejected like an invalid argument.
+mkdir -p "$sandbox/repo/internal/cli"
+printf 'package cli\n\nvar Version = "0.3.6-dev"\n' > "$sandbox/repo/internal/cli/version.go"
+expect_failure 'VERSION must be' bash "$sandbox/repo/scripts/release.sh" --dry-run
+# Stable Version in the file: bare run derives it and reaches the tag guard.
+printf 'package cli\n\nvar Version = "0.3.6"\n' > "$sandbox/repo/internal/cli/version.go"
+git -C "$sandbox/repo" add internal
+git -C "$sandbox/repo" -c user.name=Test -c user.email=test@example.invalid commit -qm version-file
 printf 'untracked\n' > "$sandbox/repo/dirty"
 expect_failure 'clean workspace' bash "$sandbox/repo/scripts/release.sh" 0.3.6
 rm "$sandbox/repo/dirty"
 git -C "$sandbox/repo" tag v0.3.6
 expect_failure 'already exists' bash "$sandbox/repo/scripts/release.sh" 0.3.6
+expect_failure 'already exists' bash "$sandbox/repo/scripts/release.sh"
 echo 'Release argument and safety checks passed.'
 
 # Exercise the production fingerprint against real Git/filesystem changes.
