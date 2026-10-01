@@ -77,6 +77,8 @@ body {
 #main-nav a:hover { color: var(--ink); background: rgba(0, 0, 0, .05); }
 #main-nav a.active { color: var(--seal-deep); background: var(--seal-soft); }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
+/* 顶栏「新建图书」主按钮的当前页高亮（对应 #/new 向导） */
+.topbar-right a[data-nav].active { background: var(--seal-deep); border-color: var(--seal-deep); color: var(--paper); }
 
 main { max-width: 1120px; margin: 0 auto; padding: 36px 28px 96px; }
 

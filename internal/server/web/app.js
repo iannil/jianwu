@@ -213,7 +213,8 @@ const App = {
   },
 
   setNav(name) {
-    document.querySelectorAll("#main-nav a").forEach(a =>
+    // 主导航链接 + 顶栏右侧的「新建图书」入口共用同一高亮逻辑
+    document.querySelectorAll("#main-nav a, .topbar-right a[data-nav]").forEach(a =>
       a.classList.toggle("active", a.dataset.nav === name));
   },
 
@@ -356,7 +357,6 @@ const App = {
     $("#view").innerHTML = `
       <div class="page-head">
         <div><h1>书籍</h1><div class="desc">${books.length} 本</div></div>
-        <a class="btn primary" href="#/new">＋ 新建图书</a>
       </div>
       ${books.length ? this.bookCards(books) : `<div class="card">${emptyState("冊", "还没有图书", "从一次 12 维设计访谈开始：AI 逐维推荐，你确认或修改。", `<a class="btn primary" href="#/new">＋ 新建图书</a>`)}</div>`}`;
   },
