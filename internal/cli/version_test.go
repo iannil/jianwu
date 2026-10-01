@@ -7,6 +7,11 @@ import (
 )
 
 func TestVersionCommands(t *testing.T) {
+	// Stamp the vars so the VCS fallback in buildVersion stays out of the way.
+	oldCommit, oldBuildTime := Commit, BuildTime
+	Commit, BuildTime = "test-commit", "test-time"
+	defer func() { Commit, BuildTime = oldCommit, oldBuildTime }()
+
 	for _, tt := range []struct {
 		name string
 		in   []string

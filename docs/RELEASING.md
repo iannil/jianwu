@@ -1,6 +1,6 @@
 # 本地发布构建
 
-需要 Go 1.25+、Git 和 `shasum`。开发构建显示 `internal/cli/version.go` 中管理的版本（当前 `0.3.7`），commit 和构建时间显示 `unknown`。`jianwu --version`、`jianwu -v` 和 `jianwu version` 输出相同信息。
+需要 Go 1.25+、Git 和 `shasum`。开发构建显示 `internal/cli/version.go` 中管理的版本（当前 `0.3.7`）；`go build` 会自动读取 Go 内嵌的 VCS 信息显示 commit 与提交时间（脏树带 `-dirty`，与发布脚本一致），`go run` 和无 VCS 上下文的源码包则显示 `unknown`。`jianwu --version`、`jianwu -v` 和 `jianwu version` 输出相同信息。
 
 在仓库根目录验证当前源码：
 
