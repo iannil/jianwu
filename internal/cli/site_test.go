@@ -19,7 +19,7 @@ func TestSite_GeneratesFromPublishedReleases(t *testing.T) {
 	if err := runPublish(cmd, "demo", publishTestOptions()); err != nil {
 		t.Fatalf("runPublish: %v", err)
 	}
-	if err := runSite(cmd, "", false); err != nil {
+	if err := runSite(cmd, "", "", false); err != nil {
 		t.Fatalf("runSite: %v", err)
 	}
 	indexPath := filepath.Join(tmp, "site", "index.html")
@@ -44,7 +44,7 @@ func TestSite_DryRunWritesNothing(t *testing.T) {
 	var buf strings.Builder
 	cmd := &cobra.Command{}
 	cmd.SetOut(&buf)
-	if err := runSite(cmd, "", true); err != nil {
+	if err := runSite(cmd, "", "", true); err != nil {
 		t.Fatalf("dry-run: %v", err)
 	}
 	if !strings.Contains(buf.String(), "nothing written") {

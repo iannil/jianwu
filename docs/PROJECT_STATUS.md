@@ -1,6 +1,6 @@
 # jianwu 项目状态
 
-> 更新：2026-10-03。开发版本 **0.3.11**，本轮修改尚未正式发布。
+> 更新：2026-10-03。开发版本 **0.3.12**，本轮修改尚未正式发布。
 
 ## 产品
 
@@ -21,6 +21,7 @@
 - `publish`（v0.3.11，ADR 29 第 1 步）：发布门（final + license + 版本未占用，警告披露不拦截）→ `releases/<MAJOR.MINOR>/`（manifest 内容哈希、provenance 来源与用量、状态快照、章节副本；EPUB 经注入钩子可选）。版本自动推导：结构变化升 major，内容修订升 minor；已发布版本不可覆盖；staging 目录 + rename 原子落位。serve 侧 `POST /books/{slug}/publish`（dry_run 同步返回门报告）与 `GET /books/{slug}/releases`，Web UI 有发布入口。
 - `export --target epub`（v0.3.11，ADR 29 第 2 步）：纯 Go EPUB3（goldmark，无 pandoc 依赖）。脚注按章编号、章末 EPUB3 aside（noteref/doc-footnote ARIA）；每章"来源与核验"节由 Citations/Claims/Verdicts 生成（四态披露）；正文原始 HTML 转义保 XHTML 良构；`dc:identifier` 用建书 UUID，`dcterms:modified` 取 Meta.UpdatedAt，zip 条目固定——同状态字节可复现，release 内 artifact 与导出产物一致。封面约定 `cover.png|jpg`。
 - `site`（v0.3.11，ADR 29 第 3 步）：从已发布 release 生成静态阅读站（书架/书页/章节阅读页/EPUB 下载/OPDS acquisition feed）。章节页与 EPUB 共用同一渲染器，来源核验节逐字一致；确定性生成（时间戳取 manifest）；损坏 release 跳过并报告。serve 侧 `POST /api/v1/site/generate`。
+- Agent 接入层（v0.3.12，ADR 30）：`jianwu mcp`（stdio MCP 服务器，官方 go-sdk，16 工具复用 server 编排，长任务 job 模式）；`/api/v1` 正式化为 agent 契约并新增可选 Bearer token（非 localhost 无 token 拒绝启动）；site 新增 `rss.xml`（RSS 2.0，EPUB enclosure，`--base` 绝对链接）；`jianwu skill` 安装内嵌 SKILL.md（含人审闸门规则）。人工闸门不放宽：review 需显式 reviewer，发布硬门不变。
 - Token：new/expand/factcheck/revise 累计 provider 报告的 LLM 用量；--tokens 控制即时显示，status 显示书级累计。失败响应、重试、fallback、流式均通过 tracking wrapper；未报告用量标为不完整。
 - 发布：--version、-v、version 输出相同构建信息；release.sh 构建本地产物与校验和，不自动打标签或推送。
 

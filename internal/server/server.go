@@ -44,6 +44,7 @@ type Server struct {
 	wsRootV  string
 	wsSource string // flag | env | config | cwd | web
 	version  string
+	apiToken string // optional Bearer token for /api/v1 (ADR 30)
 	inject   *Deps
 	jobs     *JobManager
 }
@@ -66,6 +67,14 @@ func NewWithSource(wsRoot, source, version string, deps *Deps) *Server {
 	s := New(wsRoot, version, deps)
 	s.wsSource = source
 	return s
+}
+
+// SetToken enables Bearer-token auth for all /api/v1 requests (ADR 30).
+// An empty token keeps the default localhost trust model.
+func (s *Server) SetToken(token string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.apiToken = token
 }
 
 // root returns the current workspace root (thread-safe; the root can be
@@ -174,7 +183,39 @@ func (s *Server) Handler() http.Handler {
 
 	mux.Handle("/", spaHandler())
 
-	return logRequests(mux)
+	return s.authAPI(logRequests(mux))
+}
+
+// authAPI enforces the optional Bearer token on /api/v1/* when one is set.
+// SPA assets and non-API paths are not gated (ADR 30: token mode is for
+// agent API access).
+func (s *Server) authAPI(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		token := s.apiToken
+		s.mu.Unlock()
+		if token != "" && strings.HasPrefix(r.URL.Path, "/api/") {
+			want := "Bearer " + token
+			if !constantTimeEqual(r.Header.Get("Authorization"), want) {
+				w.Header().Set("WWW-Authenticate", `Bearer realm="jianwu"`)
+				fail(w, http.StatusUnauthorized, "missing or invalid bearer token")
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// constantTimeEqual compares two strings without early exit on mismatch.
+func constantTimeEqual(a, b string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	var v byte
+	for i := 0; i < len(a); i++ {
+		v |= a[i] ^ b[i]
+	}
+	return v == 0
 }
 
 // logRequests emits one INFO line per request; failures surface in responses.

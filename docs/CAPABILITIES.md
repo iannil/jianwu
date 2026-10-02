@@ -1,6 +1,6 @@
 # jianwu 功能概览
 
-> 开发版本：0.3.11（尚未发布） | 最后更新：2026-10-03
+> 开发版本：0.3.12（尚未发布） | 最后更新：2026-10-03
 
 ---
 
@@ -32,8 +32,10 @@
 | `corpus sync --from <path>` | v0.2.3 | 从本地 JSON 目录导入语料 |
 | `corpus collect --topic "..."` | v0.3.6-dev | 自动采集：搜索 → 阅读 → LLM 提取 → 保存 → 重建索引 |
 | `corpus reindex` | v0.2.3 | 重建 embedding 索引（调用 embedder） |
-| `site [--out] [--dry-run]` | v0.3.11 | 从已发布 release 生成静态阅读站 + OPDS（见"静态阅读站"节） |
-| `serve [--addr]` | v0.3.6-dev | 启动本地 Web UI + HTTP API（见下节） |
+| `site [--out] [--base] [--dry-run]` | v0.3.11 | 从已发布 release 生成静态阅读站 + RSS/OPDS（见"静态阅读站"节） |
+| `mcp` | v0.3.12 | 以 MCP stdio 服务器运行，16 个工具覆盖全管线（见 [Agent 接入](AGENT_ACCESS.md)） |
+| `skill [--dir] [--stdout]` | v0.3.12 | 安装/打印 agent 技能文件 SKILL.md（工作流+闸门规则） |
+| `serve [--addr] [--token]` | v0.3.6-dev | 启动本地 Web UI + HTTP API（见下节；token 见 Agent 接入） |
 
 ---
 
@@ -85,6 +87,7 @@ books/<slug>/releases/<MAJOR.MINOR>/
 - **书页** `<slug>/index.html`：colophon（许可 + AI 生成披露）、历史版本、目录、EPUB 下载（附 sha256 摘要）。
 - **章节页** `<slug>/ch-NN-MM.html`：正文 + 脚注 + 与 EPUB **逐字一致**的"来源与核验"节（复用同一渲染器），上一章/下一章导航。
 - **OPDS** `opds.xml`：OPDS 1.x acquisition feed；阅读器 App 可发现并直接下载 `epub/<slug>.epub`（release artifact 逐字节副本）。
+- **RSS** `rss.xml`：RSS 2.0 发布订阅源（v0.3.12）——每版本一个 item，EPUB 以 enclosure 附带，描述含未核验论断数披露；`--base <url>` 使 RSS/OPDS 链接绝对化。
 - **确定性**：时间戳全部来自 manifest，同一书架状态重复生成字节相同；`site/` 为派生状态，每次整体重建。损坏的 release 跳过并报告，不中断生成。
 - serve 侧：`POST /api/v1/site/generate`（`dry_run` 同步返回书架清单；实际生成走任务队列）。
 

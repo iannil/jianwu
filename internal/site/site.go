@@ -113,11 +113,18 @@ type Result struct {
 	Files   []string
 }
 
-// Generate rebuilds the site at outDir from the published shelf. The
-// directory is fully derived state: it is wiped and regenerated, never
+// Generate is the legacy entry without a base URL; links stay relative.
+func Generate(wsRoot, outDir string) (*Result, error) {
+	return GenerateAt(wsRoot, outDir, "")
+}
+
+// GenerateAt rebuilds the site at outDir from the published shelf. baseURL,
+// when non-empty (e.g. "https://books.example.com"), is prefixed into RSS
+// and OPDS links so feed readers resolve them; pages keep relative links.
+// The directory is fully derived state: it is wiped and regenerated, never
 // incrementally updated. Deterministic for a given shelf state (timestamps
 // come from manifests, iteration is sorted).
-func Generate(wsRoot, outDir string) (*Result, error) {
+func GenerateAt(wsRoot, outDir, baseURL string) (*Result, error) {
 	books, skipped, err := Scan(wsRoot)
 	if err != nil {
 		return nil, err
@@ -181,7 +188,10 @@ func Generate(wsRoot, outDir string) (*Result, error) {
 	if err := write("index.html", []byte(indexPage(books))); err != nil {
 		return nil, err
 	}
-	if err := write("opds.xml", []byte(opdsFeed(entries))); err != nil {
+	if err := write("opds.xml", []byte(opdsFeed(entries, baseURL))); err != nil {
+		return nil, err
+	}
+	if err := write("rss.xml", []byte(rssFeed(books, baseURL))); err != nil {
 		return nil, err
 	}
 	return res, nil

@@ -5,7 +5,7 @@
 
 ## 项目
 
-- **当前版本：** 0.3.11（独立产品；可靠生成、显式引用、累计用量与本地发布、Kimi/DeepSeek 提供商；本轮：出版层第 1–3 步——`publish` 命令与不可变 Release 模型（ADR 29：发布硬门 final+license、版本自动推导、manifest/provenance、staging 原子落位）+ `export --target epub` 纯 Go EPUB3（脚注 aside、每章"来源与核验"节、确定性构建）+ `site` 静态阅读站与 OPDS（只读 release，章节页与 EPUB 同源渲染）；CLI + serve 全接线。版本号统一在 `internal/cli/version.go` 管理。
+- **当前版本：** 0.3.12（独立产品；本轮：agent 接入层（ADR 30）——`jianwu mcp` stdio MCP 服务器（官方 go-sdk，16 工具复用 server 编排与串行队列，长任务 job 模式）、`/api/v1` 新增可选 Bearer token（非 localhost 无 token 拒绝启动）、site 新增 rss.xml（RSS 2.0 + `--base` 绝对链接）、`jianwu skill` 安装内嵌 SKILL.md；review 人工闸门与发布硬门不因 agent 放宽。前轮 0.3.11：出版层第 1–3 步（publish/Release、EPUB3、静态阅读站+OPDS，ADR 29）。版本号统一在 `internal/cli/version.go` 管理。
 - **技术栈：** Go 1.25 + cobra (CLI) + spf13/pflag + YAML 配置 + gemini/glm/kimi/deepseek/ollama LLM 提供商 + net/http 内嵌 Web UI（`internal/server`）
 - **入口点：** `cmd/jianwu/main.go` → `cli.NewRootCmd()` → cobra 子命令；`jianwu serve` → `internal/server`（Web UI + `/api/v1` HTTP API）
 - **工作区模型：** 每个项目 = 一个本地目录（建议用 git 备份），包含 `.jianwu/` 配置 + `books/<slug>/` 输出（含 `releases/` 不可变发布版本）
@@ -26,7 +26,7 @@
 
 ## 架构
 
-11 个关键内部包（含 2 个新包 v0.2.0 + storage v0.3.0 + release/export/site v0.3.11）：
+12 个关键内部包（含 2 个新包 v0.2.0 + storage v0.3.0 + release/export/site v0.3.11 + skill v0.3.12）：
 
 - **`internal/cli/`** — cobra 命令树；薄封装层，调用 engine + book + workspace。  
   每个子命令有 `newXxxCmd()` + `runXxx()` 可测试核心。所有 CLI 命令列表见 `docs/PROJECT_STATUS.md §9`。
@@ -42,7 +42,8 @@
 - **`internal/config/`** — 5 层合并配置（默认 → 全局 → 工作区 → 环境变量 → 命令行标志）。密钥在 `~/.config/jianwu/secrets.yaml`。
 - **`internal/workspace/`** — 工作区的初始化、检测、加载、状态管理（使用 `storage.OS`）。
 - **`internal/archetypes/`** + **`internal/style/`** — 嵌入的 YAML 资源（图书原型、风格指南）。**`internal/corpus/`** 不再内嵌语料：参考语料全部来自工作区（`corpus collect` 自动采集 / `corpus sync` 导入 / 手写 JSON）。
-- **`internal/server/`** — Web 层（v0.3.6-dev）：`jianwu serve` 启动本地 HTTP 服务（默认 127.0.0.1:8787）。JSON API 在 `/api/v1/`（workspace/config/books/chapters/grill/corpus/jobs/publish/releases），内嵌 SPA 在 `web/`（vanilla JS，无构建步骤，`go:embed`）。长耗时操作经 `JobManager` 单 worker 串行执行（同书不并发写约束）；grill 访谈以"创建会话 → 逐题 answer → generate 任务"方式 HTTP 化。provider 按 `depsNeed` 按需装配（访谈不需要搜索 key）。工作区根可运行时切换（`POST /api/v1/workspace/select`，持久化到全局配置 `workspace:` 键，见 `config/global.go`）；启动解析优先级 `--dir` > `JIANWU_WORKSPACE` > 全局配置 > CWD（`workspace/resolve.go`），未初始化时写操作被 `requireWorkspace` 拦截（HTTP 428）。测试用注入 `Deps`（mock chatter/searcher/reader）。编排逻辑镜像 `internal/cli`（引擎调用相同；未来可抽取共享 pipeline 包）。
+- **`internal/server/`** — Web + MCP 层：`jianwu serve` 启动本地 HTTP 服务（默认 127.0.0.1:8787）；`jianwu mcp` 启动 stdio MCP 服务器（v0.3.12，ADR 30，官方 go-sdk；`mcp.go` 注册 16 工具，`mcp_helpers.go` 辅助，全部复用 HTTP 侧同一编排与 JobManager 串行队列）。JSON API 在 `/api/v1/`（workspace/config/books/chapters/grill/corpus/jobs/publish/releases/site），可选 Bearer token 认证（`SetToken`/`authAPI`，非 localhost 无 token 在 serve 启动时拒绝）。内嵌 SPA 在 `web/`（vanilla JS，无构建步骤，`go:embed`）。长耗时操作经 `JobManager` 单 worker 串行执行；provider 按 `depsNeed` 按需装配；工作区根可运行时切换；测试用注入 `Deps`（mock chatter/searcher/reader）与内存传输直连 MCP。编排逻辑镜像 `internal/cli`。
+- **`internal/skill/`** — agent 技能（v0.3.12）：内嵌 SKILL.md（工作流、四接入方式、人审闸门规则）+ `Install` 到 `<dir>/jianwu/`（默认 `~/.agents/skills/`）。
 
 ## 约定
 

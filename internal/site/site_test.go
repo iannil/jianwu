@@ -169,8 +169,44 @@ func TestGenerate_ProducesCompleteSite(t *testing.T) {
 		!strings.Contains(feed, "书名alpha") || !strings.Contains(feed, "urn:uuid:id-alpha") {
 		t.Errorf("opds feed incomplete:\n%s", feed)
 	}
-	if !strings.Contains(feed, "书名beta") || !strings.Contains(feed, `rel="alternate" href="beta/index.html"`) {
+	if !strings.Contains(feed, "书名beta") || !strings.Contains(feed, `rel="alternate" href="/beta/index.html"`) {
 		t.Errorf("artifact-less book must still be listed with an alternate link:\n%s", feed)
+	}
+
+	// RSS feed parses, carries the disclosure and the EPUB enclosure.
+	rss := read("rss.xml")
+	if err := xml.Unmarshal([]byte(rss), new(any)); err != nil {
+		t.Fatalf("rss not well-formed: %v\n%s", err, rss)
+	}
+	for _, want := range []string{
+		"<title>书名alpha v1.0</title>",
+		`<enclosure url="/epub/alpha.epub" length="13" type="application/epub+zip" />`,
+		"未核验论断",
+		"<guid>urn:uuid:id-alpha-1.0</guid>",
+	} {
+		if !strings.Contains(rss, want) {
+			t.Errorf("rss missing %q:\n%s", want, rss)
+		}
+	}
+	if !strings.Contains(rss, "<pubDate>") {
+		t.Error("rss items must carry pubDate")
+	}
+}
+
+func TestGenerateAt_BaseURLMakesAbsoluteLinks(t *testing.T) {
+	ws := t.TempDir()
+	publishFixture(t, ws, "alpha", true)
+	out := filepath.Join(ws, "site")
+	if _, err := GenerateAt(ws, out, "https://books.example.com/"); err != nil {
+		t.Fatal(err)
+	}
+	rss, _ := os.ReadFile(filepath.Join(out, "rss.xml"))
+	if !strings.Contains(string(rss), `url="https://books.example.com/epub/alpha.epub"`) {
+		t.Errorf("rss enclosure not absolute:\n%s", rss)
+	}
+	feed, _ := os.ReadFile(filepath.Join(out, "opds.xml"))
+	if !strings.Contains(string(feed), `href="https://books.example.com/epub/alpha.epub"`) {
+		t.Errorf("opds acquisition not absolute:\n%s", feed)
 	}
 }
 
@@ -198,7 +234,7 @@ func TestGenerate_DeterministicAndSkipsBrokenReleases(t *testing.T) {
 	if _, err := Generate(ws, out2); err != nil {
 		t.Fatal(err)
 	}
-	for _, rel := range []string{"index.html", "opds.xml", "alpha/index.html", "alpha/ch-01-01.html", "site.css"} {
+	for _, rel := range []string{"index.html", "opds.xml", "rss.xml", "alpha/index.html", "alpha/ch-01-01.html", "site.css"} {
 		a, _ := os.ReadFile(filepath.Join(out1, rel))
 		b, _ := os.ReadFile(filepath.Join(out2, rel))
 		if string(a) != string(b) {

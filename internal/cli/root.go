@@ -72,6 +72,8 @@ Design, draft, verify sources, review and export from your own workspace.`,
 	cmd.AddCommand(newRewriteCmd())
 	cmd.AddCommand(newCorpusCmd())
 	cmd.AddCommand(newSiteCmd())
+	cmd.AddCommand(newSkillCmd())
+	cmd.AddCommand(newMCPCmd())
 	cmd.AddCommand(newServeCmd())
 
 	return cmd

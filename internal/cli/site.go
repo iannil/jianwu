@@ -11,7 +11,7 @@ import (
 )
 
 func newSiteCmd() *cobra.Command {
-	var out string
+	var out, base string
 	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "site [--out <dir>] [--dry-run]",
@@ -25,15 +25,16 @@ fully derived state: it is wiped and regenerated on every run. Deterministic
 for a given shelf state. Deploy the output to any static host.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSite(cmd, out, dryRun)
+			return runSite(cmd, out, base, dryRun)
 		},
 	}
 	cmd.Flags().StringVar(&out, "out", "", "output directory (default <workspace>/site)")
+	cmd.Flags().StringVar(&base, "base", "", "base URL for absolute RSS/OPDS links (e.g. https://books.example.com)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "list the shelf without writing")
 	return cmd
 }
 
-func runSite(cmd *cobra.Command, out string, dryRun bool) error {
+func runSite(cmd *cobra.Command, out, base string, dryRun bool) error {
 	o := cmd.OutOrStdout()
 	wsRoot, err := workspace.FindWorkspace(findWorkspacePath())
 	if err != nil {
@@ -58,7 +59,7 @@ func runSite(cmd *cobra.Command, out string, dryRun bool) error {
 		fmt.Fprintf(o, "[dry-run] would write %s (%d book(s)), nothing written\n", out, len(books))
 		return nil
 	}
-	res, err := site.Generate(wsRoot, out)
+	res, err := site.GenerateAt(wsRoot, out, base)
 	if err != nil {
 		return &InfoError{Err: err, Code: ExitCodeGeneric}
 	}
