@@ -130,6 +130,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v1/books/{slug}/finalize", s.handleFinalize)     // {dry_run}
 	mux.HandleFunc("POST /api/v1/books/{slug}/export", s.handleExport)         // {target, dry_run}
 	mux.HandleFunc("GET /api/v1/books/{slug}/export/file", s.handleExportFile) // ?target=md|hugo|pdf
+	mux.HandleFunc("POST /api/v1/books/{slug}/publish", s.handlePublish)       // {version, major, dry_run}
+	mux.HandleFunc("GET /api/v1/books/{slug}/releases", s.handleReleases)      // published versions
 	mux.HandleFunc("POST /api/v1/books/{slug}/chapters", s.handleChapterAdd)   // {after, topic, as}
 
 	// Chapters.
@@ -151,6 +153,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v1/grill/sessions/{id}/generate", s.handleGrillGenerate)
 
 	// Corpus.
+	mux.HandleFunc("POST /api/v1/site/generate", s.handleSiteGenerate) // {dry_run}
+
 	mux.HandleFunc("GET /api/v1/corpus", s.handleCorpusList)
 	mux.HandleFunc("GET /api/v1/corpus/stats", s.handleCorpusStats)
 	mux.HandleFunc("GET /api/v1/corpus/{slug}", s.handleCorpusShow)

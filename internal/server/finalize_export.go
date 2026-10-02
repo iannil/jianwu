@@ -13,6 +13,7 @@ import (
 	"archive/zip"
 
 	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/export"
 	"github.com/iannil/jianwu/internal/storage"
 )
 
@@ -100,9 +101,9 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		body.Target = "md"
 	}
 	switch body.Target {
-	case "md", "hugo", "pdf":
+	case "md", "hugo", "pdf", "epub":
 	default:
-		failf(w, http.StatusBadRequest, "不支持的导出目标 %q；支持 md、hugo、pdf", body.Target)
+		failf(w, http.StatusBadRequest, "不支持的导出目标 %q；支持 md、hugo、pdf、epub", body.Target)
 		return
 	}
 	if !s.requireWorkspace(w) {
@@ -153,6 +154,9 @@ func (s *Server) handleExportFile(w http.ResponseWriter, r *http.Request) {
 	case "pdf":
 		path = filepath.Join(bc.BookDir, "export", bc.Meta.Slug+".pdf")
 		name = bc.Meta.Slug + ".pdf"
+	case "epub":
+		path = filepath.Join(bc.BookDir, "export", bc.Meta.Slug+".epub")
+		name = bc.Meta.Slug + ".epub"
 	case "hugo":
 		// Hugo export is a directory; zip it for download.
 		dir := filepath.Join(bc.BookDir, "export", "hugo")
@@ -178,6 +182,8 @@ func (s *Server) handleExportFile(w http.ResponseWriter, r *http.Request) {
 	ctype := "text/markdown; charset=utf-8"
 	if strings.HasSuffix(name, ".pdf") {
 		ctype = "application/pdf"
+	} else if strings.HasSuffix(name, ".epub") {
+		ctype = "application/epub+zip"
 	} else if strings.HasSuffix(name, ".zip") {
 		ctype = "application/zip"
 	}
@@ -215,8 +221,41 @@ func (s *Server) runExport(_ context.Context, j *Job, slug, target string) error
 		return s.exportHugo(j, bc)
 	case "pdf":
 		return s.exportPDF(j, bc)
+	case "epub":
+		return s.exportEPUB(j, bc)
 	}
 	return fmt.Errorf("不支持的导出目标 %q", target)
+}
+
+// buildEPUBArtifact assembles deterministic EPUB 3 bytes; shared by the
+// export job and the publish release artifact.
+func (s *Server) buildEPUBArtifact(bc *bookCtx) ([]byte, error) {
+	docs, err := export.Collect(bc.BookDir, bc.Outline)
+	if err != nil {
+		return nil, err
+	}
+	cover, media := export.FindCover(bc.BookDir)
+	return export.BuildEPUB(export.BookInput{Meta: bc.Meta, Outline: bc.Outline, Chapters: docs},
+		export.Options{JianwuVersion: s.version, CoverData: cover, CoverMedia: media})
+}
+
+// exportEPUB writes export/<slug>.epub (EPUB 3, no external toolchain).
+func (s *Server) exportEPUB(j *Job, bc *bookCtx) error {
+	j.SetProgress(40, "渲染 XHTML 与脚注")
+	data, err := s.buildEPUBArtifact(bc)
+	if err != nil {
+		return err
+	}
+	outPath := filepath.Join(bc.BookDir, "export", bc.Meta.Slug+".epub")
+	if err := storage.OS.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		return fmt.Errorf("mkdir export dir: %w", err)
+	}
+	if err := storage.OS.WriteFile(outPath, data, 0o644); err != nil {
+		return fmt.Errorf("write epub: %w", err)
+	}
+	j.Logf("✓ 导出 %s（含来源核验节）", outPath)
+	j.SetResult("file", outPath)
+	return nil
 }
 
 // exportMD writes a single markdown file with Pandoc YAML frontmatter

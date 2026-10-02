@@ -97,6 +97,31 @@ func TestMemStorageRenameMissing(t *testing.T) {
 	}
 }
 
+func TestMemStorageRenameDir(t *testing.T) {
+	m := NewMemStorage()
+	m.WriteFile("/books/demo/.staging-1.0/manifest.json", []byte("m"), 0o644)
+	m.WriteFile("/books/demo/.staging-1.0/content/01-01.md", []byte("c"), 0o644)
+	// An unrelated file that must stay put.
+	m.WriteFile("/books/demo/meta.json", []byte("meta"), 0o644)
+
+	if err := m.Rename("/books/demo/.staging-1.0", "/books/demo/1.0"); err != nil {
+		t.Fatalf("Rename dir: %v", err)
+	}
+
+	if _, err := m.ReadFile("/books/demo/1.0/manifest.json"); err != nil {
+		t.Errorf("manifest not moved: %v", err)
+	}
+	if _, err := m.ReadFile("/books/demo/1.0/content/01-01.md"); err != nil {
+		t.Errorf("nested file not moved: %v", err)
+	}
+	if _, err := m.ReadFile("/books/demo/.staging-1.0/manifest.json"); !os.IsNotExist(err) {
+		t.Error("staging path should be gone after dir rename")
+	}
+	if data, err := m.ReadFile("/books/demo/meta.json"); err != nil || string(data) != "meta" {
+		t.Errorf("unrelated file disturbed: %v %q", err, string(data))
+	}
+}
+
 func TestMemStorageRemoveAll(t *testing.T) {
 	m := NewMemStorage()
 	m.WriteFile("/books/a/ch01.md", []byte("c1"), 0o644)

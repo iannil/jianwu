@@ -62,6 +62,7 @@ Design, draft, verify sources, review and export from your own workspace.`,
 	cmd.AddCommand(newReviewCmd())
 	cmd.AddCommand(newFinalizeCmd())
 	cmd.AddCommand(newExportCmd())
+	cmd.AddCommand(newPublishCmd())
 	cmd.AddCommand(newStatusCmd())
 	cmd.AddCommand(newFactCheckCmd())
 	cmd.AddCommand(newReviseCmd())
@@ -70,6 +71,7 @@ Design, draft, verify sources, review and export from your own workspace.`,
 	cmd.AddCommand(newMoveChapterCmd())
 	cmd.AddCommand(newRewriteCmd())
 	cmd.AddCommand(newCorpusCmd())
+	cmd.AddCommand(newSiteCmd())
 	cmd.AddCommand(newServeCmd())
 
 	return cmd

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/iannil/jianwu/internal/book"
+	"github.com/iannil/jianwu/internal/export"
 	"github.com/iannil/jianwu/internal/storage"
 	"github.com/spf13/cobra"
 )
@@ -25,15 +26,17 @@ Targets:
   md    — Single markdown file with Pandoc frontmatter (default)
   hugo  — Chapter-per-file Hugo content structure
   pdf   — PDF via pandoc (requires pandoc + xelatex installed)
+  epub  — EPUB 3 (pure Go; footnotes become EPUB3 asides and every chapter
+          ends with a "来源与核验" section from claims/citations/verdicts)
 
-Footnotes are renumbered globally across the book.
+Footnotes are renumbered globally across the book (per chapter for epub).
 Exportable at any status.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runExport(cmd, args, target, dryRun)
 		},
 	}
-	cmd.Flags().StringVar(&target, "target", "md", "export target: md (single file), hugo (chapter-per-file), or pdf (pandoc required)")
+	cmd.Flags().StringVar(&target, "target", "md", "export target: md (single file), hugo (chapter-per-file), pdf (pandoc required), or epub (EPUB 3)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "report what would be written without writing")
 	return cmd
 }
@@ -51,9 +54,55 @@ func runExport(cmd *cobra.Command, args []string, target string, dryRun bool) er
 		return exportHugo(cmd, bc, dryRun)
 	case "pdf":
 		return exportPDF(cmd, bc, dryRun)
+	case "epub":
+		return exportEPUB(cmd, bc, dryRun)
 	default:
-		return &InfoError{Err: fmt.Errorf("unsupported export target %q; supported: md, hugo, pdf", target), Code: ExitCodeUsage}
+		return &InfoError{Err: fmt.Errorf("unsupported export target %q; supported: md, hugo, pdf, epub", target), Code: ExitCodeUsage}
 	}
+}
+
+// buildEPUBArtifact assembles the book into deterministic EPUB 3 bytes.
+// Shared by export --target epub and the publish release artifact.
+func buildEPUBArtifact(bc *bookCtx) ([]byte, error) {
+	docs, err := export.Collect(bc.BookDir, bc.Outline)
+	if err != nil {
+		return nil, err
+	}
+	cover, media := export.FindCover(bc.BookDir)
+	return export.BuildEPUB(export.BookInput{Meta: bc.Meta, Outline: bc.Outline, Chapters: docs},
+		export.Options{JianwuVersion: Version, CoverData: cover, CoverMedia: media})
+}
+
+// exportEPUB writes export/<slug>.epub (EPUB 3, no external toolchain).
+func exportEPUB(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
+	out := cmd.OutOrStdout()
+	present, missing := 0, 0
+	for pi := range bc.Outline.Parts {
+		for ci := range bc.Outline.Parts[pi].Chapters {
+			if _, err := os.Stat(book.ChapterPath(bc.BookDir, bc.Outline.Parts[pi].Index, bc.Outline.Parts[pi].Chapters[ci].Index)); err == nil {
+				present++
+			} else {
+				missing++
+			}
+		}
+	}
+	outPath := filepath.Join(bc.BookDir, "export", bc.Meta.Slug+".epub")
+	if dryRun {
+		fmt.Fprintf(out, "[dry-run] would write %s (%d chapter(s), %d placeholder(s))\n", outPath, present, missing)
+		return nil
+	}
+	data, err := buildEPUBArtifact(bc)
+	if err != nil {
+		return &InfoError{Err: err, Code: ExitCodeGeneric}
+	}
+	if err := storage.OS.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		return &InfoError{Err: fmt.Errorf("mkdir export dir: %w", err), Code: ExitCodeGeneric}
+	}
+	if err := storage.OS.WriteFile(outPath, data, 0o644); err != nil {
+		return &InfoError{Err: fmt.Errorf("write epub: %w", err), Code: ExitCodeGeneric}
+	}
+	fmt.Fprintf(out, "✓ Exported %s (%d chapter(s), %d placeholder(s))\n", outPath, present, missing)
+	return nil
 }
 
 // exportMD writes a single markdown file with Pandoc YAML frontmatter.

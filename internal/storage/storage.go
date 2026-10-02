@@ -79,12 +79,29 @@ func (m *MemStorage) RemoveAll(path string) error {
 	return nil
 }
 func (m *MemStorage) Rename(oldPath, newPath string) error {
-	data, ok := m.files[oldPath]
-	if !ok {
+	if data, ok := m.files[oldPath]; ok {
+		m.files[newPath] = data
+		delete(m.files, oldPath)
+		return nil
+	}
+	// Directory move: relocate every key under oldPath/ to newPath/.
+	prefix := oldPath
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+	var moves [][2]string
+	for k := range m.files {
+		if strings.HasPrefix(k, prefix) {
+			moves = append(moves, [2]string{k, newPath + "/" + k[len(prefix):]})
+		}
+	}
+	if len(moves) == 0 {
 		return os.ErrNotExist
 	}
-	m.files[newPath] = data
-	delete(m.files, oldPath)
+	for _, mv := range moves {
+		m.files[mv[1]] = m.files[mv[0]]
+		delete(m.files, mv[0])
+	}
 	return nil
 }
 func (m *MemStorage) Stat(path string) (os.FileInfo, error) {

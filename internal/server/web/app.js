@@ -363,7 +363,10 @@ const App = {
   async viewBook(slug) {
     this.setNav("books");
     $("#view").innerHTML = SKELETON_VIEW;
-    const { meta, outline, stats } = await api("/books/" + encodeURIComponent(slug));
+    const [{ meta, outline, stats }, rel] = await Promise.all([
+      api("/books/" + encodeURIComponent(slug)),
+      api("/books/" + encodeURIComponent(slug) + "/releases").catch(() => ({ releases: [] })),
+    ]);
     const v = $("#view");
     this.currentBook = slug;
     const chRows = (p) => p.chapters.map(c => {
@@ -408,10 +411,25 @@ const App = {
             <button class="btn" onclick="App.exportBook('${esc(slug)}','md')">Markdown</button>
             <button class="btn" onclick="App.exportBook('${esc(slug)}','hugo')">Hugo</button>
             <button class="btn" onclick="App.exportBook('${esc(slug)}','pdf')">PDF</button>
+            <button class="btn" onclick="App.exportBook('${esc(slug)}','epub')">EPUB</button>
             <button class="btn" onclick="App.downloadExport('${esc(slug)}','md')">下载 .md</button>
+            <button class="btn" onclick="App.downloadExport('${esc(slug)}','epub')">下载 .epub</button>
+          </div>
+          <span class="tb-sep" aria-hidden="true"></span>
+          <div class="tb-group" role="group" aria-label="发布">
+            <span class="tb-label">发布</span>
+            <button class="btn" onclick="App.publishBook('${esc(slug)}')">发布新版本</button>
           </div>
         </div>
       </div>
+      ${(rel.releases || []).length ? `
+      <div class="card" style="margin-bottom:14px">
+        <b>已发布版本</b>
+        <table class="chapters">
+          <tr><th>版本</th><th>发布时间</th><th>章节</th><th>未核验论断</th><th>EPUB</th></tr>
+          ${rel.releases.map(r => `<tr><td class="addr">${esc(r.version)}</td><td>${esc(r.created_at)}</td><td>${r.chapters}</td><td>${r.claims_unverified}</td><td>${r.has_epub ? "✓" : "—"}</td></tr>`).join("")}
+        </table>
+      </div>` : ""}
       ${outline.parts.length === 0 ? `<div class="card">${emptyState("纲", "大纲为空", "这本书还没有目录结构。回到「新建图书」完成访谈，即可生成大纲与章节框架。", `<a class="btn" href="#/new">去新建访谈</a>`)}</div>` : ""}
       ${outline.parts.map(p => `
         <div class="part-block">
@@ -493,6 +511,21 @@ const App = {
   },
   downloadExport(slug, target) {
     window.open(`/api/v1/books/${encodeURIComponent(slug)}/export/file?target=${target}`, "_blank");
+  },
+  async publishBook(slug) {
+    try {
+      const rep = await api(`/books/${encodeURIComponent(slug)}/publish`, { body: { dry_run: true } });
+      const blockers = (rep.gate && rep.gate.blockers) || [];
+      if (blockers.length) {
+        await Modal.open({ title: "发布门未通过", text: blockers.join("；"), okText: "知道了" });
+        return;
+      }
+      const warns = (rep.gate && rep.gate.warnings) || [];
+      const warnText = warns.length ? ` 有 ${warns.length} 条警告（如未核验论断），将如实记录进 manifest。` : "";
+      if (!(await Modal.open({ title: `发布 ${rep.version}`, text: `将写入不可变的 release ${rep.version}：manifest、provenance、状态快照与章节副本。${warnText}`, okText: "发布" }))) return;
+      this.startJob(`/books/${encodeURIComponent(slug)}/publish`, {},
+        j => { if (j.slug === slug) this.route(); });
+    } catch (e) { toast(e.message, "err"); }
   },
   async cancelJob(id) {
     try { await api(`/jobs/${id}`, { method: "DELETE" }); toast("已请求取消"); }

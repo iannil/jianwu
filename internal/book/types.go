@@ -12,6 +12,8 @@ type Meta struct {
 	Slug         string                `json:"slug"`
 	Title        string                `json:"title"`
 	Subtitle     string                `json:"subtitle,omitempty"`
+	Author       string                `json:"author,omitempty"`
+	License      string                `json:"license,omitempty"`
 	Archetype    string                `json:"archetype"`
 	Parameters   Parameters            `json:"parameters"`
 	Language     string                `json:"language"`
