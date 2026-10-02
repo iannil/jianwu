@@ -6,7 +6,7 @@ Turn knowledge into structured, reviewable non-fiction books with traceable sour
 
 jianwu is an independent, local-first Go CLI for writers, researchers and people organizing knowledge. It guides book design, outlines and chapter drafting, records source checks, and keeps prose, citations and progress in your workspace.
 
-**Development version: 0.3.6-dev, not yet released.** [Project status](docs/PROJECT_STATUS.md) · [Capabilities](docs/CAPABILITIES.md) · [Roadmap](docs/ROADMAP.md)
+**Development version: 0.3.11, not yet released.** [Project status](docs/PROJECT_STATUS.md) · [Capabilities](docs/CAPABILITIES.md) · [Roadmap](docs/ROADMAP.md)
 
 ## Workflow
 
@@ -15,7 +15,9 @@ Design interview → Outline → Chapter scaffolds → Research / Draft / Valida
                                                         ↓
                                                  Fact-check ↔ Revise
                                                         ↓
-                                             Human review → Finalize → Export
+                                   Human review → Finalize → Publish (Release)
+                                                        ↓
+                                    EPUB artifact · Static reading site · OPDS
 ```
 
 - Six structural archetypes, reference material and style guidance.
@@ -23,7 +25,9 @@ Design interview → Outline → Chapter scaffolds → Research / Draft / Valida
 - Chapter status, explicit claim-to-citation IDs and verification records.
 - Batch expansion with up to five concurrent generators and serialized saves; failures produce a nonzero exit code.
 - Cumulative provider-reported LLM tokens, including observable stream/retry/fallback usage; missing reports are marked incomplete.
-- Markdown, Hugo and PDF export (PDF requires pandoc/xelatex).
+- Markdown, Hugo, PDF and pure-Go EPUB 3 export; every EPUB chapter carries a source-verification section (claims, citations, verdicts) and identical pages on the reading site.
+- Publishing layer (ADR 29): `publish` writes immutable, versioned releases (manifest with content hashes, provenance with AI disclosure and deduplicated sources) behind a hard gate — whole book final plus an explicit license. Structural edits bump the major version, content fixes the minor; published versions are never overwritten.
+- `jianwu site` regenerates a static reading shelf from published releases only: catalog, chapter reading pages, EPUB downloads and an OPDS acquisition feed. Deterministic output, deployable to any static host.
 
 Source verification assists human review. Book quality and learning outcomes still require [real evaluation](docs/EVALUATION.md).
 
@@ -52,7 +56,11 @@ jianwu factcheck "$book_slug" 01-01
 jianwu review "$book_slug" 01-01
 # Repeat verification/review for every chapter before finalizing
 jianwu finalize "$book_slug"
-jianwu export "$book_slug" --target md
+jianwu export "$book_slug" --target epub
+# Publishing (requires license in books/<slug>/meta.json):
+jianwu publish "$book_slug" --dry-run
+jianwu publish "$book_slug"    # immutable release with EPUB artifact
+jianwu site                    # static shelf + OPDS from published releases
 ```
 
 Back up your workspace before writing. Do not modify one book from multiple CLI processes simultaneously. Legacy claims without citation IDs remain unverified; back up and re-expand to establish explicit associations.
@@ -76,7 +84,7 @@ The same workspace is also exposed as a JSON API at `http://127.0.0.1:8787/api/v
 go test -race ./...
 go vet ./...
 scripts/release_test.sh
-scripts/release.sh 0.3.6 --dry-run
+scripts/release.sh 0.3.11 --dry-run
 ```
 
 The [release workflow](docs/RELEASING.md) produces a local binary, build metadata and checksums. It never tags or pushes automatically. Engine packages live under `internal/`; no public Go SDK is currently offered.

@@ -6,7 +6,7 @@
 
 jianwu 是独立、本地优先的 Go CLI 产品，面向写作者、研究者与知识整理者。通过设计访谈、图书原型、逐章写作、来源复核和人工审阅组织长篇创作。内容、引用和进度保存在自己的工作区。
 
-**开发版本：0.3.6-dev，尚未正式发布。** [项目状态](docs/PROJECT_STATUS.md) · [功能概览](docs/CAPABILITIES.md) · [路线图](docs/ROADMAP.md)
+**开发版本：0.3.11，尚未正式发布。** [项目状态](docs/PROJECT_STATUS.md) · [功能概览](docs/CAPABILITIES.md) · [路线图](docs/ROADMAP.md)
 
 ## 工作流程
 
@@ -15,7 +15,9 @@ jianwu 是独立、本地优先的 Go CLI 产品，面向写作者、研究者�
                              ↓
                         来源复核 ↔ 修订
                              ↓
-                       人工审阅 → 定稿 → 导出
+              人工审阅 → 定稿 → 发布（Release）
+                                ↓
+                EPUB 产物 · 静态阅读站 · OPDS 订阅
 ```
 
 - 6 种结构原型、内置参考语料与风格指南。
@@ -23,7 +25,9 @@ jianwu 是独立、本地优先的 Go CLI 产品，面向写作者、研究者�
 - 章节状态、显式 claim/引用关联、来源核对结论。
 - 批量展开最多 5 并发，集中保存进度，失败退出非零。
 - 累计 provider 已报告的 LLM Token；流式、重试及 fallback 用量跟踪，缺失报告明确提示。
-- Markdown、Hugo、PDF 导出（PDF 需要 pandoc/xelatex）。
+- Markdown、Hugo、PDF 与纯 Go EPUB3 导出；EPUB 每章带"来源与核验"节（论断/引用/核验结论），阅读站章节页与之逐字一致。
+- 出版层（ADR 29）：`publish` 在硬门（全书 final + 显式 license）之后写入不可变的版本化 release（manifest 内容哈希、provenance 含 AI 披露与去重来源清单）。结构变化升 major、内容修订升 minor；已发布版本不可覆盖。
+- `jianwu site` 只从已发布 release 生成静态书架：目录、章节阅读页、EPUB 下载与 OPDS 订阅源；确定性输出，可部署到任意静态托管。
 
 来源复核是辅助判断，人工审阅仍然必要。真实样书和学习效果尚待 [评估](docs/EVALUATION.md)。
 
@@ -52,7 +56,11 @@ jianwu factcheck "$book_slug" 01-01
 jianwu review "$book_slug" 01-01
 # 对每章完成复核与审阅后
 jianwu finalize "$book_slug"
-jianwu export "$book_slug" --target md
+jianwu export "$book_slug" --target epub
+# 出版（需要在 books/<slug>/meta.json 设置 license）：
+jianwu publish "$book_slug" --dry-run
+jianwu publish "$book_slug"    # 不可变 release，内含 EPUB 产物
+jianwu site                    # 从已发布 release 生成静态书架 + OPDS
 ```
 
 不要用多个 CLI 进程同时修改同一本书。写入操作前备份工作区。旧书缺少 citation_ids 时不会自动推断来源；备份后重新展开可补齐关联。
@@ -76,7 +84,7 @@ jianwu serve
 go test -race ./...
 go vet ./...
 scripts/release_test.sh
-scripts/release.sh 0.3.6 --dry-run
+scripts/release.sh 0.3.11 --dry-run
 ```
 
 [发布流程](docs/RELEASING.md)生成本地二进制、构建信息与校验和，不自动打标签或推送。核心代码位于 `internal/`，服务本产品，尚无公共 Go SDK。
