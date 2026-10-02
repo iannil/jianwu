@@ -1,6 +1,6 @@
 # jianwu 项目状态
 
-> 更新：2026-10-01。开发版本 **0.3.10**，本轮修改尚未正式发布。
+> 更新：2026-10-03。开发版本 **0.3.11**，本轮修改尚未正式发布。
 
 ## 产品
 
@@ -17,7 +17,10 @@
 - `factcheck`：按 citation_ids 查找来源，不按位置关联。无关联、失效来源和读取失败保留未通过结论；登录墙/空壳源标记为 source unusable 并计入 SourceErrors；同一论断的多个来源分别核对。
 - `revise`：改写后重新校验正文（注入 style guide 保持行文连贯）、重建 claims 和引用，并撤销旧审阅/verdict；脚注日期按结构化引用数据回填。仍需再次 factcheck 与人工 review。
 - `review`/`finalize`：明确的人类确认与定稿。`review` 是人工批准，不代表系统保证事实正确。
-- `export`：Markdown、Hugo、PDF（后者依赖 pandoc/xelatex）。
+- `export`：Markdown、Hugo、PDF（后者依赖 pandoc/xelatex）、EPUB3（纯 Go）。
+- `publish`（v0.3.11，ADR 29 第 1 步）：发布门（final + license + 版本未占用，警告披露不拦截）→ `releases/<MAJOR.MINOR>/`（manifest 内容哈希、provenance 来源与用量、状态快照、章节副本；EPUB 经注入钩子可选）。版本自动推导：结构变化升 major，内容修订升 minor；已发布版本不可覆盖；staging 目录 + rename 原子落位。serve 侧 `POST /books/{slug}/publish`（dry_run 同步返回门报告）与 `GET /books/{slug}/releases`，Web UI 有发布入口。
+- `export --target epub`（v0.3.11，ADR 29 第 2 步）：纯 Go EPUB3（goldmark，无 pandoc 依赖）。脚注按章编号、章末 EPUB3 aside（noteref/doc-footnote ARIA）；每章"来源与核验"节由 Citations/Claims/Verdicts 生成（四态披露）；正文原始 HTML 转义保 XHTML 良构；`dc:identifier` 用建书 UUID，`dcterms:modified` 取 Meta.UpdatedAt，zip 条目固定——同状态字节可复现，release 内 artifact 与导出产物一致。封面约定 `cover.png|jpg`。
+- `site`（v0.3.11，ADR 29 第 3 步）：从已发布 release 生成静态阅读站（书架/书页/章节阅读页/EPUB 下载/OPDS acquisition feed）。章节页与 EPUB 共用同一渲染器，来源核验节逐字一致；确定性生成（时间戳取 manifest）；损坏 release 跳过并报告。serve 侧 `POST /api/v1/site/generate`。
 - Token：new/expand/factcheck/revise 累计 provider 报告的 LLM 用量；--tokens 控制即时显示，status 显示书级累计。失败响应、重试、fallback、流式均通过 tracking wrapper；未报告用量标为不完整。
 - 发布：--version、-v、version 输出相同构建信息；release.sh 构建本地产物与校验和，不自动打标签或推送。
 
@@ -25,7 +28,7 @@
 
 `cmd/jianwu` → `internal/cli` → `engine/{grill,outline,scaffolding,expand,factcheck,revise}`。
 
-领域数据在 `book`；配置在 `config`；Provider 通过小接口注入；storage 提供 OS 与测试实现。S3Storage 仍是未实现占位。
+领域数据在 `book`；配置在 `config`；Provider 通过小接口注入；storage 提供 OS 与测试实现；发布层在 `release`（ADR 29）。S3Storage 仍是未实现占位。
 
 保留进程级的 DefaultStorage、SecretsProvider 和 CLI 工作区标志；不支持在一个进程中按请求切换它们。Namespace 是路径前缀工具，不是安全沙箱。
 

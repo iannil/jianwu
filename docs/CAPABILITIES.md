@@ -1,6 +1,6 @@
 # jianwu 功能概览
 
-> 开发版本：0.3.6-dev（尚未发布） | 最后更新：2026-09-27
+> 开发版本：0.3.11（尚未发布） | 最后更新：2026-10-03
 
 ---
 
@@ -18,7 +18,8 @@
 | `expand <slug> <NN-MM> [--force]` | v0.1.1 | 单章展开（research → draft → validate，支持 streaming） |
 | `review <slug> <NN-MM>` | v0.1.3 | 标记章节为已审阅 |
 | `finalize <slug> [--dry-run]` | v0.1.3 | 全书定稿 |
-| `export <slug> [--target md\|hugo\|pdf]` | v0.1.3 | 导出全书（markdown / Hugo / PDF） |
+| `export <slug> [--target md\|hugo\|pdf\|epub]` | v0.1.3 | 导出全书（markdown / Hugo / PDF / EPUB3） |
+| `publish <slug> [--dry-run] [--major] [--version X.Y]` | v0.3.11 | 发布不可变版本（Release，见下节） |
 | `status <slug>` | v0.1.3 | 章节进度概览 + 下一步提示 |
 | `factcheck <slug> <NN-MM>` | v0.2.0 | 自动事实复核 |
 | `revise <slug> <NN-MM>` | v0.2.0 | 基于事实复核结果修订章节 |
@@ -31,6 +32,7 @@
 | `corpus sync --from <path>` | v0.2.3 | 从本地 JSON 目录导入语料 |
 | `corpus collect --topic "..."` | v0.3.6-dev | 自动采集：搜索 → 阅读 → LLM 提取 → 保存 → 重建索引 |
 | `corpus reindex` | v0.2.3 | 重建 embedding 索引（调用 embedder） |
+| `site [--out] [--dry-run]` | v0.3.11 | 从已发布 release 生成静态阅读站 + OPDS（见"静态阅读站"节） |
 | `serve [--addr]` | v0.3.6-dev | 启动本地 Web UI + HTTP API（见下节） |
 
 ---
@@ -42,7 +44,7 @@
 - **工作区配置**：根目录按 `--dir` flag > 环境变量 `JIANWU_WORKSPACE` > 全局配置 `~/.config/jianwu/config.yaml` 的 `workspace:` 键 > 启动目录解析；Web 页面可随时切换（持久化到全局配置文件，CLI 共享）。**未配置/未初始化工作区时，新建图书、生成、展开、修订等操作被拦截**，页面引导先完成配置。
 - **工作区仪表盘**：初始化工作区、书籍列表与进度条、累计 Token 用量、配置摘要。
 - **新建图书向导**：12 维 grill 访谈逐题呈现，AI 推荐一键接受/修改/skip；完成后一键生成大纲与章节框架。
-- **书籍详情**：分 part 章节表（状态/字数/引用/未验证论断/核查结论）；逐章展开、重写、事实核查、修订、审阅、删除、插入；展开全部、定稿、导出 md/hugo/pdf 并下载产物。
+- **书籍详情**：分 part 章节表（状态/字数/引用/未验证论断/核查结论）；逐章展开、重写、事实核查、修订、审阅、删除、插入；展开全部、定稿、导出 md/hugo/pdf/epub 并下载产物。
 - **章节阅读**：markdown 渲染、脚注、引用来源、事实核查结论（含建议改写）。
 - **语料管理**：列表/详情/统计、目录同步、重建 embedding 索引。
 - **任务面板**：所有长耗时操作以后台任务执行，实时进度、日志、取消。
@@ -50,6 +52,41 @@
 HTTP API 位于 `/api/v1/`（workspace / config / books / chapters / grill / corpus / jobs），可作为本地 API 集成点；CLI 与引擎层不受影响。工作区切换端点为 `POST /api/v1/workspace/select {path}`。
 
 **可靠性模型：** 服务为单进程、可切换工作区。所有写操作经单一后台任务队列串行执行（同书不并发写入约束不变）；长任务进度可轮询（`GET /api/v1/jobs/{id}`），进程终止时未保存的生成结果仍会丢失（与 CLI 相同）。访谈/事实核查/修订只装配所需 provider——访谈不需要搜索 API key。
+
+---
+
+## 发布（Release 模型，v0.3.11）
+
+`publish` 把已定稿的图书固化为不可变的版本化发布包（[ADR 29](decisions/29-publishing-layer.md) 出版层第 1 步）：
+
+```
+books/<slug>/releases/<MAJOR.MINOR>/
+  manifest.json     # 版本、内容 sha256、claims/verdicts 统计、（可选）EPUB 产物哈希
+  provenance.json   # 模型与用量、AI 生成披露、人工 review 时间线、去重来源清单
+  outline.json      # 状态快照（claims/verdicts/citations 真相源）
+  meta.json         # 状态快照
+  content/NN-MM.md  # 定稿章节副本
+```
+
+- **发布硬门**：全书与全部章节 `final` + `meta.json` 的 `license` 字段非空 + 目标版本号未占用。finalize 后任何 revise/expand 会把书打回 draft，自动重新武装发布门（新 edition 必须重新 review）。
+- **警告不拦截**：未核验论断、未通过 verdict、缺 reviewed_by 署名会显示并记入 manifest（披露原则），不阻止发布。
+- **版本推导**：首个版本 1.0；结构变化（part 数或任一部章节数）→ 升 major，内容修订 → 升 minor；`--major` 强制、`--version X.Y` 显式（必须大于现有版本）。
+- **原子落位**：先写 `releases/.staging-<version>/`，完整后改名就位；失败清理 staging，历史版本不受影响。已发布版本不可覆盖。
+- **来源审计**：provenance 的去重来源清单（URL + 访问时间）是商用前人工 license 审计的依据。
+- serve 侧：`POST /api/v1/books/{slug}/publish`（`dry_run` 同步返回门报告与下一版本）、`GET /api/v1/books/{slug}/releases`（版本列表）；Web UI 书籍详情页有发布入口与版本历史。
+
+---
+
+## 静态阅读站与 OPDS（v0.3.11）
+
+`jianwu site` 从**已发布 release** 生成静态阅读站（`<workspace>/site/`，`--out` 可改），可直接部署到任意静态托管。工作稿绝不上架——分发渠道只读 Release（ADR 29）：
+
+- **书架页** `index.html`：书名/副题/作者/版本/日期/未核验论断数，附 OPDS 订阅入口。
+- **书页** `<slug>/index.html`：colophon（许可 + AI 生成披露）、历史版本、目录、EPUB 下载（附 sha256 摘要）。
+- **章节页** `<slug>/ch-NN-MM.html`：正文 + 脚注 + 与 EPUB **逐字一致**的"来源与核验"节（复用同一渲染器），上一章/下一章导航。
+- **OPDS** `opds.xml`：OPDS 1.x acquisition feed；阅读器 App 可发现并直接下载 `epub/<slug>.epub`（release artifact 逐字节副本）。
+- **确定性**：时间戳全部来自 manifest，同一书架状态重复生成字节相同；`site/` 为派生状态，每次整体重建。损坏的 release 跳过并报告，不中断生成。
+- serve 侧：`POST /api/v1/site/generate`（`dry_run` 同步返回书架清单；实际生成走任务队列）。
 
 ---
 
@@ -125,11 +162,12 @@ scaffolded → expanded → reviewed → final → export
     sessions/<id>.json       # grill 运行中会话
     corpus_index.json        # embedding 索引缓存（corpus reindex 生成）
   books/<slug>/
-    meta.json                # 图书元数据（含累计 token_usage）
+    meta.json                # 图书元数据（含累计 token_usage、author/license）
     outline.json             # 目录 + 章节状态（含 Verdicts[]）
     .session.json            # grill 已完成会话（audit log）
     chapters/NN-MM.md        # 展开后的章节（YAML frontmatter + markdown）
     export/                  # export 输出（md/hugo/pdf）
+    releases/<X.Y>/          # publish 产出的不可变发布版本
 ```
 
 ### 关键类型（`internal/book/types.go`）
@@ -181,8 +219,11 @@ scaffolded → expanded → reviewed → final → export
 | `--target md` | 单文件 markdown（Pandoc 兼容 frontmatter，默认） |
 | `--target hugo` | 章节分文件 Hugo content 结构（`_index.md` + 逐章文件） |
 | `--target pdf` | 通过 pandoc + xelatex 自动生成 PDF |
+| `--target epub` | EPUB 3（纯 Go，无外部工具链；v0.3.11） |
 
-脚注在跨章导出时自动全局重编号。
+脚注在跨章导出时自动全局重编号（epub 为按章编号、章末 EPUB3 aside）。
+
+**EPUB3（v0.3.11，ADR 29 第 2 步）：** `dc:identifier` 用建书时的 UUID（`urn:uuid:`，跨导出稳定）；`dcterms:modified` 取 `Meta.UpdatedAt` 而非墙钟，zip 条目固定顺序与时间戳——同一书籍状态产出**字节相同**的 .epub（`publish` 的 manifest 产物哈希即依赖此性质）。每章包含"来源与核验"节：来源列表（URL + 访问日期）与论断核验表（✓ 来源支持 / ✗ 未通过 / 未核验 / 无引用，核验说明折叠展示）——溯源能力随发布直达读者。正文原始 HTML 一律转义，输出保持 XHTML 良构。封面约定 `books/<slug>/cover.png|jpg`，存在则作为 cover-image。`books/<slug>/releases/<X.Y>/artifact/` 内的 EPUB 与 `export --target epub` 字节一致。
 
 ---
 
