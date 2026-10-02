@@ -45,7 +45,7 @@
 
 验证命令：`go test -race ./...`、`go vet ./...`、`gofmt -l internal cmd`、`scripts/release_test.sh`、`scripts/release.sh 0.3.6 --dry-run`。
 
-本轮全量竞态测试、vet、格式检查、发布保护测试与本地发布演练通过，详见 [交付记录](DELIVERY_2026-09-27.md)。真实样书/读者评估尚未完成，不将 mock 集成测试当作质量评估。下一步按 [样书评估方案](EVALUATION.md) 形成证据。
+本轮全量竞态测试、vet、格式检查、发布保护测试与本地发布演练通过，详见 [交付记录](DELIVERY_2026-10-03.md)。真实样书/读者评估尚未完成，不将 mock 集成测试当作质量评估。下一步按 [样书评估方案](EVALUATION.md) 形成证据。
 
 ## 文档
 

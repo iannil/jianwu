@@ -58,7 +58,21 @@ jianwu finalize "$book_slug"
 jianwu export "$book_slug" --target md
 ```
 
-导出无需定稿也能执行，适合先看草稿。PDF 需要另行安装 pandoc 与 xelatex。`--tokens` 显示用量但不影响记录；用量不完整时不会把未知消耗当作零费用。
+导出无需定稿也能执行，适合先看草稿。PDF 需要另行安装 pandoc 与 xelatex；EPUB（`--target epub`）为纯 Go 实现，无外部依赖，每章带"来源与核验"节。`--tokens` 显示用量但不影响记录；用量不完整时不会把未知消耗当作零费用。
+
+## 发布与阅读站（可选）
+
+定稿后可发布不可变的版本快照（ADR 29 出版层）。发布硬门要求全书 final 且 `books/<slug>/meta.json` 设置 `license`（建议同时设置 `author`）：
+
+```sh
+jianwu publish "$book_slug" --dry-run   # 查看发布门、下一版本与将产出的文件
+jianwu publish "$book_slug"             # 写入 books/<slug>/releases/<X.Y>/（含 EPUB 产物）
+jianwu site                              # 从已发布 release 生成静态阅读站 + OPDS
+```
+
+- `releases/` 内版本不可变：修改内容后需重新 review/finalize，再次 `publish` 自动递增版本（结构变化升 major、内容修订升 minor）。
+- `site/` 目录（书架、章节阅读页、EPUB 下载、`opds.xml`）是派生状态，每次整体重建，可部署到任意静态托管；工作稿不会出现在书架上。
+- 手工校验 EPUB 可运行 `scripts/epubcheck.sh <file.epub>`（需 Java + epubcheck，缺省退化为结构检查）。
 
 运行写入命令前备份工作区；不要同时用多个 CLI 修改同一本书。旧书缺少 citation_ids 时，需要备份后重新展开以建立正文与来源关联。
 

@@ -296,9 +296,28 @@ const App = {
       </div>
       <h2>书籍</h2>
       ${books.length ? this.bookCards(books) : `<div class="card">${emptyState("冊", "还没有图书", "从一次 12 维设计访谈开始：AI 逐维推荐，你确认或修改。", `<a class="btn primary" href="#/new">＋ 新建图书</a>`)}</div>`}
+      <h2>出版与分发</h2>
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>从已发布的 release 生成静态阅读站（书架 · 章节阅读页 · 来源核验 · EPUB 下载 · OPDS 订阅），站点写入 <span class="mono">site/</span> 并整体重建，可部署到任意静态托管。工作稿不会上架。</div>
+        <button class="btn" onclick="App.generateSite()">生成阅读站</button>
+      </div>
       <h2>工作区设置</h2>
       ${this.workspaceForm(false)}
     `;
+  },
+
+  async generateSite() {
+    try {
+      const rep = await api("/site/generate", { body: { dry_run: true } });
+      const books = rep.books || [];
+      if (!books.length) {
+        await Modal.open({ title: "书架为空", text: "还没有已发布的图书。在书籍详情页完成定稿并「发布」后，再来生成阅读站。", okText: "知道了" });
+        return;
+      }
+      const names = books.map(b => `${b.title} v${b.version}`).join("、");
+      if (!(await Modal.open({ title: "生成阅读站", text: `将上架 ${books.length} 本：${names}。site/ 目录会整体重建。`, okText: "生成" }))) return;
+      this.startJob("/site/generate", {}, null);
+    } catch (e) { toast(e.message, "err"); }
   },
 
   bookCards(books) {
