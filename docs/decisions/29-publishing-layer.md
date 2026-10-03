@@ -23,9 +23,9 @@ books/<slug>/releases/<version>/
 ## 实现顺序（依赖样书评估）
 
 0. 先执行 [EVALUATION](../EVALUATION.md)：读者任务数据是出版方向的第一批证据，不先建平台再验证质量。
-1. `publish` 命令 + Release 目录 + license/provenance 硬门（技术设计：[plans/2026-10-03-publish-release.md](../plans/2026-10-03-publish-release.md)）。
-2. EPUB3 导出：claims 的 citation_ids 映射为脚注与每章来源核验页，溯源能力首次到达读者（技术设计：[plans/2026-10-03-epub3-export.md](../plans/2026-10-03-epub3-export.md)）。
-3. 阅读站（实现时细化为：`internal/site` 直接从 releases/ 生成静态站而非演进 hugo 导出——分发只读 Release 原则的推论；技术记录：[plans/2026-10-03-static-site-opds.md](../plans/2026-10-03-static-site-opds.md)）+ OPDS feed。
+1. `publish` 命令 + Release 目录 + license/provenance 硬门（技术设计：[archive/plans/2026-10-03-publish-release.md](../archive/plans/2026-10-03-publish-release.md)）。
+2. EPUB3 导出：claims 的 citation_ids 映射为脚注与每章来源核验页，溯源能力首次到达读者（技术设计：[archive/plans/2026-10-03-epub3-export.md](../archive/plans/2026-10-03-epub3-export.md)）。
+3. 阅读站（实现时细化为：`internal/site` 直接从 releases/ 生成静态站而非演进 hugo 导出——分发只读 Release 原则的推论；技术记录：[archive/plans/2026-10-03-static-site-opds.md](../archive/plans/2026-10-03-static-site-opds.md)）+ OPDS feed。
 4. 勘误回路：读者 errata → 结构化勘误文件 → 回流 factcheck/revise → 新 minor Release。
 5. （可选，独立决策）平台服务：抽取 cli/server 共享 pipeline 包、独立存储与队列；仅在分发数据成立后立项。
 

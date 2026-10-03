@@ -10,7 +10,7 @@
 
 ## 当前实现
 
-- `new`：12 维访谈 → outline → 并行 scaffolding，6 个原型、10 本内置参考语料。
+- `new`：12 维访谈 → outline → 并行 scaffolding，6 个结构原型；参考语料全部来自工作区（collect/sync，无内置）。
 - `scaffolding <slug> --retry-failed`：只重试框架失败章节（`new` 的恢复路径；serve 侧对应 `POST /api/v1/books/{slug}/scaffold-retry`）。
 - `expand`：调研 → 草稿 → 校验，保存完整 claims、脚注、章节状态与模型信息。调研阶段拒收登录墙/空壳源（reader.ContentIssue）。
 - `expand --all`：最多 5 个并发任务；大纲在生成期间只读；所有任务结束后逐个保存。失败返回非零退出码，独立成功章节保留。
@@ -29,9 +29,9 @@
 
 `cmd/jianwu` → `internal/cli` → `engine/{grill,outline,scaffolding,expand,factcheck,revise}`。
 
-领域数据在 `book`；配置在 `config`；Provider 通过小接口注入；storage 提供 OS 与测试实现；发布层在 `release`（ADR 29）。S3Storage 仍是未实现占位。
+领域数据在 `book`；配置在 `config`；Provider 通过小接口注入；storage 提供 OS 与测试实现。出版层：`release`（发布）+ `export`（EPUB3）+ `site`（静态站）；agent 层：`server`（Web/MCP）+ `skill`。全量架构见 [架构总览](architecture/overview.md)。
 
-保留进程级的 DefaultStorage、SecretsProvider 和 CLI 工作区标志；不支持在一个进程中按请求切换它们。Namespace 是路径前缀工具，不是安全沙箱。
+保留进程级的 DefaultStorage、SecretsProvider 和 CLI 工作区标志；不支持在一个进程中按请求切换它们。多租户 Namespace/S3 存储占位已随 ADR 28 移除（2026-10-03 清理）。
 
 ## 可靠性与已知限制
 
@@ -44,9 +44,11 @@
 
 ## 验证与下一步
 
-验证命令：`go test -race ./...`、`go vet ./...`、`gofmt -l internal cmd`、`scripts/release_test.sh`、`scripts/release.sh 0.3.6 --dry-run`。
+验证命令：`go test -race ./...`、`go vet ./...`、`gofmt -l internal cmd`、`scripts/release_test.sh`、`scripts/release.sh <版本> --dry-run`。
 
-本轮全量竞态测试、vet、格式检查、发布保护测试与本地发布演练通过，详见 [交付记录](DELIVERY_2026-10-03.md)。真实样书/读者评估尚未完成，不将 mock 集成测试当作质量评估。下一步按 [样书评估方案](EVALUATION.md) 形成证据。
+本轮全量竞态测试、vet、格式检查、发布保护测试与本地发布演练通过，详见 [交付记录](DELIVERY_2026-10-03.md)。真实样书/读者评估尚未完成，不将 mock 集成测试当作质量评估。
+
+**评估现状**：probability 单本机器部分完成（5 章展开 + factcheck；[运行记录](evaluations/2026-10-03/run-probability.md)），卡在人工审阅与环境两项（glm 余额不足已切 deepseek；jina 无 key 致 factcheck 来源读取中途失败）。下一步见 [路线图·当前主线](ROADMAP.md)。
 
 ## 文档
 

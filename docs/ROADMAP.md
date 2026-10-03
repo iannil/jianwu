@@ -1,37 +1,45 @@
 # jianwu 路线图
 
-> 更新：2026-09-27。定位：[独立产品决策](decisions/28-independent-product.md)。开发版本：0.3.6-dev；尚未发布。
+> 更新：2026-10-03。开发版本 0.3.12（未打 tag）。定位：[ADR 28 独立产品](decisions/28-independent-product.md) · [ADR 29 出版层](decisions/29-publishing-layer.md) · [ADR 30 agent 接入](decisions/30-agent-access.md)。
 
-## 当前：可靠的独立 CLI
+## 已完成（按里程碑）
 
-本轮实现：
+| 里程碑 | 内容 |
+|---|---|
+| v0.1.x | 核心管线（grill→outline→scaffolding→expand）+ 状态机 + streaming + fallback |
+| v0.2.x | factcheck/revise 闭环 + 章节迭代命令 + 语料（sync/collect/embedding）+ 6 原型 |
+| v0.3.0–0.3.10 | Storage 接口 + 长任务进度 + Token 计量 + 批量并发写入 + serve Web UI + Kimi/DeepSeek + 独立产品化（ADR 28） |
+| v0.3.11（ADR 29 第 1–3 步） | `publish` 不可变 Release（硬门/版本推导/manifest+provenance）；`export --target epub` 纯 Go EPUB3（脚注 aside + 来源核验节 + 确定性）；`site` 静态阅读站 + OPDS |
+| v0.3.12（ADR 30） | agent 接入四通道：`jianwu mcp`（16 工具）、`/api/v1` Bearer token、site RSS、`jianwu skill` |
 
-- 批量展开最多 5 个并发生成任务，完成后集中合并落盘；部分失败保留其他成功结果，并返回非零退出码。
-- 最终正文 claims 持久化，以 citation_ids 关联来源；旧白名单不绕过验证。
-- 修订后更新 claims 和引用，清除旧人工审阅与事实复核结论。
-- 单文件原子替换；展开/修订在普通 I/O 失败时尝试恢复前态。
-- new、expand（含 --all）、factcheck、revise 的已报告 LLM 用量累计；status 展示；流式、重试与 fallback 路径纳入计量。
-- 一致的版本输出与本地 release 构建、源码指纹和校验和。
+样书评估：probability 单本机器部分完成（2026-10-03 运行记录），人工部分未开始。
 
-验收记录以实际测试为准，见 [PROJECT_STATUS](PROJECT_STATUS.md)。发布操作见 [RELEASING](RELEASING.md)。
+## 当前主线：样书质量验证（EVALUATION）
 
-## 下一步：样书质量验证
+按 [评估准备](evaluations/2026-09-27/README.md) 与 [运行记录](evaluations/2026-10-03/run-probability.md) 推进：
 
-执行 [EVALUATION](EVALUATION.md)，先完成三类小规模样书：概念解释、实践指南、证据综述。记录来源准确性、章节重复、人工修订时间、已报告 Token、实际账单与读者任务结果。
+1. **probability 书人工审阅**（书在 `~/Code/zhurong/jianwu-eval`）：逐章读正文、对来源、抽查论断 → 决定 revise → review → finalize →（用户定 license）→ publish → site。
+2. **补 jina key 后重跑 factcheck 轮**（显式记录重跑）：当前 02-01 等章的"未通过"实为来源读取失败（免费额度耗尽），核验结论不可靠。
+3. 三类样书各完成一轮（概率/代码审查/检索练习），按 [EVALUATION.md](EVALUATION.md) 记录模板留证。
+4. 3 位真实读者前后测；实际账单与 token 对账。
 
-根据观察选择下一功能；不预先扩充原型库、Provider 数量或平台形态。已实现功能测试通过，不等于完整图书质量合格。
+**通过标准先行确定，不用事后阈值掩盖问题**；评估结论驱动后续功能取舍。
 
-出版层方向已确定设计边界（Release 模型 + 静态分发，见 [ADR 29](decisions/29-publishing-layer.md)），进入实现仍以本节评估证据为准。
+## 开放事项（LLM 可直接领取的迭代项）
 
-## 稳定版目标
+按优先级排序；领取前读 [架构总览](architecture/overview.md) 的"核心不变量"与"已知边界"。
 
-- 安装、升级、版本识别和错误恢复可复现。
-- 作者可完成生成、复核、修订、审阅和导出。
-- 明确发布兼容性、数据备份与失败恢复行为。
-- 用真实样书证据说明适用范围和仍需人工审核的部分。
+| # | 事项 | 位置/背景 | 验收要点 |
+|---|---|---|---|
+| 1 | 评估环境修复：secrets 补 `jina_api_key` 后重跑 factcheck | 用户操作 + agent 辅助 | 重跑记录进 evaluations/，verdicts 可靠 |
+| 2 | md/hugo/pdf 导出收编进 `internal/export`（消除 cli/server 双份镜像） | `internal/cli/export.go` + `internal/server/finalize_export.go` | 行为不变，测试迁移，ADR 29 预留的共享包抽取 |
+| 3 | Citation 增加可选 `license` 字段 + collect 管线回填（provenance license 审计前置） | `internal/book/types.go`、`engine/collect` | 商用前审计有结构化依据（ADR 29 风险条） |
+| 4 | 勘误回路（ADR 29 第 4 步）：site 勘误提交 → 结构化文件 → 回流 factcheck/revise → 新 minor release | `internal/site` + 新 `internal/errata` | **依赖真实读者数据**，评估完成前不动工 |
+| 5 | epubcheck 持续校验脚本接入 release 演练（可选 CI 化） | `scripts/epubcheck.sh` | 公开分发前全量校验 |
+| 6 | OpenAPI 规范（ADR 30 非目标，按需启动）：`/api/v1` 机器可读契约 | 新 `docs/openapi.yaml` | 外部 agent 集成需求出现再做 |
 
-## 不在当前路线
+## 不在路线
 
-mouqin 集成、多租户服务、SaaS 计费、公共 Go SDK 均不作为 jianwu 的里程碑。GUI、协作和插件生态须由独立产品的真实需求提出。
+mouqin 集成、多租户/SaaS、公共 Go SDK、DRM、OpenAPI 强制化（见 ADR 28/29/30 非目标节）。
 
-旧路线保留在 [2026-06-30 快照](archive/status/2026-06-30-roadmap.md)，仅供历史查阅。
+旧路线快照：[archive/status](archive/status/)。

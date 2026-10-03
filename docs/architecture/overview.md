@@ -1,237 +1,104 @@
 # jianwu 架构总览
 
-> 2026-09-27：jianwu 为独立、本地优先的 CLI 产品，不再服务 mouqin；无公共 SDK 承诺。下文保留核心阶段的数据流说明，当前交付边界见 PROJECT_STATUS.md 和 ADR 28。
+> 2026-10-03。jianwu 为独立、本地优先的 Go CLI 产品（ADR 28），不承诺公共 SDK。
+> 本文档是给 LLM 的"只读一个文件就能上手改代码"的架构地图；命令与端点清单见 [CAPABILITIES](../CAPABILITIES.md)，当前状态见 [PROJECT_STATUS](../PROJECT_STATUS.md)。
 
-## 0.3.6 可靠性与质量管线
+## 一句话架构
 
-- 批量展开：最多 5 个并发任务读取稳定大纲；全部结束后由协调者依次合并保存，失败返回非零退出码。
-- ExpandOutput 保留完整 claims；citation_ids 显式引用 Citation.ID，不按数组位置猜测来源。
-- Factcheck 对每个 claim/source 关联产生 verdict，缺失/失效来源保留未通过结果；旧文本白名单不绕过验证。
-- Revise 重建最终正文 claims/引用，清除旧 review/verdict，用户重新 factcheck 后审阅。
-- 书级 token_usage 累计可观测的 LLM 响应；流式、重试、fallback 纳入 tracking wrapper，缺失用量单列。
-- 单文件临时文件加 rename；展开和修订在普通 I/O 失败时恢复之前的文件。无跨文件崩溃事务，不支持多个 CLI 并发修改同一本书。
-- DefaultStorage / secretsProvider / cliWorkspaceDir 为单进程默认值；Namespace 仅加路径前缀，不是安全沙箱。
+CLI（cobra）与 Web/MCP 层（net/http + MCP go-sdk）是同一编排内核的两个壳；内核调用 7 个引擎子包完成"访谈→大纲→框架→展开→核查→修订"，领域数据在 `internal/book`，出版层（`internal/release` + `internal/export` + `internal/site`）把定稿书变成不可变版本与可分发的静态站。所有 LLM/搜索/阅读器经 `internal/provider` 小接口注入。
 
-> 本文档给 LLM 一份"如果只读一个文件就要能改 jianwu 代码"的架构地图。
-> 详细 API 见 `PROJECT_STATUS.md` + 各包的 godoc。
-
----
-
-## 包依赖图（无环）
+## 分层与数据流
 
 ```
-cmd/jianwu/main.go
-    │
-    ▼
-internal/cli ──────────┬─→ internal/engine/{outline, scaffolding, grill, expand}
-    │                  │       │
-    │                  │       ├─→ internal/book（types + JSON I/O）
-    │                  │       ├─→ internal/archetypes, internal/style, internal/corpus（embed FS）
-    │                  │       └─→ internal/provider/llm（Chatter 接口）
-    │                  │
-    │                  ├─→ internal/provider/{llmfactory, searchfactory, readerfactory}
-    │                  │       │
-    │                  │       └─→ internal/provider/{llm, search, reader}/*（具体实现）
-    │                  │
-    │                  ├─→ internal/workspace（.jianwu/ 加载、Init、Load）
-    │                  └─→ internal/config（5 层 resolver + secrets）
-    │
-    └─→ internal/cli 自身（cobra 命令、TerminalPrompt、providers 装配）
+接入层（三个壳，同一内核）
+  internal/cli        jianwu <cmd>……（单进程，直接调引擎）
+  internal/server     jianwu serve（Web UI + /api/v1，可选 Bearer token）
+                      jianwu mcp（stdio MCP，16 工具，ADR 30）
+                      └─ JobManager：单 worker 串行队列（同书不并发写）
+        │
+        ▼
+引擎层 internal/engine
+  grill（12 维访谈） → outline（结构） → scaffolding（并行框架）
+  expand（调研→草稿→校验，web_search + read_url，[^N] 引用）
+  factcheck（按 citation_ids 核对来源 → Verdicts）
+  revise（按 verdicts 修订；作废旧 review/verdict → 重新人审）
+  collect（语料自动采集：搜索→阅读→LLM 提取）
+        │
+        ▼
+领域层 internal/book   Meta / Outline / Chapter / Claim / ClaimVerdict / Citation
+  真相源 outline.json（状态机：scaffolded→expanded→reviewed→final）
+  .md frontmatter 镜像同步；meta.json 含 TokenUsage 与 Author/License
+        │
+        ▼
+出版层（ADR 29）
+  internal/release    publish：硬门（final+license+版本未占用）→ releases/<MAJOR.MINOR>/
+                      （manifest 哈希 + provenance + 快照 + 章节副本 + EPUB artifact）
+  internal/export     EPUB3 纯 Go（goldmark）：脚注 aside + 每章"来源与核验"节；确定性构建
+  internal/site       只读 releases/ 生成静态站：书架/章节页/EPUB 下载/RSS/OPDS
 ```
 
-**为什么有 `llmfactory` / `searchfactory` / `readerfactory` 独立包？**
+**核心不变量**（改代码时必须保持）：
 
-避免 import cycle：
-- `internal/provider/llm/factory.go` import `llm/gemini` + `llm/glm`
-- 但 `llm/gemini` + `llm/glm` 都 import `llm`（为了 `Chatter` 接口）
-- → 循环
+1. 同一本书不并发写——serve/MCP 的所有写操作过 JobManager 单 worker；CLI 单进程。
+2. `revise`/`expand` 会把 `Meta.Status` 打回 draft——finalize 后任何修改自动重新武装发布门，"新 edition 必须重新人审"由状态机保证，无独立状态。
+3. 分发渠道（site）只读 releases/，绝不读工作稿；已发布版本不可覆盖。
+4. 确定性输出：EPUB 与 site 的时间戳全部取 manifest/Meta.UpdatedAt，同状态字节相同（publish 的 artifact 哈希依赖此性质）。
+5. claims 用 citation_ids 显式关联来源，不按位置推断；来源不可读 → 保守"未核验"，不是内容错误。
+6. Token 只记 provider 已报告的 LLM 用量；缺失标"不完整"，未知不伪装为零。
 
-把 factory 放到平级的 `llmfactory` 包，就能 import `llm` + `llm/gemini` + `llm/glm` 三者。
+## 包清单（`internal/`）
 
-## 数据流（v0.1 `jianwu new` 全流程）
+| 包 | 职责 | 关键入口 |
+|---|---|---|
+| `cli` | cobra 命令树；`loadBook`/`findChapter` 等共享辅助 | `root.go`（注册全部命令），`book_resolve.go` |
+| `engine/grill` | 访谈决策树 + 会话恢复 | `DefaultTree()`、`NewSession()` |
+| `engine/outline` | 单次 LLM 结构生成（JSON Schema 强制） | `Generate(ctx, chatter, Input)` |
+| `engine/scaffolding` | N 章并行框架（errgroup） | — |
+| `engine/expand` | 3 轮迭代展开；拒收登录墙/空壳源 | `ExpandOutput`（claims/脚注/用量） |
+| `engine/factcheck` | 按 citation_ids 逐来源核对 | `Result.Verdicts/SourceErrors` |
+| `engine/revise` | 按 SuggestedRewrite 修订 + 重建引用 | — |
+| `engine/collect` | 语料采集管线 | — |
+| `book` | 领域类型 + JSON IO + 脚注重编号/日期规范化 | `RenumberFootnotes`、`NormalizeFootnoteDates` |
+| `provider` | `llm`（Chatter/Embedder/Streamer）+ `search` + `reader` + 工厂 | gemini/glm/kimi/deepseek/ollama/mock；brave/serper；jina |
+| `storage` | Storage 接口（OS + MemStorage 测试实现） | `storage.OS`、`WriteFileAtomic` |
+| `config` | 5 层合并（默认→全局→工作区→env→flag） | secrets 在 `~/.config/jianwu/secrets.yaml`（0600） |
+| `workspace` | 工作区发现/初始化（`--dir`>env>全局配置>CWD） | — |
+| `archetypes`/`style`/`corpus` | 内嵌 YAML 资源；语料全部来自工作区 | — |
+| `server` | Web UI + `/api/v1` + MCP（`mcp.go` 16 工具）+ JobManager | `Handler()`、`MCP()`、`SetToken()` |
+| `release` | 发布门 + 版本推导 + manifest/provenance + 原子落位 | `Publish()`、`CheckGate()`、`NextVersion()` |
+| `export` | EPUB3 装配（goldmark + EPUB3 脚注 renderer） | `BuildEPUB()`、`RenderXHTML()`、`SourcesXHTML()`、`CollectDir()` |
+| `site` | 静态阅读站 + RSS/OPDS | `Scan()`、`GenerateAt()` |
+| `skill` | agent 技能内嵌与安装（ADR 30） | `Install()`、`Content()` |
 
-```
-[jianwu new]
-    │
-    ├─ workspace.FindWorkspace(".")  ← walk up 找 .jianwu/
-    ├─ workspace.Load(wsRoot)        ← 加载 config
-    ├─ config.LoadSecrets()          ← ENV > file（0600 强制）
-    │
-    ├─ offerResume(repo)             ← 列出 .jianwu/sessions/*.json 中 status=in_progress
-    │   └─ 用户选择恢复 → 加载该 session
-    │
-    ├─ grill.Run × 12 维度
-    │   ├─ LLM 生成推荐（per dimension）
-    │   ├─ TerminalPrompt.Ask（用户接受/修改/跳过）
-    │   └─ repo.Save(session)  ← 每步落盘，Ctrl+C 可恢复
-    │
-    ├─ deriveSlugFromTopic(session.Answers["topic"])
-    ├─ checkSlugConflict(wsRoot, slug, --force)
-    │
-    ├─ outline.Generate(chatter, Input)
-    │   ├─ buildPromptData: load archetype YAML + corpus outlines + style samples
-    │   ├─ render system + user templates
-    │   ├─ chatter.Chat（RetryWrapper 装配）
-    │   └─ JSON parse → book.Outline
-    │
-    ├─ writeBookMeta + SaveOutline
-    │
-    ├─ scaffolding.ScaffoldAll(chatter, outline, archetypeID, params, opts)
-    │   ├─ errgroup.SetLimit(5)
-    │   ├─ 每章: GenerateChapter → LLM chat → parse JSON → 更新 outline
-    │   └─ continue-on-error: 失败章 status=failed，其他继续
-    │
-    ├─ SaveOutline（含 scaffolded 章节字段）
-    │
-    └─ repo.Archive(session, slug)  ← 移到 books/<slug>/.session.json（audit log）
-```
-
-## 数据流（v0.1.x `jianwu expand` — 已实现）
+## 工作区磁盘结构
 
 ```
-[jianwu expand <slug> <NN-MM>]
-    │
-    ├─ workspace + config + secrets
-    ├─ LoadMeta + LoadOutline
-    ├─ 找到指定 chapter（part NN, chapter MM）
-    │
-    ├─ ToolRegistry 装配:
-    │   ├─ Searcher: Brave（primary）+ Serper（fallback）
-    │   ├─ Reader: Jina
-    │   ├─ Embedder: 与 chatter 同 provider
-    │   └─ Outline callback: 读相邻章节
-    │
-    ├─ expand.Generate(ctx, chatter, tools, ExpandInput)
-    │   ├─ iter 1 RunResearch:
-    │   │   ├─ buildResearchQueries（topic + chapter + key concepts）
-    │   │   ├─ tools.SearchAndRegister × N（cap 5）→ 注册 citation metadata
-    │   │   ├─ tools.ReadURL × M（cap 10）→ 补全 reader_provider
-    │   │   └─ LLM call → ResearchNotes JSON
-    │   │
-    │   ├─ iter 2 RunDraft:
-    │   │   └─ LLM call → markdown + [^N] footnotes
-    │   │
-    │   ├─ iter 3 RunValidate:
-    │   │   └─ LLM call → ValidationResult JSON（revised_markdown + claims[].has_citation）
-    │   │
-    │   ├─ ParseFootnotes(finalMD) → map[ID]FootnoteDef
-    │   ├─ mergeCitations(defs, tools.Citations())  ← URL 匹配补全 metadata
-    │   └─ 统计 unverified_claims（has_citation=false）
-    │
-    └─ SaveChapter + 更新 outline.json（status=expanded + citations + word_count + unverified_claims）
+<workspace>/
+  .jianwu/            config.yaml、sessions/、corpus/
+  books/<slug>/
+    meta.json         id(UUID)/author/license/token_usage/status
+    outline.json      状态真相源：parts→chapters（claims/citations/verdicts）
+    chapters/NN-MM.md frontmatter（镜像状态）+ 正文（[^N] 脚注）
+    export/           md/hugo/pdf/epub 导出产物（开发用）
+    releases/<X.Y>/   不可变发布：manifest/provenance/快照/content/artifact/
+  site/               jianwu site 产出（派生状态，整体重建）
 ```
 
-## 关键接口
+## Agent 接入（ADR 30，详见 [AGENT_ACCESS](../AGENT_ACCESS.md)）
 
-### Provider 抽象
+四种通道共享同一编排：MCP（`jianwu mcp`，stdio，16 工具，长任务 job_id+轮询）、HTTP API（`/api/v1`，可选 Bearer token，非 localhost 无 token 拒绝启动）、RSS/OPDS（site 产物）、SKILL（`jianwu skill` 安装）。人工闸门不放宽：`review` 需显式 reviewer 且要求先向用户展示正文与核验结论；发布硬门（final + license）对 agent 一视同仁。
 
-```go
-// internal/provider/llm/interface.go
-type Chatter interface {
-    Chat(ctx context.Context, req ChatRequest) (*ChatResponse, error)
-}
-type Embedder interface {
-    Embed(ctx context.Context, req EmbedRequest) (*EmbedResponse, error)
-}
-// Streamer 接口（v0.1.6 Streaming 已交付）
+## 决策记录（ADR）
 
-// internal/provider/search/interface.go
-type Searcher interface {
-    Search(ctx context.Context, query string, opts SearchOpts) ([]SearchResult, error)
-}
+- [26-grill-decisions](../decisions/26-grill-decisions.md)：26 项核心决策 + v0.1.x 审计
+- [27-v0.3-audit](../decisions/27-v0.3-audit-decisions.md)：v0.3 审计（含 mouqin 资产处置）
+- [28-independent-product](../decisions/28-independent-product.md)：独立产品，不再服务 mouqin
+- [29-publishing-layer](../decisions/29-publishing-layer.md)：出版层（Release 模型 + 静态分发）
+- [30-agent-access](../decisions/30-agent-access.md)：agent 接入层（MCP/API/RSS/SKILL）
 
-// internal/provider/reader/interface.go
-type Reader interface {
-    Read(ctx context.Context, url string) (Content, error)
-}
-```
+## 已知边界（不要"修复"这些）
 
-### 引擎入口
-
-```go
-// outline
-outline.Generate(ctx, chatter llm.Chatter, in outline.Input) (*book.Outline, error)
-
-// scaffolding
-scaffolding.GenerateChapter(ctx, chatter, in ChapterInput) (*ChapterOutput, error)
-scaffolding.ScaffoldAll(ctx, chatter, outline, archetypeID, params, opts) map[string]Result
-scaffolding.RetryFailed(ctx, chatter, outline, archetypeID, params, opts) map[string]Result
-
-// grill
-grill.Run(ctx, chatter, tree, session, ui UserInput) (*Dimension, error)  // caller 循环
-grill.NewSession() *Session
-grill.NewRepository(workspaceRoot) *Repository
-
-// expand
-expand.Generate(ctx, chatter, tools *ToolRegistry, in ExpandInput) (*ExpandOutput, error)
-expand.NewToolRegistry(searcher, reader, embedder, outlineFn) *ToolRegistry
-```
-
-## 错误处理
-
-所有 LLM 错误都通过 `llm.ClassifyError(err, statusCode)` 包装为 `*HTTPError`，可 `errors.Is(err, llm.ErrNetwork)` 分类。
-
-```go
-// internal/provider/llm/errors.go
-var (
-    ErrNetwork     = errors.New("network error")     // 触发 retry + fallback
-    ErrRateLimit   = errors.New("rate limited")       // 触发 retry + fallback
-    ErrServer      = errors.New("server error")       // 触发 retry + fallback
-    ErrLLMProvider = errors.New("llm provider error") // 4xx，不 retry
-)
-```
-
-CLI 层通过 `*cli.InfoError{Err, Code}` 把错误映射到 exit code：
-
-```go
-// cmd/jianwu/main.go
-if errors.As(err, &ie) {
-    os.Exit(ie.Code)  // 3/4/5
-}
-os.Exit(1)
-```
-
-## 测试策略
-
-- 库代码：TDD（test-first）
-- LLM-driven：test-after，Mock Provider + httptest
-- 跨切：E2E 用显式 ProviderDeps / chatterProvider 参数注入 mock
-- Live：`GEMINI_API_KEY` / `GLM_API_KEY` 设置时跑真 API，否则 SKIP
-
-## 配置加载顺序
-
-```
-高优先级 → 低优先级
-1. CLI flag          (--model glm-4.6)
-2. ENV var           (JIANWU_OUTLINE_MODEL)
-3. Workspace config  (<ws>/.jianwu/config.yaml)
-4. Global config     (~/.config/jianwu/config.yaml)
-5. Builtin defaults  (internal/config/defaults.go)
-```
-
-Secrets 单独走：
-```
-高 → 低
-1. ENV               (GEMINI_API_KEY)
-2. Secrets file      (~/.config/jianwu/secrets.yaml, 0600 强制)
-```
-
-## 添加新功能时的检查清单
-
-新 CLI 命令：
-- [ ] 在 `internal/cli/<name>.go` 加 `new<Name>Cmd()`
-- [ ] 注册到 `internal/cli/root.go` 的 `NewRootCmd()`
-- [ ] 加 `InfoError` 包装 + 对应 exit code
-- [ ] 加单元测试 + 1 个 E2E 测试
-
-新 provider：
-- [ ] 在 `internal/provider/<type>/<name>/` 实现 interface
-- [ ] 加 `httptest` 单元测试
-- [ ] 在对应 `*factory` 包加 case
-- [ ] 加 factory 测试
-
-新引擎阶段：
-- [ ] 在 `internal/engine/<name>/` 建包
-- [ ] `types.go` + `embed.go`（prompt 模板）+ `schema.go`（JSON Schema）+ 主入口 `<name>.go`
-- [ ] TDD 单元测试 + live integration 测试
-- [ ] 在 `cli/new_flow.go` 或新命令里编排
+- 单文件原子替换 ≠ 跨文件崩溃事务；断电可能丢失未保存的批量结果（设计如此，交付约束）。
+- md/hugo/pdf 导出在 cli/server 双份镜像（EPUB 已收进 internal/export 单一实现）；迁移旧目标到共享包是允许的后续重构，不是 bug。
+- `website/` + `scripts/deploy-mouqin.sh` 是 mouqin 历史资产（ADR 28：保留、不部署、不代表路线）。
+- 真实样书质量与读者学习效果**未验证**（[EVALUATION](../EVALUATION.md) 进行中）；程序测试不证明内容合格。

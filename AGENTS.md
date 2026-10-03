@@ -26,10 +26,10 @@
 
 ## 架构
 
-12 个关键内部包（含 2 个新包 v0.2.0 + storage v0.3.0 + release/export/site v0.3.11 + skill v0.3.12）：
+16 个顶层内部包（engine 含 7 子包；storage v0.3.0 / release·export·site v0.3.11 / skill·MCP v0.3.12）：
 
 - **`internal/cli/`** — cobra 命令树；薄封装层，调用 engine + book + workspace。  
-  每个子命令有 `newXxxCmd()` + `runXxx()` 可测试核心。所有 CLI 命令列表见 `docs/PROJECT_STATUS.md §9`。
+  每个子命令有 `newXxxCmd()` + `runXxx()` 可测试核心。所有 CLI 命令与 HTTP/MCP 端点清单见 `docs/CAPABILITIES.md`。
   全局标志：`--verbose`/`-L`、`--debug`、`--dir`/`-d`（指定 workspace 根目录，详见 `root.go`）。
   共享辅助函数在 `book_resolve.go`（`loadBook`/`findChapter`/`findPart`/`parseChapterAddr`/`mirrorChapterStatus`）。
 - **`internal/export/`** — 交付格式装配层（v0.3.11，ADR 29 第 2 步）：EPUB3 纯 Go 构建（goldmark 唯一新依赖，零传递）。`Collect` 按章读文 + 脚注重编号 + 日期规范化；`RenderXHTML` 输出 XHTML 良构片段（原始 HTML 转义、EPUB3 脚注 aside + ARIA）；`sourcesXHTML` 从 Citations/Claims/Verdicts 生成"来源与核验"节（四态披露）；`BuildEPUB` 确定性装配（mimetype 首条 STORED、固定 zip 时间戳、dcterms:modified 取 Meta.UpdatedAt）→ 同书籍状态字节相同。md/hugo/pdf 旧目标仍在 cli/server 镜像，未迁移。
@@ -58,20 +58,30 @@
 
 ## 文档索引
 
+现行文档（docs/ 根与一级子目录）：
+
 | 文档 | 用途 |
 |---|---|
-| `docs/CAPABILITIES.md` | 用户面向的功能概览（CLI 命令、引擎管线、Provider、配置、导出） |
-| `docs/PROJECT_STATUS.md` | 独立产品当前状态与交付限制 |
-| `docs/ROADMAP.md` | 可靠性 → 样书质量验证路线 |
-| `docs/architecture/overview.md` | 架构图 + 数据流 + 关键接口 |
-| `docs/decisions/26-grill-decisions.md` | 26 项核心决策 + v0.1.x 审计决策 |
-| `docs/EXTRACTION_NOTES.md` | zhurongshuo 资产萃取记录 |
-| `docs/archive/plans/` | 已完成切片的 SDD plan（v0.1.0–v0.1.6 + v0.2.0）|
-| `docs/archive/DESIGN.md` | 原始设计文档（v0.1 锁定版，部分已过期） |
+| `docs/architecture/overview.md` | **LLM 架构地图**：分层/数据流/核心不变量/包清单/已知边界——改代码前先读 |
+| `docs/CAPABILITIES.md` | 功能概览：CLI 命令、Web/MCP/API 端点、引擎管线、Provider、配置、导出、发布、阅读站 |
+| `docs/PROJECT_STATUS.md` | 当前状态快照 + 评估现状 + 验证命令 |
+| `docs/ROADMAP.md` | 已完成里程碑 + 当前主线（样书评估）+ **开放事项队列**（LLM 可领取的迭代项） |
+| `docs/AGENT_ACCESS.md` | agent 四通道接入指南（MCP/API/RSS/SKILL）与闸门约束 |
+| `docs/EVALUATION.md` | 样书评估协议（固定任务、记录模板、决策规则） |
+| `docs/evaluations/` | 评估运行记录（2026-09-27 准备 + 2026-10-03 probability 试运行） |
+| `docs/DELIVERY_2026-10-03.md` | 最近交付记录（出版层 + agent 层，含验证证据） |
+| `docs/getting-started.md` / `docs/RELEASING.md` | 入门与发布流程 |
+| `docs/decisions/26–30` | ADR：核心决策 → v0.3 审计 → 独立产品（28）→ 出版层（29）→ agent 接入（30） |
 
-## 备注
+归档（只读历史，不跟随现状）：`docs/archive/plans/`（全部已完成切片的 SDD plan，含 2026-10-03 出版层三份）、`docs/archive/status/`（旧状态快照）、`docs/archive/delivery/`、`docs/archive/superpowers/`、`docs/archive/DESIGN.md`、`docs/archive/DEPLOY_MOUQIN.md`、`docs/archive/EXTRACTION_NOTES.md`。
 
-<!-- 用于在会话中记录 agent 发现的快速备注空间。 -->
+## 备注（项目记忆 · 2026-10-03 更新）
+
+- **版本**：0.3.12，未打 tag；0.3.11/0.3.12 两轮已交付（出版层 ADR 29 + agent 接入层 ADR 30），细节见 DELIVERY_2026-10-03.md。
+- **当前主线**：样书评估（EVALUATION.md）。probability 书已完成机器部分，位于 `~/Code/zhurong/jianwu-eval/books/b-e70ef579ef3bf737`（独立评估工作区，勿动全局配置与 `~/Developer/jianwu`）；卡点：人工审阅未开始、secrets 缺 `jina_api_key`（factcheck 来源读取中途失败）、glm key 无余额（评估改用 deepseek-flash）。
+- **开放事项**：见 ROADMAP.md"开放事项"表（#2 导出收编、#3 Citation license 字段可随时领取；#4 勘误回路等读者数据）。
+- **已清理**（2026-10-03）：S3 占位/Namespace（零使用，随 ADR 28 移除）、mcp 死 helper、6 文件 gofmt 欠账。
+- **未提交状态**：无（工作区干净）。
 
 ## 交付约束
 
