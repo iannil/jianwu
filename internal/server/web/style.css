@@ -58,7 +58,7 @@ body {
   border-bottom: 1px solid var(--line);
   position: sticky; top: 0; z-index: var(--z-nav);
 }
-.brand { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.brand { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; text-decoration: none; color: inherit; }
 .seal {
   width: 32px; height: 32px; border-radius: 8px; flex: none;
   background: var(--seal); color: #fafafa;
@@ -230,7 +230,6 @@ table.chapters a:hover { color: var(--seal-deep); text-decoration: underline; }
   transition: border-color .16s, color .16s, background-color .16s, transform .16s;
 }
 .chip:hover { border-color: var(--seal); color: var(--seal-deep); transform: translateY(-1px); }
-.chip.selected { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .wizard-steps { display: flex; gap: 6px; margin: 4px 0 22px; flex-wrap: wrap; }
 .wizard-steps .step { width: 30px; height: 5px; border-radius: 3px; background: var(--line); transition: background-color .2s; }
 .wizard-steps .step.done { background: var(--seal); }
@@ -332,7 +331,6 @@ table.cfg input.field.num { width: 84px; min-width: 84px; }
 
 /* --- empty states --- */
 .empty { text-align: center; color: var(--muted); padding: 64px 24px; }
-.empty .big { font-size: 40px; margin-bottom: 10px; }
 .empty .glyph {
   width: 64px; height: 64px; margin: 0 auto 16px;
   border: 1.5px dashed var(--line-strong); border-radius: 16px;
@@ -351,8 +349,12 @@ table.cfg input.field.num { width: 84px; min-width: 84px; }
 }
 @keyframes shimmer { to { transform: translateX(100%); } }
 
-.spin { display: inline-block; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* --- 行内链接式按钮（触发抽屉等动作，替代 a href="javascript:..."） --- */
+.linklike {
+  background: none; border: none; padding: 0; font: inherit; color: inherit;
+  cursor: pointer; text-align: left; text-decoration: none; display: inline;
+}
+table.chapters .linklike:hover { color: var(--seal-deep); text-decoration: underline; }
 
 /* --- 移动端自适应（≤760px）：顶栏两行（品牌+操作 / 导航平分），内容收窄，表格横滚。
    放在文件末尾，确保覆盖同优先级的基础规则（如 table.chapters 的 overflow） --- */

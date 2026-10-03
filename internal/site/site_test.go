@@ -193,6 +193,53 @@ func TestGenerate_ProducesCompleteSite(t *testing.T) {
 	}
 }
 
+// TestGenerate_PageHeadAndFeedMetadata pins the page chrome (viewport, favicon,
+// language) and the RSS channel metadata added for readers/validators.
+func TestGenerate_PageHeadAndFeedMetadata(t *testing.T) {
+	ws := t.TempDir()
+	publishFixture(t, ws, "alpha", true)
+	out := filepath.Join(ws, "site")
+	if _, err := Generate(ws, out); err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	read := func(rel string) string {
+		t.Helper()
+		raw, err := os.ReadFile(filepath.Join(out, rel))
+		if err != nil {
+			t.Fatalf("read %s: %v", rel, err)
+		}
+		return string(raw)
+	}
+
+	// Every generated page shares htmlPage: check one shallow and one deep page.
+	for _, page := range []string{"index.html", "alpha/ch-01-01.html"} {
+		html := read(page)
+		for _, want := range []string{
+			`<html lang="zh-CN">`,
+			`<meta name="viewport" content="width=device-width, initial-scale=1" />`,
+			`rel="icon"`,
+		} {
+			if !strings.Contains(html, want) {
+				t.Errorf("%s missing %q", page, want)
+			}
+		}
+	}
+
+	rss := read("rss.xml")
+	for _, want := range []string{
+		"<language>zh-cn</language>",
+		"<lastBuildDate>",
+		`<atom:link href="/rss.xml" rel="self" type="application/rss+xml" />`,
+	} {
+		if !strings.Contains(rss, want) {
+			t.Errorf("rss missing %q:\n%s", want, rss)
+		}
+	}
+	if err := xml.Unmarshal([]byte(rss), new(any)); err != nil {
+		t.Fatalf("rss not well-formed: %v\n%s", err, rss)
+	}
+}
+
 func TestGenerateAt_BaseURLMakesAbsoluteLinks(t *testing.T) {
 	ws := t.TempDir()
 	publishFixture(t, ws, "alpha", true)

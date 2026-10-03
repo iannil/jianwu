@@ -60,12 +60,21 @@ func opdsFeed(entries []opdsEntry, baseURL string) string {
 // catalog page.
 func rssFeed(books []ShelfBook, baseURL string) string {
 	base := strings.TrimSuffix(baseURL, "/")
+	lastBuild := "Thu, 01 Jan 1970 00:00:00 +0000"
+	for i := range books {
+		if d := books[i].Manifest.CreatedAt.UTC().Format("Mon, 02 Jan 2006 15:04:05 -0700"); d > lastBuild {
+			lastBuild = d
+		}
+	}
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="utf-8"?>` + "\n")
-	b.WriteString(`<rss version="2.0">` + "\n<channel>\n")
+	b.WriteString(`<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">` + "\n<channel>\n")
 	b.WriteString("<title>肩吾书架</title>\n")
 	b.WriteString("<link>" + base + "/index.html</link>\n")
 	b.WriteString("<description>本地发布 · 可溯源的 AI 辅助图书</description>\n")
+	b.WriteString("<language>zh-cn</language>\n")
+	b.WriteString("<lastBuildDate>" + lastBuild + "</lastBuildDate>\n")
+	b.WriteString(`<atom:link href="` + base + `/rss.xml" rel="self" type="application/rss+xml" />` + "\n")
 	for i := range books {
 		bk := &books[i]
 		b.WriteString("<item>\n")

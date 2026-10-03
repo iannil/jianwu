@@ -37,7 +37,9 @@ func collectRelease(b *ShelfBook) ([]export.ChapterDoc, error) {
 func htmlPage(title, cssHref, body string) string {
 	var b strings.Builder
 	b.WriteString("<!DOCTYPE html>\n")
-	b.WriteString(`<html lang="zh">` + "\n<head>\n<meta charset=\"utf-8\" />\n")
+	b.WriteString(`<html lang="zh-CN">` + "\n<head>\n<meta charset=\"utf-8\" />\n")
+	b.WriteString(`<meta name="viewport" content="width=device-width, initial-scale=1" />` + "\n")
+	b.WriteString(`<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231c1c1c'/><text x='32' y='45' font-size='36' text-anchor='middle' fill='%23fafafa' font-family='serif' font-weight='600'>肩</text></svg>">` + "\n")
 	b.WriteString("<title>" + export.Esc(title) + "</title>\n")
 	b.WriteString(`<link rel="stylesheet" href="` + cssHref + `" />` + "\n</head>\n<body>\n")
 	b.WriteString(body)

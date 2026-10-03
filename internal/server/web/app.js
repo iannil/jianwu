@@ -16,7 +16,10 @@ async function api(path, opts = {}) {
   let data = {};
   try { data = await resp.json(); } catch { /* empty body */ }
   if (!resp.ok) {
-    const msg = data && data.error ? data.error : `HTTP ${resp.status}`;
+    let msg = data && data.error ? data.error : `HTTP ${resp.status}`;
+    if (resp.status === 401) {
+      msg = "API 需要认证（HTTP 401）：该服务以 --token 启用了 Bearer 鉴权，Web UI 不支持 token 模式。请改用 localhost 地址访问，或不带 token 启动 serve。";
+    }
     const err = new Error(msg);
     err.status = resp.status;
     throw err;
@@ -34,6 +37,21 @@ function esc(s) {
   }[c]));
 }
 
+// jsAttr 把值安全地嵌进 HTML 属性里的 JS 字符串字面量：esc() 只管 HTML 层，
+// 实体会先被属性解码再进 JS，单引号仍会断串；JSON.stringify 才对 JS 层安全。
+function jsAttr(v) {
+  return esc(JSON.stringify(v));
+}
+
+// 链接白名单：http(s)/mailto 与相对地址放行；其它显式 scheme（javascript:、
+// data: 等，章节正文与引用来自 LLM/网络，属半受信）一律拒绝，返回空串。
+function safeURL(u) {
+  const s = String(u ?? "").trim();
+  if (s === "" || /^(https?:|mailto:)/i.test(s)) return s;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return "";
+  return s; // 无 scheme：相对地址 / 锚点
+}
+
 function toast(msg, kind = "") {
   const el = document.createElement("div");
   el.className = "toast " + kind;
@@ -43,12 +61,49 @@ function toast(msg, kind = "") {
   setTimeout(() => el.remove(), kind === "err" ? 6000 : 3000);
 }
 
+// 焦点圈禁：浮层（modal/抽屉）内循环 Tab，关闭后把焦点还给触发元素。
+const FocusTrap = {
+  el: null,
+  restore: null,
+  _onKey: null,
+
+  trap(el) {
+    if (this.el === el) return;
+    this.release();
+    this.restore = document.activeElement;
+    this.el = el;
+    this._onKey = e => {
+      if (e.key !== "Tab") return;
+      const items = el.querySelectorAll(
+        "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])");
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+      else if (!el.contains(active)) { e.preventDefault(); first.focus(); }
+    };
+    el.addEventListener("keydown", this._onKey);
+  },
+
+  release() {
+    if (!this.el) return;
+    this.el.removeEventListener("keydown", this._onKey);
+    this.el = null;
+    this._onKey = null;
+    const el = this.restore;
+    this.restore = null;
+    if (el && el.isConnected) el.focus();
+  },
+};
+
 // 内置对话框，替代原生 confirm/prompt。input=false 时 close(true)；有输入框时 close(输入值)。
 const Modal = {
   _resolve: null,
 
   open({ title, text = "", input = false, value = "", placeholder = "", okText = "确定", danger = false }) {
     return new Promise(resolve => {
+      if (this._resolve) this.close(null); // 被覆盖的旧对话框按取消收尾，Promise 不悬挂
       this._resolve = resolve;
       $("#modal-title").textContent = title;
       const textEl = $("#modal-text");
@@ -61,6 +116,7 @@ const Modal = {
       $("#modal-ok").textContent = okText;
       $("#modal-ok").className = danger ? "btn danger-solid" : "btn primary";
       $("#modal").classList.remove("hidden");
+      FocusTrap.trap($("#modal"));
       setTimeout(() => (input ? inp : $("#modal-ok")).focus(), 30);
     });
   },
@@ -68,6 +124,7 @@ const Modal = {
   close(result) {
     if (!this._resolve) return;
     $("#modal").classList.add("hidden");
+    FocusTrap.release();
     const resolve = this._resolve;
     this._resolve = null;
     resolve(result);
@@ -87,7 +144,8 @@ const SKELETON_VIEW = `
   <div class="skeleton" style="height:260px"></div>`;
 
 function emptyState(glyph, title, text, actionHtml = "") {
-  return `<div class="empty"><div class="glyph" aria-hidden="true">${glyph}</div><h3>${title}</h3><p>${text}</p>${actionHtml}</div>`;
+  // title/text/glyph 内部转义；actionHtml 是调用方拼好的可信标记，保持原样。
+  return `<div class="empty"><div class="glyph" aria-hidden="true">${esc(glyph)}</div><h3>${esc(title)}</h3><p>${esc(text)}</p>${actionHtml}</div>`;
 }
 
 const STATUS_ZH = {
@@ -103,7 +161,7 @@ function statusBadge(s) {
 }
 function fmtTokens(u) {
   if (!u || !u.call_count) return "—";
-  return `${u.total_tokens} tokens（${u.call_count} 次调用）`;
+  return `${u.total_tokens ?? 0} tokens（${u.call_count} 次调用）`;
 }
 
 // Minimal markdown renderer: headings, bold/italic/code, footnotes, lists, paragraphs.
@@ -115,7 +173,11 @@ function renderMD(src) {
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // 链接目的地过 safeURL 白名单；危险 scheme 退化为纯文本（与阅读站 goldmark 安全模式对齐）。
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, url) => {
+      const u = safeURL(url);
+      return u ? `<a href="${u}" target="_blank" rel="noopener">${text}</a>` : text;
+    });
   for (const raw of lines) {
     if (raw.startsWith("```")) { inCode = !inCode; html += inCode ? "<pre>" : "</pre>"; continue; }
     if (inCode) { html += esc(raw) + "\n"; continue; }
@@ -144,12 +206,23 @@ function renderMD(src) {
 const Jobs = {
   known: new Map(), // id -> status
   timer: null,
+  failures: 0,
 
-  start() { this.timer = setInterval(() => this.refresh(), 1500); },
+  start() {
+    // 标签页回到前台立即恢复轮询；隐藏期间不发请求。
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && !this.timer) this.refresh();
+    });
+    this.refresh();
+  },
 
   async refresh() {
+    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+    if (document.hidden) return;
+    let delay = 1500;
     try {
       const { jobs } = await api("/jobs");
+      this.failures = 0;
       const running = jobs.filter(j => j.status === "running").length;
       const badge = $("#jobs-badge");
       badge.textContent = running > 0 ? `任务 (${running}●)` : "任务";
@@ -165,7 +238,12 @@ const Jobs = {
         this.known.set(j.id, j.status);
       }
       if (!$("#jobs-drawer").classList.contains("hidden")) this.renderList(jobs);
-    } catch { /* server unreachable; ignore */ }
+    } catch {
+      // 服务端不可达：指数退避，最多 15s，避免空转。
+      this.failures += 1;
+      delay = Math.min(1500 * 2 ** this.failures, 15000);
+    }
+    this.timer = setTimeout(() => this.refresh(), delay);
   },
 
   kindZh(kind) {
@@ -174,8 +252,9 @@ const Jobs = {
       "corpus-collect": "语料采集" }[kind] || kind;
   },
 
-  async renderList() {
-    const { jobs } = await api("/jobs");
+  // jobs 由轮询方传入；仅在无参调用（打开抽屉的瞬间）时才单独拉取一次。
+  async renderList(jobs) {
+    if (!jobs) ({ jobs } = await api("/jobs"));
     const el = $("#jobs-list");
     if (!jobs.length) { el.innerHTML = `<div class="empty">暂无任务</div>`; return; }
     el.innerHTML = jobs.map(j => `
@@ -184,7 +263,7 @@ const Jobs = {
           <b>${this.kindZh(j.kind)}</b>
           ${j.slug ? `<span class="mono muted">${esc(j.slug)}</span>` : ""}
           ${j.status === "running"
-            ? `<button class="btn sm danger" onclick="App.cancelJob('${j.id}')">取消</button>`
+            ? `<button class="btn sm danger" onclick="App.cancelJob(${jsAttr(j.id)})">取消</button>`
             : `<span class="badge ${j.status === "succeeded" ? "v-ok" : "v-bad"}">${j.status === "succeeded" ? "成功" : "失败"}</span>`}
         </div>
         ${j.status === "running" ? `<div class="job-bar"><i style="width:${j.progress}%"></i></div>` : ""}
@@ -223,13 +302,14 @@ const App = {
     const parts = hash.slice(2).split("/").filter(Boolean);
     this.onJobDone = null;
     try {
-      if (parts.length === 0) return this.viewDashboard();
-      if (parts[0] === "book" && parts[1]) return this.viewBook(parts[1]);
-      if (parts[0] === "books") return this.viewBooks();
-      if (parts[0] === "new") return this.viewNewWizard();
-      if (parts[0] === "corpus") return this.viewCorpus();
-      if (parts[0] === "config") return this.viewConfig();
-      return this.viewDashboard();
+      // 必须 await：`return promise` 会绕过本层 try/catch，视图异常将停在骨架屏。
+      if (parts.length === 0) return await this.viewDashboard();
+      if (parts[0] === "book" && parts[1]) return await this.viewBook(parts[1]);
+      if (parts[0] === "books") return await this.viewBooks();
+      if (parts[0] === "new") return await this.viewNewWizard();
+      if (parts[0] === "corpus") return await this.viewCorpus();
+      if (parts[0] === "config") return await this.viewConfig();
+      return await this.viewDashboard();
     } catch (e) {
       $("#view").innerHTML = `<div class="card"><b>加载失败</b><div class="muted">${esc(e.message)}</div></div>`;
     }
@@ -283,7 +363,7 @@ const App = {
     const searchCfg = this.ws.config?.search || {};
     const expandCfg = this.ws.config?.models?.expand || {};
     const stat = (num, unit, label) =>
-      `<div class="stat"><div class="stat-num">${num}${unit ? `<span class="unit">${unit}</span>` : ""}</div><div class="stat-label">${label}</div></div>`;
+      `<div class="stat"><div class="stat-num">${esc(num)}${unit ? `<span class="unit">${esc(unit)}</span>` : ""}</div><div class="stat-label">${esc(label)}</div></div>`;
     v.innerHTML = `
       <div class="page-head">
         <div><h1>工作区</h1><div class="desc mono">${esc(this.ws.root)}</div></div>
@@ -291,8 +371,8 @@ const App = {
       <div class="stats">
         ${stat(books.length, "本", "图书")}
         ${stat(totalTokens.toLocaleString(), "tokens", "累计 LLM 用量")}
-        ${stat(esc(searchCfg.primary || "—"), "", `搜索 · reader ${esc(searchCfg.reader || "—")}`)}
-        ${stat(esc(expandCfg.provider || "—"), "", `展开模型 · ${esc(expandCfg.model || "")}`)}
+        ${stat(searchCfg.primary || "—", "", `搜索 · reader ${searchCfg.reader || "—"}`)}
+        ${stat(expandCfg.provider || "—", "", `展开模型 · ${expandCfg.model || ""}`)}
       </div>
       <h2>书籍</h2>
       ${books.length ? this.bookCards(books) : `<div class="card">${emptyState("冊", "还没有图书", "从一次 12 维设计访谈开始：AI 逐维推荐，你确认或修改。", `<a class="btn primary" href="#/new">＋ 新建图书</a>`)}</div>`}
@@ -326,7 +406,7 @@ const App = {
       const total = st.total || 1;
       const seg = (n, c) => `<span style="width:${(n / total) * 100}%;background:${c}"></span>`;
       return `
-      <div class="card book-card" onclick="location.hash='#/book/${esc(b.slug)}'">
+      <div class="card book-card" onclick="location.hash = '#/book/' + ${jsAttr(b.slug)}">
         <h3>${esc(b.title)}</h3>
         <div class="slug">${esc(b.slug)} · ${statusBadge(b.status)}</div>
         <div class="progressbar">
@@ -384,7 +464,11 @@ const App = {
     $("#view").innerHTML = SKELETON_VIEW;
     const [{ meta, outline, stats }, rel] = await Promise.all([
       api("/books/" + encodeURIComponent(slug)),
-      api("/books/" + encodeURIComponent(slug) + "/releases").catch(() => ({ releases: [] })),
+      // 404 = 尚未发布，静默为空；其它错误（500 等）如实抛出。
+      api("/books/" + encodeURIComponent(slug) + "/releases").catch(e => {
+        if (e.status === 404) return { releases: [] };
+        throw e;
+      }),
     ]);
     const v = $("#view");
     this.currentBook = slug;
@@ -395,18 +479,18 @@ const App = {
       <tr>
         <td class="addr">${addr}</td>
         <td>
-          <div><a href="javascript:App.showChapter('${esc(slug)}',${p.index},${c.index})"><b>${esc(c.title)}</b></a></div>
+          <div><button type="button" class="linklike" onclick="App.showChapter(${jsAttr(slug)},${p.index},${c.index})"><b>${esc(c.title)}</b></button></div>
           <div class="ch-meta">${c.word_count ? c.word_count + " 字 · " : ""}${c.citations_count || 0} 引用${c.unverified_claims ? ` · <span style="color:var(--warn)">${c.unverified_claims} 未验证</span>` : ""}${(c.verdicts || []).length ? ` · 核查 ${verdictBad ? verdictBad + " 未通过" : "全部通过"}` : ""}</div>
         </td>
         <td>${statusBadge(c.status)}</td>
         <td class="actions">
-          ${c.status === "scaffolded" || c.status === "failed" ? `<button class="btn sm" onclick="App.expandChapter('${esc(slug)}',${p.index},${c.index},1)">展开</button>` : ""}
-          ${c.status === "expanded" ? `<button class="btn sm" onclick="App.reviewChapter('${esc(slug)}',${p.index},${c.index})">审阅</button>` : ""}
+          ${c.status === "scaffolded" || c.status === "failed" ? `<button class="btn sm" onclick="App.expandChapter(${jsAttr(slug)},${p.index},${c.index},1)">展开</button>` : ""}
+          ${c.status === "expanded" ? `<button class="btn sm" onclick="App.reviewChapter(${jsAttr(slug)},${p.index},${c.index})">审阅</button>` : ""}
           ${(c.status === "expanded" || c.status === "reviewed") ? `
-            <button class="btn sm" onclick="App.factcheckChapter('${esc(slug)}',${p.index},${c.index})">核查</button>
-            <button class="btn sm" onclick="App.reviseChapter('${esc(slug)}',${p.index},${c.index})">修订</button>` : ""}
-          ${(c.status === "expanded" || c.status === "reviewed" || c.status === "final") ? `<button class="btn sm" onclick="App.expandChapter('${esc(slug)}',${p.index},${c.index},2)">重写</button>` : ""}
-          <button class="btn sm danger" onclick="App.deleteChapter('${esc(slug)}',${p.index},${c.index})">删除</button>
+            <button class="btn sm" onclick="App.factcheckChapter(${jsAttr(slug)},${p.index},${c.index})">核查</button>
+            <button class="btn sm" onclick="App.reviseChapter(${jsAttr(slug)},${p.index},${c.index})">修订</button>` : ""}
+          ${(c.status === "expanded" || c.status === "reviewed" || c.status === "final") ? `<button class="btn sm" onclick="App.expandChapter(${jsAttr(slug)},${p.index},${c.index},2)">重写</button>` : ""}
+          <button class="btn sm danger" onclick="App.deleteChapter(${jsAttr(slug)},${p.index},${c.index})">删除</button>
         </td>
       </tr>`;
     }).join("");
@@ -419,25 +503,25 @@ const App = {
         </div>
         <div class="toolbar">
           <div class="tb-group" role="group" aria-label="章节操作">
-            <button class="btn primary" onclick="App.expandAll('${esc(slug)}')">展开全部</button>
-            <button class="btn" onclick="App.addChapter('${esc(slug)}')">＋ 章节</button>
+            <button class="btn primary" onclick="App.expandAll(${jsAttr(slug)})">展开全部</button>
+            <button class="btn" onclick="App.addChapter(${jsAttr(slug)})">＋ 章节</button>
           </div>
           <span class="tb-sep" aria-hidden="true"></span>
-          <button class="btn" onclick="App.finalize('${esc(slug)}')">定稿</button>
+          <button class="btn" onclick="App.finalize(${jsAttr(slug)})">定稿</button>
           <span class="tb-sep" aria-hidden="true"></span>
           <div class="tb-group" role="group" aria-label="导出">
             <span class="tb-label">导出</span>
-            <button class="btn" onclick="App.exportBook('${esc(slug)}','md')">Markdown</button>
-            <button class="btn" onclick="App.exportBook('${esc(slug)}','hugo')">Hugo</button>
-            <button class="btn" onclick="App.exportBook('${esc(slug)}','pdf')">PDF</button>
-            <button class="btn" onclick="App.exportBook('${esc(slug)}','epub')">EPUB</button>
-            <button class="btn" onclick="App.downloadExport('${esc(slug)}','md')">下载 .md</button>
-            <button class="btn" onclick="App.downloadExport('${esc(slug)}','epub')">下载 .epub</button>
+            <button class="btn" onclick="App.exportBook(${jsAttr(slug)},'md')">Markdown</button>
+            <button class="btn" onclick="App.exportBook(${jsAttr(slug)},'hugo')">Hugo</button>
+            <button class="btn" onclick="App.exportBook(${jsAttr(slug)},'pdf')">PDF</button>
+            <button class="btn" onclick="App.exportBook(${jsAttr(slug)},'epub')">EPUB</button>
+            <button class="btn" onclick="App.downloadExport(${jsAttr(slug)},'md')">下载 .md</button>
+            <button class="btn" onclick="App.downloadExport(${jsAttr(slug)},'epub')">下载 .epub</button>
           </div>
           <span class="tb-sep" aria-hidden="true"></span>
           <div class="tb-group" role="group" aria-label="发布">
             <span class="tb-label">发布</span>
-            <button class="btn" onclick="App.publishBook('${esc(slug)}')">发布新版本</button>
+            <button class="btn" onclick="App.publishBook(${jsAttr(slug)})">发布新版本</button>
           </div>
         </div>
       </div>
@@ -564,8 +648,12 @@ const App = {
           ${v.suggested_rewrite ? `<div class="muted">建议改写：${esc(v.suggested_rewrite)}</div>` : ""}
           <div class="muted" style="font-size:12px">${esc(v.reasoning || "")}</div>
         </div>`).join("");
-      const cites = (ch.citations || []).map(x =>
-        `<li>[${esc(x.id)}] <a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title || x.url)}</a></li>`).join("");
+      const cites = (ch.citations || []).map(x => {
+        const u = safeURL(x.url);
+        // URL 来自 LLM/网络采集，非白名单 scheme 退化为纯文本（不加链接）。
+        const label = esc(x.title || x.url);
+        return `<li>[${esc(x.id)}] ${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${label}</a>` : label}</li>`;
+      }).join("");
       $("#chapter-drawer-body").innerHTML = `
         ${ch.abstract ? `<div class="muted" style="margin-bottom:10px">${esc(ch.abstract)}</div>` : ""}
         <div class="md-body">${ch.body ? renderMD(ch.body) : `<div class="empty">尚未展开（状态：${STATUS_ZH[ch.status] || ch.status}）</div>`}</div>
@@ -573,12 +661,13 @@ const App = {
         ${cites ? `<h2>引用来源</h2><ul class="cite-list">${cites}</ul>` : ""}
       `;
       $("#chapter-drawer").classList.remove("hidden");
+      FocusTrap.trap($("#chapter-drawer"));
       this.syncBackdrop();
     } catch (e) { toast(e.message, "err"); }
   },
-  closeChapter() { $("#chapter-drawer").classList.add("hidden"); this.syncBackdrop(); },
-  openJobs() { $("#jobs-drawer").classList.remove("hidden"); this.syncBackdrop(); Jobs.renderList(); },
-  closeJobs() { $("#jobs-drawer").classList.add("hidden"); this.syncBackdrop(); },
+  closeChapter() { $("#chapter-drawer").classList.add("hidden"); FocusTrap.release(); this.syncBackdrop(); },
+  openJobs() { $("#jobs-drawer").classList.remove("hidden"); FocusTrap.trap($("#jobs-drawer")); this.syncBackdrop(); Jobs.renderList(); },
+  closeJobs() { $("#jobs-drawer").classList.add("hidden"); FocusTrap.release(); this.syncBackdrop(); },
   syncBackdrop() {
     const anyOpen = !$("#jobs-drawer").classList.contains("hidden")
       || !$("#chapter-drawer").classList.contains("hidden");
@@ -637,7 +726,7 @@ const App = {
           <p style="margin:4px 0 0">${esc(w.dim.question)}</p>
           ${w.recommendation ? `<div class="reco"><div class="reco-tag">AI 推荐</div>${esc(w.recommendation)}</div>` : `<div class="reco muted">AI 推荐不可用，请手动输入</div>`}
           ${w.dim.options && w.dim.options.length ? `
-            <div class="opt-chips">${w.dim.options.map(o => `<button type="button" class="chip" onclick="App.wizardPick('${esc(o)}')">${esc(o)}</button>`).join("")}</div>` : ""}
+            <div class="opt-chips">${w.dim.options.map(o => `<button type="button" class="chip" onclick="App.wizardPick(${jsAttr(o)})">${esc(o)}</button>`).join("")}</div>` : ""}
           <div class="answer-row">
             <input type="text" id="wiz-answer" placeholder="输入你的答案，留空接受推荐${w.dim.default_value ? `（skip=默认 ${esc(w.dim.default_value)}）` : ""}">
             <button class="btn primary" onclick="App.wizardSubmit()">确认</button>
@@ -730,7 +819,7 @@ const App = {
             ${list.books.map(b => `
               <tr>
                 <td class="mono">${esc(b.slug)}</td>
-                <td><a href="javascript:App.showCorpus('${esc(b.slug)}')">${esc(b.title_zh)}</a></td>
+                <td><button type="button" class="linklike" onclick="App.showCorpus(${jsAttr(b.slug)})">${esc(b.title_zh)}</button></td>
                 <td class="mono">${esc(b.archetype || "")}</td>
                 <td>${b.parts} parts / ${b.chapters} 章</td>
               </tr>`).join("")}
@@ -746,6 +835,12 @@ const App = {
       const b = await api("/corpus/" + encodeURIComponent(slug));
       // 详情接口返回 corpus.Book 原始结构：标题是 {zh, en} 本地化对象
       const titleOf = t => (t && (t.zh || t.en)) || "";
+      const src = b.source || {};
+      const srcURL = safeURL(src.url);
+      const srcLabel = esc(src.name || src.url || "");
+      const srcRow = src.url
+        ? `<span class="k">来源</span><span>${srcURL ? `<a href="${esc(srcURL)}" target="_blank" rel="noopener">${srcLabel}</a>` : srcLabel}</span>`
+        : "";
       $("#chapter-drawer-title").textContent = titleOf(b.title) || b.slug;
       $("#chapter-drawer-body").innerHTML = `
         <div class="kv">
@@ -753,13 +848,14 @@ const App = {
           <span class="k">原型</span><span class="mono">${esc(b.archetype)}</span>
           <span class="k">受众/深度</span><span>${esc(b.audience)} / ${esc(b.depth)}</span>
           <span class="k">摘要</span><span>${esc(b.abstract || "")}</span>
-          ${b.source?.url ? `<span class="k">来源</span><span><a href="${esc(b.source.url)}" target="_blank" rel="noopener">${esc(b.source.name || b.source.url)}</a></span>` : ""}
+          ${srcRow}
         </div>
         ${(b.parts || []).map(p => `
           <h2>Part ${p.index} · ${esc(titleOf(p.title))}</h2>
           <ul>${(p.chapters || []).map(c => `<li>${esc(titleOf(c.title))}</li>`).join("")}</ul>`).join("")}
       `;
       $("#chapter-drawer").classList.remove("hidden");
+      FocusTrap.trap($("#chapter-drawer"));
       this.syncBackdrop();
     } catch (e) { toast(e.message, "err"); }
   },
@@ -847,7 +943,7 @@ const App = {
             <td>${editable
               ? `<input class="field" id="secret-${esc(f.field)}" type="password" placeholder="输入新值；留空表示不修改" autocomplete="off">`
               : `<div class="ch-meta">由环境变量设置，网页无法修改</div>`}</td>
-            <td class="actions">${f.source === "file" ? `<button class="btn sm danger" onclick="App.clearSecret('${esc(f.field)}')">清除</button>` : ""}</td>
+            <td class="actions">${f.source === "file" ? `<button class="btn sm danger" onclick="App.clearSecret(${jsAttr(f.field)})">清除</button>` : ""}</td>
           </tr>`;
       }).join("");
 

@@ -21,7 +21,7 @@ a:hover { text-decoration: underline; }
 
 .site-head h1 { font-size: 1.1em; margin: 0; }
 
-.muted { color: #777; font-size: 0.88em; }
+.muted { color: #6b6b6b; font-size: 0.88em; } /* #777 在纸白底上对比度不足 AA，加深一档 */
 .subtitle { font-size: 1.1em; color: #444; }
 
 .catalog { list-style: none; padding: 0; }
@@ -58,7 +58,8 @@ a:hover { text-decoration: underline; }
 }
 .sources h2 { font-size: 1.1em; }
 table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #bbb; padding: 0.35em 0.5em; text-align: left; vertical-align: top; }
+/* anywhere 参与 min-content 计算：长论断/来源 URL 可断行，窄屏表格不撑破阅读栏 */
+th, td { border: 1px solid #bbb; padding: 0.35em 0.5em; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 
 .st-supported { color: #2e7d32; }
 .st-failed { color: #c62828; }
