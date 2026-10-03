@@ -18,10 +18,10 @@ import (
 	"github.com/iannil/jianwu/internal/archetypes"
 	"github.com/iannil/jianwu/internal/corpus"
 	"github.com/iannil/jianwu/internal/engine"
+	"github.com/iannil/jianwu/internal/llmjson"
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/provider/reader"
 	"github.com/iannil/jianwu/internal/provider/search"
-	"github.com/iannil/jianwu/internal/llmjson"
 )
 
 // Limits bounding one collection run (cost control, mirrors expand's caps).

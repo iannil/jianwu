@@ -9,9 +9,9 @@ import (
 	"github.com/iannil/jianwu/internal/archetypes"
 	"github.com/iannil/jianwu/internal/book"
 	"github.com/iannil/jianwu/internal/corpus"
+	"github.com/iannil/jianwu/internal/llmjson"
 	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/style"
-	"github.com/iannil/jianwu/internal/llmjson"
 )
 
 // Generate produces an outline for the given input by calling the LLM.

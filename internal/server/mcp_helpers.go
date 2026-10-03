@@ -50,24 +50,12 @@ func failedVerdicts(vs []book.ClaimVerdict) int {
 	return n
 }
 
-// mirrorChapterStatusPath updates a chapter .md status in place (mirror of
-// the cli helper, used by the MCP finalize tool).
-func mirrorChapterStatusPath(bookDir string, partIdx, chIdx int, status string) error {
-	return mirrorChapterStatus(bookDir, partIdx, chIdx, status)
-}
-
 // saveBookState persists outline.json + meta.json for one book.
 func saveBookState(bc *bookCtx) error {
 	if err := book.SaveOutline(filepath.Join(bc.BookDir, "outline.json"), bc.Outline); err != nil {
 		return err
 	}
 	return book.SaveMeta(filepath.Join(bc.BookDir, "meta.json"), bc.Meta)
-}
-
-// runExpandChapterMCP adapts runExpandChapter to the uniform chapter-job
-// signature used by the MCP registrations.
-func (s *Server) runExpandChapterMCP(ctx context.Context, j *Job, slug string, part, ch, force int) error {
-	return s.runExpandChapter(ctx, j, slug, part, ch, force)
 }
 
 // mcpCreateBook builds a completed grill session from explicit dimensions

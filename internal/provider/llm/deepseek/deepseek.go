@@ -27,10 +27,10 @@ func New(cfg Config) (*Provider, error) {
 		cfg.BaseURL = DefaultBaseURL
 	}
 	return openaicomp.New(openaicomp.Config{
-		Name:          "deepseek",
-		APIKey:        cfg.APIKey,
-		BaseURL:       cfg.BaseURL,
-		SchemaMode:    openaicomp.SchemaJSONObject,
-		NoEmbeddings:  true,
+		Name:         "deepseek",
+		APIKey:       cfg.APIKey,
+		BaseURL:      cfg.BaseURL,
+		SchemaMode:   openaicomp.SchemaJSONObject,
+		NoEmbeddings: true,
 	})
 }

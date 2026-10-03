@@ -312,7 +312,7 @@ func registerMCPTools(srv *mcp.Server, s *Server) {
 					continue
 				}
 				c.Status = book.StatusFinal
-				if err := mirrorChapterStatusPath(bc.BookDir, bc.Outline.Parts[pi].Index, c.Index, book.StatusFinal); err != nil {
+				if err := mirrorChapterStatus(bc.BookDir, bc.Outline.Parts[pi].Index, c.Index, book.StatusFinal); err != nil {
 					return nil, nil, err
 				}
 			}

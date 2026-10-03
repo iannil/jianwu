@@ -6,8 +6,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/iannil/jianwu/internal/provider/llm"
 	"github.com/iannil/jianwu/internal/llmjson"
+	"github.com/iannil/jianwu/internal/provider/llm"
 )
 
 // verifyClaim asks the LLM to verify one claim against its cited source.
