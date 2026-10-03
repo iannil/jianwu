@@ -64,7 +64,7 @@ func Publish(st storage.Storage, in Input, opts Options) (*Result, error) {
 		return res, fmt.Errorf("发布门未通过（%d 项）：%s", len(rep.Blockers), strings.Join(rep.Blockers, "；"))
 	}
 	if opts.DryRun {
-		res.Files = plannedFiles(in, opts)
+		res.Files = plannedFiles(st, in, opts)
 		return res, nil
 	}
 
@@ -131,6 +131,13 @@ func Publish(st storage.Storage, in Input, opts Options) (*Result, error) {
 		man.EPUB = &ArtifactInfo{Path: rel, SHA256: sha256Hex(epub), Bytes: len(epub)}
 	}
 
+	// Cover by convention (cover.png / cover.jpg at the book root), snapshotted
+	// into the release so the reading site never reads working book state.
+	if coverRel, coverData := coverFile(st, in.BookDir); coverRel != "" {
+		writes = append(writes, fileWrite{coverRel, coverData})
+		man.Cover = &ArtifactInfo{Path: coverRel, SHA256: sha256Hex(coverData), Bytes: len(coverData)}
+	}
+
 	manJSON, err := json.MarshalIndent(man, "", "  ")
 	if err != nil {
 		return res, fmt.Errorf("marshal manifest: %w", err)
@@ -165,8 +172,21 @@ func Publish(st storage.Storage, in Input, opts Options) (*Result, error) {
 	return res, nil
 }
 
+// coverFile returns the book's cover by convention (cover.png preferred over
+// cover.jpg at the book root), as release-relative name plus bytes. Same
+// convention as export.FindCover, kept local so release stays a base layer.
+func coverFile(st storage.Storage, bookDir string) (string, []byte) {
+	for _, name := range []string{"cover.png", "cover.jpg"} {
+		data, err := st.ReadFile(filepath.Join(bookDir, name))
+		if err == nil {
+			return name, data
+		}
+	}
+	return "", nil
+}
+
 // plannedFiles lists the files a real run would write (for --dry-run).
-func plannedFiles(in Input, opts Options) []string {
+func plannedFiles(st storage.Storage, in Input, opts Options) []string {
 	files := []string{"manifest.json", "provenance.json", "outline.json", "meta.json"}
 	for pi := range in.Outline.Parts {
 		part := &in.Outline.Parts[pi]
@@ -176,6 +196,9 @@ func plannedFiles(in Input, opts Options) []string {
 	}
 	if opts.BuildEPUB != nil {
 		files = append(files, "artifact/"+in.Meta.Slug+".epub")
+	}
+	if coverRel, _ := coverFile(st, in.BookDir); coverRel != "" {
+		files = append(files, coverRel)
 	}
 	return files
 }

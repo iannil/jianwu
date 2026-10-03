@@ -6,7 +6,7 @@
   --panel-2: #f0f0f0;
   --ink: #1c1c1c;
   --ink-2: #4a4a4a;
-  --muted: #767676;
+  --muted: #6b6b6b; /* #767676 在 --paper 上对比度 ~4.2:1 低于 AA，加深一档（与阅读站同步） */
   --line: #e4e4e4;
   --line-strong: #c9c9c9;
   /* accent = 纯墨（原朱砂位，全局唯一 accent） */
@@ -180,6 +180,27 @@ h2 {
 .tb-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .tb-sep { width: 1px; height: 20px; background: var(--line-strong); flex: none; }
 .tb-label { color: var(--muted); font-size: 12.5px; letter-spacing: .02em; margin-right: -2px; flex: none; }
+
+/* --- 导出下拉菜单 --- */
+.menu-anchor { position: relative; }
+.menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: var(--z-nav);
+  /* max-content：宽度贴最长菜单项，避免右侧大片空白。 */
+  width: max-content; min-width: 0; padding: 6px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.menu button {
+  all: unset; cursor: pointer; padding: 7px 10px; border-radius: 6px;
+  font: inherit; font-size: 13.5px; color: var(--ink); white-space: nowrap;
+}
+.menu button:hover, .menu button:focus-visible { background: var(--panel-2); }
+.menu-cap {
+  padding: 6px 10px 3px; font-size: 11.5px; color: var(--muted);
+  letter-spacing: .04em;
+}
+.menu-sep { height: 1px; background: var(--line); margin: 4px 2px; }
 .part-block { margin-bottom: 30px; }
 .part-title { font-family: var(--serif); font-size: 17px; font-weight: 700; margin-bottom: 10px; }
 table.chapters {
@@ -237,7 +258,8 @@ table.chapters a:hover { color: var(--seal-deep); text-decoration: underline; }
 /* --- drawers & backdrop --- */
 .backdrop {
   position: fixed; inset: 0; z-index: var(--z-backdrop);
-  background: rgba(0, 0, 0, .28); backdrop-filter: blur(1.5px);
+  /* .28+blur(1.5px) 层次感不足，宽抽屉曾被误读为双栏分屏；加深以明确浮层关系 */
+  background: rgba(0, 0, 0, .45); backdrop-filter: blur(3px);
   animation: fade .2s ease;
 }
 .drawer {
@@ -278,7 +300,18 @@ table.chapters a:hover { color: var(--seal-deep); text-decoration: underline; }
   animation: pop .18s cubic-bezier(.2, .7, .3, 1.1);
 }
 .modal-card h3 { margin: 0 0 8px; font-family: var(--serif); font-size: 17.5px; }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.modal-head h3 { flex: 1; }
+.modal-close { flex: none; padding: 2px 8px; font-size: 14px; }
 .modal-text { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.7; }
+/* 警示块：与正文数据分层，黑白灰体系内以实底墨黑左缘 + 浅灰底表达严重性。 */
+.modal-warn {
+  margin: 10px 0 0; padding: 9px 12px;
+  border-left: 3px solid var(--ink);
+  background: var(--panel-2);
+  color: var(--ink); font-size: 13.5px; line-height: 1.65;
+  white-space: pre-line;
+}
 .modal-input-row { margin: 12px 0 2px; }
 .modal-input-row input { width: 100%; flex: none; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
@@ -295,6 +328,16 @@ table.chapters a:hover { color: var(--seal-deep); text-decoration: underline; }
 .md-body pre code { background: none; padding: 0; }
 .md-body .fn { color: var(--seal-deep); font-size: 12px; }
 .md-body a { color: var(--seal-deep); }
+/* goldmark 输出（与阅读站/EPUB 同源渲染）的补充样式：表格、引用块、脚注区。 */
+.md-body table { border-collapse: collapse; width: 100%; margin: 0 0 1em; font-size: 14px; }
+.md-body th, .md-body td { border: 1px solid var(--line-strong); padding: 6px 10px; text-align: left; vertical-align: top; }
+.md-body th { background: var(--panel-2); font-weight: 600; }
+.md-body blockquote { margin: 0 0 1em; padding: 2px 0 2px 14px; border-left: 3px solid var(--line-strong); color: var(--ink-2); }
+.md-body .fn-ref { font-size: 12px; }
+.md-body .fn-ref a { text-decoration: none; }
+.md-body section.footnotes { margin-top: 1.6em; padding-top: .8em; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-2); }
+.md-body section.footnotes aside { margin: .3em 0 .3em 1.1em; text-indent: -1.1em; }
+.md-body .backref { text-decoration: none; margin-left: 4px; }
 .cite-list { font-size: 13px; padding-left: 18px; margin: 8px 0; }
 .cite-list li { margin-bottom: 7px; word-break: break-all; }
 .cite-list a { color: var(--seal-deep); text-decoration: none; }

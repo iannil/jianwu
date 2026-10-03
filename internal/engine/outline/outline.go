@@ -72,10 +72,13 @@ func Generate(ctx context.Context, chatter llm.Chatter, in Input) (*book.Outline
 	}
 	// LLM-reported indices are unreliable (often all zero); renumber
 	// positionally so part/chapter addressing (NN-MM) stays unambiguous.
+	// LLM-planned word targets are similarly unreliable at the extremes;
+	// clamp them so a hallucinated 999999 can't become a prompt target.
 	for i := range outline.Parts {
 		outline.Parts[i].Index = i + 1
 		for j := range outline.Parts[i].Chapters {
 			outline.Parts[i].Chapters[j].Index = j + 1
+			outline.Parts[i].Chapters[j].WordCountTarget = clampWordTarget(outline.Parts[i].Chapters[j].WordCountTarget)
 		}
 	}
 	return &outline, nil
@@ -151,6 +154,7 @@ func buildPromptData(in Input) (promptData, error) {
 		Goal:           in.Goal,
 		Length:         in.Length,
 		Language:       in.Language,
+		WordTargetHint: wordTargetHint(in.Length),
 	}, nil
 }
 

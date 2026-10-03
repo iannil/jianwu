@@ -159,6 +159,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/grill/sessions/{id}", s.handleGrillSessionGet)
 	mux.HandleFunc("DELETE /api/v1/grill/sessions/{id}", s.handleGrillAbandon)
 	mux.HandleFunc("POST /api/v1/grill/sessions/{id}/answer", s.handleGrillAnswer)
+	mux.HandleFunc("DELETE /api/v1/grill/sessions/{id}/answers/{dim}", s.handleGrillUnanswer)
 	mux.HandleFunc("POST /api/v1/grill/sessions/{id}/generate", s.handleGrillGenerate)
 
 	// Corpus.

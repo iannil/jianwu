@@ -53,8 +53,12 @@
 
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-card">
-      <h3 id="modal-title"></h3>
+      <div class="modal-head">
+        <h3 id="modal-title"></h3>
+        <button class="btn ghost modal-close" onclick="Modal.close(null)" aria-label="关闭">✕</button>
+      </div>
       <p id="modal-text" class="modal-text"></p>
+      <p id="modal-warn" class="modal-warn hidden"></p>
       <div id="modal-input-row" class="modal-input-row hidden">
         <input type="text" id="modal-input" class="field" autocomplete="off">
       </div>

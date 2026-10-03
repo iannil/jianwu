@@ -1,6 +1,8 @@
 package export
 
 import (
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/iannil/jianwu/internal/book"
@@ -62,6 +64,58 @@ func claimStatus(c book.Claim, verdicts []book.ClaimVerdict) ClaimStatus {
 	return StatusFailed
 }
 
+// sortedCitations returns citations ordered by ID — numeric when both sides
+// parse as integers, else lexicographic — so a claim citing [3] can be
+// matched in the list regardless of the order citations were stored in.
+func sortedCitations(cits []book.Citation) []book.Citation {
+	out := append([]book.Citation(nil), cits...)
+	sort.SliceStable(out, func(i, j int) bool {
+		ni, erri := strconv.Atoi(out[i].ID)
+		nj, errj := strconv.Atoi(out[j].ID)
+		if erri == nil && errj == nil {
+			return ni < nj
+		}
+		return out[i].ID < out[j].ID
+	})
+	return out
+}
+
+// citationIDsLabel renders the claim's citation IDs as "[1] [3]" for the
+// claims table, so readers can trace a verdict back to its sources; empty
+// IDs render as the "no citation" dash.
+func citationIDsLabel(ids []string) string {
+	if len(ids) == 0 {
+		return "—"
+	}
+	sorted := append([]string(nil), ids...)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		ni, erri := strconv.Atoi(sorted[i])
+		nj, errj := strconv.Atoi(sorted[j])
+		if erri == nil && errj == nil {
+			return ni < nj
+		}
+		return sorted[i] < sorted[j]
+	})
+	parts := make([]string, len(sorted))
+	for i, id := range sorted {
+		parts[i] = "[" + id + "]"
+	}
+	return strings.Join(parts, " ")
+}
+
+// reasoningSummary returns the first line of a verdict's reasoning, rune-
+// truncated, to use as the collapsible's visible summary — a scannable
+// gist instead of a repeated "核验说明" link on every row.
+func reasoningSummary(reasoning string) string {
+	first := strings.TrimSpace(strings.SplitN(reasoning, "\n", 2)[0])
+	r := []rune(first)
+	const max = 40
+	if len(r) > max {
+		return string(r[:max]) + "…"
+	}
+	return first
+}
+
 // SourcesXHTML renders the per-chapter "来源与核验" section from the
 // structured citations/claims/verdicts. Always emitted — the disclosure is
 // the product differentiator, not an optional appendix.
@@ -77,7 +131,7 @@ func SourcesXHTML(c book.OutlineChapter) string {
 
 	if len(c.Citations) > 0 {
 		b.WriteString("<h3>来源</h3>\n<ul>\n")
-		for _, cit := range c.Citations {
+		for _, cit := range sortedCitations(c.Citations) {
 			b.WriteString(`<li>[` + Esc(cit.ID) + "] ")
 			if cit.URL != "" {
 				b.WriteString(`<a href="` + Esc(cit.URL) + "\">" + Esc(cit.Title) + "</a>")
@@ -93,13 +147,14 @@ func SourcesXHTML(c book.OutlineChapter) string {
 	}
 
 	if len(c.Claims) > 0 {
-		b.WriteString("<h3>论断核验</h3>\n<table>\n<tr><th>论断</th><th>状态</th><th>说明</th></tr>\n")
+		b.WriteString("<h3>论断核验</h3>\n<table>\n<tr><th>论断</th><th>涉及来源</th><th>状态</th><th>说明</th></tr>\n")
 		for _, cl := range c.Claims {
 			st := claimStatus(cl, c.Verdicts)
 			meta := statusLabels[st]
-			b.WriteString("<tr><td>" + Esc(cl.Text) + `</td><td class="` + meta.class + "\">" + meta.label + "</td><td>")
+			b.WriteString("<tr><td>" + Esc(cl.Text) + `</td><td class="cite-ids">` + citationIDsLabel(cl.CitationIDs) +
+				`</td><td class="` + meta.class + `">` + meta.label + "</td><td>")
 			if reasoning := matchedReasoning(cl, c.Verdicts); reasoning != "" {
-				b.WriteString("<details><summary>核验说明</summary><p>" + Esc(reasoning) + "</p></details>")
+				b.WriteString("<details><summary>" + Esc(reasoningSummary(reasoning)) + "</summary><p>" + Esc(reasoning) + "</p></details>")
 			} else {
 				b.WriteString("—")
 			}

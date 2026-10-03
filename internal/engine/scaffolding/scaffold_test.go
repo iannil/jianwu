@@ -187,3 +187,27 @@ func TestScaffoldAllDefaultConcurrency(t *testing.T) {
 		t.Errorf("status: %q (want scaffolded)", outline.Parts[0].Chapters[0].Status)
 	}
 }
+
+func TestScaffoldAllPreservesWordTarget(t *testing.T) {
+	// ScaffoldAll merges results field-by-field; the outline-planned
+	// word_count_target must survive scaffolding untouched.
+	outline := &book.Outline{
+		Parts: []book.OutlinePart{
+			{Index: 1, Title: "P1", Role: "ontology", Chapters: []book.OutlineChapter{
+				{Index: 1, Title: "C1", WordCountTarget: 3200},
+				{Index: 2, Title: "C2", WordCountTarget: 0},
+			}},
+		},
+	}
+	sample := `{"abstract":"X","key_concepts":["a"],"learning_objectives":["y"],"suggested_examples":["z"]}`
+	p := mock.New(llm.ChatResponse{Content: sample})
+	ScaffoldAll(context.Background(), p, outline, "ontology-epistemology-practice",
+		ChapterParams{Topic: "T", Audience: "scholar", Depth: "advanced", Goal: "understanding", Length: "medium", Language: "zh"},
+		Options{})
+	if got := outline.Parts[0].Chapters[0].WordCountTarget; got != 3200 {
+		t.Errorf("planned target clobbered: got %d, want 3200", got)
+	}
+	if got := outline.Parts[0].Chapters[1].WordCountTarget; got != 0 {
+		t.Errorf("unplanned target changed: got %d, want 0", got)
+	}
+}

@@ -24,8 +24,11 @@ type ExpandInput struct {
 	PartRole     string
 	ChapterIndex int
 	ChapterTitle string
-	Abstract     string   // from scaffolding
-	KeyConcepts  []string // from scaffolding
+	Abstract     string // from scaffolding
+	// WordCountTarget is the outline-planned per-chapter target. Zero means
+	// unplanned: the length-tier default applies (see wordTarget).
+	WordCountTarget int
+	KeyConcepts     []string // from scaffolding
 	// Adjacent chapters (for coherence)
 	PreviousChapter *book.OutlineChapter
 	NextChapter     *book.OutlineChapter

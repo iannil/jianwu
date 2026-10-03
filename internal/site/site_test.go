@@ -48,16 +48,23 @@ func publishFixture(t *testing.T, wsRoot, slug string, withEPUB bool) {
 	for _, c := range []struct {
 		idx   int
 		title string
-	}{{1, "第一章"}, {2, "第二章"}} {
+	}{
+		{1, "第一章"}, {2, "第二章"},
+	} {
+		// 正文以 "## 标题" 开头，与引擎草稿的真实输出一致（site 必须剥掉这个重复标题）。
 		if _, err := book.WriteChapter(bookDir, 1, c.idx, book.ChapterFrontmatter{
 			Title: c.title, PartIndex: 1, ChapterIndex: c.idx, Status: book.StatusFinal,
-		}, "正文内容"+c.title+"。[^1]\n\n[^1]: [来源A](https://example.com/a)\n"); err != nil {
+		}, "## "+c.title+"\n\n正文内容"+c.title+"。[^1]\n\n[^1]: [来源A](https://example.com/a)\n"); err != nil {
 			t.Fatal(err)
 		}
 	}
 	opts := release.Options{JianwuVersion: "test"}
 	if withEPUB {
 		opts.BuildEPUB = func() ([]byte, error) { return []byte("PK-epub-" + slug), nil }
+	}
+	// 约定封面：所有 fixture 书带 cover.png，验证封面随 release 快照进入阅读站。
+	if err := os.WriteFile(filepath.Join(bookDir, "cover.png"), []byte("PNG-cover-"+slug), 0o644); err != nil {
+		t.Fatal(err)
 	}
 	res, err := release.Publish(storage.OS, release.Input{BookDir: bookDir, Meta: meta, Outline: outline}, opts)
 	if err != nil {
@@ -123,6 +130,13 @@ func TestGenerate_ProducesCompleteSite(t *testing.T) {
 			t.Errorf("index missing %q", want)
 		}
 	}
+	// 书架缩略封面与书页大图均来自 release 快照。
+	if !strings.Contains(idx, `<img class="shelf-cover" src="alpha/cover.png"`) {
+		t.Error("index missing shelf cover thumbnail")
+	}
+	if _, err := os.Stat(filepath.Join(out, "alpha", "cover.png")); err != nil {
+		t.Errorf("cover.png not shipped next to book page: %v", err)
+	}
 	// Root page css path must not escape the site dir.
 	if !strings.Contains(idx, `href="site.css"`) {
 		t.Error("index stylesheet path must be site.css (not ../site.css)")
@@ -130,9 +144,15 @@ func TestGenerate_ProducesCompleteSite(t *testing.T) {
 
 	// Book page: colophon + epub download only for alpha.
 	alphaPage := read("alpha/index.html")
-	for _, want := range []string{"书名alpha", "CC BY-SA 4.0", "下载 EPUB", "第一章"} {
+	for _, want := range []string{"书名alpha", "CC BY-SA 4.0", "下载 EPUB", "第一章", `<img class="cover" src="cover.png"`} {
 		if !strings.Contains(alphaPage, want) {
 			t.Errorf("alpha book page missing %q", want)
+		}
+	}
+	// 原始字符串里的 "\n" 会成为字面反斜杠 n 渲染进页面——任何页面都不得出现。
+	for _, page := range []string{"index.html", "alpha/index.html", "alpha/ch-01-01.html"} {
+		if html := read(page); strings.Contains(html, `\n`) {
+			t.Errorf("%s contains a literal backslash-n", page)
 		}
 	}
 	if strings.Contains(read("beta/index.html"), "下载 EPUB") {
@@ -237,6 +257,53 @@ func TestGenerate_PageHeadAndFeedMetadata(t *testing.T) {
 	}
 	if err := xml.Unmarshal([]byte(rss), new(any)); err != nil {
 		t.Fatalf("rss not well-formed: %v\n%s", err, rss)
+	}
+}
+
+// 章节阅读页：重复标题被剥离、顶部章导航与 meta description 存在。
+func TestGenerate_ChapterPageReadingAids(t *testing.T) {
+	ws := t.TempDir()
+	publishFixture(t, ws, "alpha", true)
+	out := filepath.Join(ws, "site")
+	if _, err := Generate(ws, out); err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	read := func(rel string) string {
+		t.Helper()
+		raw, err := os.ReadFile(filepath.Join(out, rel))
+		if err != nil {
+			t.Fatalf("read %s: %v", rel, err)
+		}
+		return string(raw)
+	}
+
+	first := read("alpha/ch-01-01.html")
+	// 模板渲染 <h1>第一章</h1>；正文自带的 "## 第一章" 必须被剥掉，不得再出现 <h2>。
+	if !strings.Contains(first, "<h1>第一章</h1>") {
+		t.Errorf("chapter page missing template h1:\n%s", first)
+	}
+	if strings.Contains(first, "<h2>第一章</h2>") {
+		t.Errorf("chapter page carries the duplicate body heading:\n%s", first)
+	}
+	// 首章：prev 为空占位、目录直达、next 指向下一章。
+	for _, want := range []string{
+		`<nav class="chapnav" aria-label="章节导航">`,
+		`<span class="prev"></span>`,
+		`<a class="toc" href="index.html">目录</a>`,
+		`<a class="next" href="ch-01-02.html">`,
+		`<meta name="description" content="《书名alpha》章节：第一章。附来源与核验披露。" />`,
+	} {
+		if !strings.Contains(first, want) {
+			t.Errorf("first chapter page missing %q", want)
+		}
+	}
+
+	last := read("alpha/ch-01-02.html")
+	if !strings.Contains(last, `<a class="prev" href="ch-01-01.html">`) {
+		t.Errorf("second chapter page missing prev link")
+	}
+	if !strings.Contains(last, `<span class="next"></span>`) {
+		t.Errorf("last chapter page missing next placeholder")
 	}
 }
 

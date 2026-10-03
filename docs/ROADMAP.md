@@ -1,6 +1,6 @@
 # jianwu 路线图
 
-> 更新：2026-10-03。开发版本 0.3.12（未打 tag）。定位：[ADR 28 独立产品](decisions/28-independent-product.md) · [ADR 29 出版层](decisions/29-publishing-layer.md) · [ADR 30 agent 接入](decisions/30-agent-access.md)。
+> 更新：2026-10-03。开发版本 0.3.13（未打 tag）。定位：[ADR 28 独立产品](decisions/28-independent-product.md) · [ADR 29 出版层](decisions/29-publishing-layer.md) · [ADR 30 agent 接入](decisions/30-agent-access.md)。
 
 ## 已完成（按里程碑）
 
@@ -11,6 +11,7 @@
 | v0.3.0–0.3.10 | Storage 接口 + 长任务进度 + Token 计量 + 批量并发写入 + serve Web UI + Kimi/DeepSeek + 独立产品化（ADR 28） |
 | v0.3.11（ADR 29 第 1–3 步） | `publish` 不可变 Release（硬门/版本推导/manifest+provenance）；`export --target epub` 纯 Go EPUB3（脚注 aside + 来源核验节 + 确定性）；`site` 静态阅读站 + OPDS |
 | v0.3.12（ADR 30） | agent 接入四通道：`jianwu mcp`（16 工具）、`/api/v1` Bearer token、site RSS、`jianwu skill` |
+| v0.3.13 | 按章字数目标：outline 规划 `word_count_target`（夹紧 500–8000）+ expand 优先采用；篇幅档位诚实分档（小册子/系列长文，见 CAPABILITIES） |
 
 样书评估：probability 单本机器部分完成（2026-10-03 运行记录），人工部分未开始。
 
@@ -37,6 +38,8 @@
 | 4 | 勘误回路（ADR 29 第 4 步）：site 勘误提交 → 结构化文件 → 回流 factcheck/revise → 新 minor release | `internal/site` + 新 `internal/errata` | **依赖真实读者数据**，评估完成前不动工 |
 | 5 | epubcheck 持续校验脚本接入 release 演练（可选 CI 化） | `scripts/epubcheck.sh` | 公开分发前全量校验 |
 | 6 | OpenAPI 规范（ADR 30 非目标，按需启动）：`/api/v1` 机器可读契约 | 新 `docs/openapi.yaml` | 外部 agent 集成需求出现再做 |
+| 7 | 分节生成 + deepen 轮：章拆 3–8 节、每节跑现有三轮迭代、章由节拼装，解除"单章=单次输出"的篇幅上限（分节依据复用 `SuggestedExamples`/`LearningObjectives`） | `engine/scaffolding` + `engine/expand` | **前置=样书评估结论**（读者反馈"太薄/缺例题"才启动）；ADR 级工程，动工前先写决策记录 |
+| 8 | 前端 P2 打磨批次（2026-10-03 两轮 UI 审计的明知遗留）：配置页"测试连接"、移动端触控目标 44px 与表格横滚暗示、OG 分享标签、状态色跨面统一（未通过=工作台灰/阅读站红）、错误态重试按钮 | `internal/server/web/` + `internal/site/` | **前置=样书评估读者反馈**——自审收益已尽，后续以真实读者数据排优先级 |
 
 ## 不在路线
 

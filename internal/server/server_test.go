@@ -212,6 +212,36 @@ func waitJob(t *testing.T, srv *Server, jobID string) *jobView {
 
 // --- tests ---
 
+func TestBooksListSlugMatchesDirectoryName(t *testing.T) {
+	srv, _ := newTestEnv(t)
+	// Fixture writes meta.slug == dir name; then diverge them the way a
+	// hand-rename or meta edit would.
+	bookDir := createBookFixture(t, srv.root(), "dir-name", 1)
+	metaPath := filepath.Join(bookDir, "meta.json")
+	meta, err := book.LoadMeta(metaPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.Slug = "meta-slug"
+	if err := book.SaveMeta(metaPath, meta); err != nil {
+		t.Fatal(err)
+	}
+
+	rec, out := do(t, srv, "GET", "/api/v1/books", nil)
+	wantCode(t, rec, http.StatusOK)
+	books, _ := out["books"].([]any)
+	if len(books) != 1 {
+		t.Fatalf("books = %d, want 1", len(books))
+	}
+	got := books[0].(map[string]any)["slug"]
+	if got != "dir-name" {
+		t.Errorf("list slug = %v, want directory name %q (loadBook resolves by directory)", got, "dir-name")
+	}
+	// The reported slug must actually resolve.
+	rec2, _ := do(t, srv, "GET", "/api/v1/books/dir-name", nil)
+	wantCode(t, rec2, http.StatusOK)
+}
+
 func TestWorkspaceLifecycle(t *testing.T) {
 	root := t.TempDir()
 	srv := New(root, "test", nil)
@@ -241,6 +271,43 @@ func TestWorkspaceLifecycle(t *testing.T) {
 	// Re-init conflicts.
 	rec, _ = do(t, srv, "POST", "/api/v1/workspace/init", map[string]any{})
 	wantCode(t, rec, http.StatusConflict)
+}
+
+// 章节详情返回 goldmark 渲染的 body_html（与阅读站同源、剥离重复标题），
+// 审阅者预览即读者所见；原文 body 保留。
+func TestChapterDetailBodyHTML(t *testing.T) {
+	srv, chat := newTestEnv(t)
+	createBookFixture(t, srv.WSRoot(), "prev", 1)
+	chat.responses = []llm.ChatResponse{
+		{Content: `{"findings":[],"candidates":[]}`}, // research
+		{Content: testDraftMD},                       // draft 以 "## C1" 开头
+		{Content: testValidateJSON},                  // validate
+	}
+	rec, j := do(t, srv, "POST", "/api/v1/books/prev/chapters/1/1/expand", map[string]any{})
+	wantCode(t, rec, http.StatusAccepted)
+	jobID, _ := j["job_id"].(string)
+	if job := waitJob(t, srv, jobID); job.Status != JobSucceeded {
+		t.Fatalf("expand job failed: %s\nlog: %s", job.Err, job.Log)
+	}
+
+	rec, ch := do(t, srv, "GET", "/api/v1/books/prev/chapters/1/1", nil)
+	wantCode(t, rec, http.StatusOK)
+	html, _ := ch["body_html"].(string)
+	if html == "" {
+		t.Fatalf("body_html missing: %v", ch)
+	}
+	if !strings.Contains(html, "Body text with a claim") {
+		t.Errorf("body_html missing content:\n%s", html)
+	}
+	if strings.Contains(html, "<h2>C1</h2>") {
+		t.Errorf("body_html carries duplicate leading title:\n%s", html)
+	}
+	if !strings.Contains(html, `epub:type="noteref"`) {
+		t.Errorf("body_html missing footnote render:\n%s", html)
+	}
+	if b, _ := ch["body"].(string); !strings.Contains(b, "## C1") {
+		t.Errorf("raw body must stay intact for editing")
+	}
 }
 
 func TestGrillFlowGeneratesBook(t *testing.T) {
@@ -350,6 +417,48 @@ func TestGrillAnswerInvalidOptionFallsBackToDefault(t *testing.T) {
 	if answers["audience"] != "educated-general" {
 		t.Fatalf("audience = %v, want default educated-general", answers["audience"])
 	}
+}
+
+func TestGrillUnanswerGoesBack(t *testing.T) {
+	srv, chat := newTestEnv(t)
+	chat.responses = []llm.ChatResponse{
+		{Content: "scholar\n学术读者"},     // audience
+		{Content: "understanding\n理解"}, // goal
+		{Content: "ontology-epistemology-practice\n结构"},
+	}
+	rec, sess := do(t, srv, "POST", "/api/v1/grill/sessions", map[string]any{"topic": "测试主题"})
+	wantCode(t, rec, http.StatusCreated)
+	sessionID, _ := sess["session_id"].(string)
+
+	// Answer audience (accepting recommendation), landing on goal.
+	rec, resp := do(t, srv, "POST", "/api/v1/grill/sessions/"+sessionID+"/answer", map[string]any{"answer": ""})
+	wantCode(t, rec, http.StatusOK)
+	if d, _ := resp["dimension"].(map[string]any); d == nil || d["id"] != "goal" {
+		t.Fatalf("after audience, pending dim = %v, want goal", resp["dimension"])
+	}
+
+	// Un-answer audience: the session returns to audience with the stored
+	// recommendation replayed (no extra LLM call scripted).
+	rec, back := do(t, srv, "DELETE", "/api/v1/grill/sessions/"+sessionID+"/answers/audience", nil)
+	wantCode(t, rec, http.StatusOK)
+	if back["complete"] != false {
+		t.Fatalf("back response complete = %v, want false", back["complete"])
+	}
+	d, _ := back["dimension"].(map[string]any)
+	if d == nil || d["id"] != "audience" {
+		t.Fatalf("pending dim after unanswer = %v, want audience", back["dimension"])
+	}
+	if back["recommendation"] != "scholar\n学术读者" {
+		t.Fatalf("recommendation after unanswer = %q, want the stored one", back["recommendation"])
+	}
+	answers, _ := back["answers"].(map[string]any)
+	if _, ok := answers["audience"]; ok {
+		t.Fatalf("audience answer not removed: %v", answers)
+	}
+
+	// Un-answering a dim that has no answer is a 404.
+	rec, _ = do(t, srv, "DELETE", "/api/v1/grill/sessions/"+sessionID+"/answers/audience", nil)
+	wantCode(t, rec, http.StatusNotFound)
 }
 
 func TestExpandChapterLifecycle(t *testing.T) {

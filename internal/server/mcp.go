@@ -89,7 +89,9 @@ func registerMCPTools(srv *mcp.Server, s *Server) {
 				continue
 			}
 			out = append(out, map[string]any{
-				"slug": bc.Meta.Slug, "title": bc.Meta.Title, "status": bc.Meta.Status,
+				// Directory name is the slug agents must use in later calls
+				// (loadBook resolves by directory; meta.slug can diverge).
+				"slug": e.Name(), "title": bc.Meta.Title, "status": bc.Meta.Status,
 				"parts": len(bc.Outline.Parts), "chapters": mcpChapterCount(bc),
 				"words": totalWords(bc), "tokens": bc.Meta.TokenUsage.TotalTokens,
 			})
@@ -123,7 +125,7 @@ func registerMCPTools(srv *mcp.Server, s *Server) {
 			}
 		}
 		return jsonResult(map[string]any{
-			"slug": bc.Meta.Slug, "title": bc.Meta.Title, "status": bc.Meta.Status,
+			"slug": filepath.Base(bc.BookDir), "title": bc.Meta.Title, "status": bc.Meta.Status,
 			"license_set": bc.Meta.License != "", "author": bc.Meta.Author,
 			"tokens": bc.Meta.TokenUsage, "chapters": chapters,
 		})

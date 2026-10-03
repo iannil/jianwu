@@ -28,6 +28,10 @@ a:hover { text-decoration: underline; }
 .catalog li { margin: 1.2em 0; }
 .book-link { font-size: 1.15em; font-weight: bold; }
 
+/* 封面：书页大图与书架缩略，让书架看起来像书架。 */
+.cover { max-width: 230px; height: auto; border: 1px solid #ddd; display: block; margin-bottom: 1em; }
+.shelf-cover { width: 52px; height: auto; border: 1px solid #ddd; vertical-align: middle; margin-right: .7em; }
+
 .dl {
   display: inline-block;
   border: 1px solid #3562a8;
@@ -41,6 +45,16 @@ a:hover { text-decoration: underline; }
 .toc ol { padding-left: 1.5em; }
 
 .chapter h1 { font-size: 1.5em; }
+
+/* 章节页顶部导航：prev 占左、目录居中、next 占右；缺失侧用空占位保持对称。 */
+.chapnav {
+  display: flex; align-items: baseline; gap: .8em;
+  font-size: .88em; margin-bottom: 1.8em;
+}
+.chapnav .prev, .chapnav .next { flex: 1; }
+.chapnav .prev { text-align: left; }
+.chapnav .next { text-align: right; }
+.chapnav .toc { flex: none; color: #6b6b6b; }
 
 .footnotes {
   margin-top: 2.5em;
@@ -61,6 +75,8 @@ table { border-collapse: collapse; width: 100%; }
 /* anywhere 参与 min-content 计算：长论断/来源 URL 可断行，窄屏表格不撑破阅读栏 */
 th, td { border: 1px solid #bbb; padding: 0.35em 0.5em; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 
+/* nowrap：状态/编号为短枚举，折行成竖排两行严重损伤扫视（如 "✗ 未/通过"）。 */
+.st-supported, .st-failed, .st-unverified, .st-uncited, .cite-ids { white-space: nowrap; }
 .st-supported { color: #2e7d32; }
 .st-failed { color: #c62828; }
 .st-unverified, .st-uncited { color: #9a6700; }
@@ -70,10 +86,11 @@ th, td { border: 1px solid #bbb; padding: 0.35em 0.5em; text-align: left; vertic
   border-top: 1px solid #ddd;
   padding-top: 0.8em;
   display: flex;
-  justify-content: space-between;
 }
+/* 仅有一侧链接时（首章/末章）仍贴正确一侧，而非整体居左。 */
+.pagenav .next { margin-left: auto; }
 
-.empty { color: #999; }
+.empty { color: #6b6b6b; } /* #999 在纸白底上对比度 ~2.8:1，加深至 AA */
 
 pre {
   padding: 0.6em;

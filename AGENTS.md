@@ -5,7 +5,7 @@
 
 ## 项目
 
-- **当前版本：** 0.3.12（独立产品；本轮：agent 接入层（ADR 30）——`jianwu mcp` stdio MCP 服务器（官方 go-sdk，16 工具复用 server 编排与串行队列，长任务 job 模式）、`/api/v1` 新增可选 Bearer token（非 localhost 无 token 拒绝启动）、site 新增 rss.xml（RSS 2.0 + `--base` 绝对链接）、`jianwu skill` 安装内嵌 SKILL.md；review 人工闸门与发布硬门不因 agent 放宽。前轮 0.3.11：出版层第 1–3 步（publish/Release、EPUB3、静态阅读站+OPDS，ADR 29）。版本号统一在 `internal/cli/version.go` 管理。
+- **当前版本：** 0.3.13（独立产品；本轮两件事：① 按章字数目标——outline 提示词引导按章规划 `word_count_target`（生成后夹紧 500–8000，未规划为 0），scaffolding 逐字段回写天然继承，expand 草稿优先采用每章目标、未规划回退档位默认（short 1500/medium 2500/long 4000），cli/server/MCP 同一编排路径接线；篇幅档位诚实分档（小册子/系列长文）写入 CAPABILITIES/README，分节生成列入 ROADMAP 开放事项 #7（前置=样书评估结论）。② 两轮前端 UI 审计修复——章节重复标题剥离（export.StripLeadingTitle，四产物面）、书单 slug 统一目录名口径（HTTP+MCP）、来源引用排序 + 论断表"涉及来源"列、审阅四态摘要确认（⚠ 警告分层 + 风险态文案）、导出收编下拉、向导"上一步"（`DELETE /grill/sessions/{id}/answers/{dim}`）、预览渲染对齐（`body_html` goldmark 同源）、封面链路（release 快照 + 阅读站渲染）、章节页双导航、isComposing、对比度 AA 等；遗留 P2 入档 ROADMAP #8（前置=读者反馈）。前轮 0.3.12：agent 接入层（ADR 30）；0.3.11：出版层（ADR 29）。版本号统一在 `internal/cli/version.go` 管理。
 - **技术栈：** Go 1.25 + cobra (CLI) + spf13/pflag + YAML 配置 + gemini/glm/kimi/deepseek/ollama LLM 提供商 + net/http 内嵌 Web UI（`internal/server`）
 - **入口点：** `cmd/jianwu/main.go` → `cli.NewRootCmd()` → cobra 子命令；`jianwu serve` → `internal/server`（Web UI + `/api/v1` HTTP API）
 - **工作区模型：** 每个项目 = 一个本地目录（建议用 git 备份），包含 `.jianwu/` 配置 + `books/<slug>/` 输出（含 `releases/` 不可变发布版本）
@@ -33,7 +33,7 @@
   全局标志：`--verbose`/`-L`、`--debug`、`--dir`/`-d`（指定 workspace 根目录，详见 `root.go`）。
   共享辅助函数在 `book_resolve.go`（`loadBook`/`findChapter`/`findPart`/`parseChapterAddr`/`mirrorChapterStatus`）。
 - **`internal/export/`** — 交付格式装配层（v0.3.11，ADR 29 第 2 步）：EPUB3 纯 Go 构建（goldmark 唯一新依赖，零传递）。`Collect` 按章读文 + 脚注重编号 + 日期规范化；`RenderXHTML` 输出 XHTML 良构片段（原始 HTML 转义、EPUB3 脚注 aside + ARIA）；`sourcesXHTML` 从 Citations/Claims/Verdicts 生成"来源与核验"节（四态披露）；`BuildEPUB` 确定性装配（mimetype 首条 STORED、固定 zip 时间戳、dcterms:modified 取 Meta.UpdatedAt）→ 同书籍状态字节相同。md/hugo/pdf 旧目标仍在 cli/server 镜像，未迁移。
-- **`internal/engine/`** — 7 个子包：`grill/`（访谈）、`outline/`（结构；参考语料经 `Input.CorpusBooks` 注入）、`scaffolding/`（框架）、`expand/`（3 轮迭代：调研 → 草稿 → 验证）、`factcheck/`（自动事实复核）、`revise/`（基于 verdicts 修订章节）、`collect/`（语料自动采集：搜索 → 阅读 → LLM 提取 → 校验）。核心创作 + 质量管线。
+- **`internal/engine/`** — 7 个子包：`grill/`（访谈）、`outline/`（结构；含按章 `word_count_target` 规划，参考语料经 `Input.CorpusBooks` 注入）、`scaffolding/`（框架）、`expand/`（3 轮迭代：调研 → 草稿 → 验证；草稿字数目标优先取每章 `WordCountTarget`）、`factcheck/`（自动事实复核）、`revise/`（基于 verdicts 修订章节）、`collect/`（语料自动采集：搜索 → 阅读 → LLM 提取 → 校验）。核心创作 + 质量管线。
 - **`internal/book/`** — 领域类型：`Meta`（含 `TokenUsage`、`Author`/`License` 发布字段；旧 `ClaimWhitelist` 仅兼容读取）、`Outline`（含 `Verdicts[]`）、`Chapter`、`Claim`（显式引用 ID）、`ClaimVerdict`、slug。纯数据 + IO。
 - **`internal/release/`** — 出版层（v0.3.11，ADR 29 第 1 步）：`Publish` 产出不可变 `releases/<MAJOR.MINOR>/`（manifest + provenance + 状态快照 + 章节副本，EPUB 经注入钩子装配 artifact）；`CheckGate` 硬门（final + license + 版本未占用，警告披露不拦截）；`NextVersion` 自动推导（结构变化 major / 内容修订 minor）；staging 目录 + Rename 原子落位，失败清理。书籍状态只读。
 - **`internal/site/`** — 静态阅读站（v0.3.11，ADR 29 第 3 步）：只读 releases/ 生成书架/书页/章节阅读页/EPUB 下载/OPDS acquisition feed。`Scan` 列书架（缺 manifest 的 release 跳过并报告）；`Generate` 整体重建派生目录，确定性输出（时间戳取 manifest）。章节渲染复用 export 包（RenderXHTML/SourcesXHTML/CollectDir），网页与 EPUB 同源。
@@ -77,9 +77,9 @@
 
 ## 备注（项目记忆 · 2026-10-03 更新）
 
-- **版本**：0.3.12，未打 tag；0.3.11/0.3.12 两轮已交付（出版层 ADR 29 + agent 接入层 ADR 30），细节见 DELIVERY_2026-10-03.md。
+- **版本**：0.3.13，未打 tag；0.3.13 本轮（按章字数目标 + 两轮前端审计修复）已实现并全量验证（race/vet/gofmt），0.3.11/0.3.12 细节见 DELIVERY_2026-10-03.md。
 - **当前主线**：样书评估（EVALUATION.md）。probability 书已完成机器部分，位于 `~/Code/zhurong/jianwu-eval/books/b-e70ef579ef3bf737`（独立评估工作区，勿动全局配置与 `~/Developer/jianwu`）；卡点：人工审阅未开始、secrets 缺 `jina_api_key`（factcheck 来源读取中途失败）、glm key 无余额（评估改用 deepseek-flash）。
-- **开放事项**：见 ROADMAP.md"开放事项"表（#2 导出收编、#3 Citation license 字段可随时领取；#4 勘误回路等读者数据）。
+- **开放事项**：见 ROADMAP.md"开放事项"表（#2 导出收编、#3 Citation license 字段可随时领取；#4 勘误回路等读者数据；#7 分节生成等评估结论）。
 - **已清理**（2026-10-03）：S3 占位/Namespace（零使用，随 ADR 28 移除）、mcp 死 helper、6 文件 gofmt 欠账。
 - **未提交状态**：无（工作区干净）。
 

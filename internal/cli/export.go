@@ -149,7 +149,7 @@ func exportMD(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
 				}
 				return &InfoError{Err: fmt.Errorf("read chapter %02d-%02d: %w", p.Index, c.Index, rerr), Code: ExitCodeGeneric}
 			}
-			renumbered, next := book.RenumberFootnotes(body, counter)
+			renumbered, next := book.RenumberFootnotes(export.StripLeadingTitle(body, c.Title), counter)
 			counter = next
 			b.WriteString(renumbered)
 			b.WriteString("\n\n")
@@ -221,7 +221,7 @@ func exportHugo(cmd *cobra.Command, bc *bookCtx, dryRun bool) error {
 				totalChapters++
 				continue
 			}
-			renumbered, next := book.RenumberFootnotes(body, counter)
+			renumbered, next := book.RenumberFootnotes(export.StripLeadingTitle(body, c.Title), counter)
 			counter = next
 
 			var chBuf strings.Builder

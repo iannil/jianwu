@@ -1,6 +1,6 @@
 # jianwu 项目状态
 
-> 更新：2026-10-03。开发版本 **0.3.12**，本轮修改尚未正式发布。
+> 更新：2026-10-03。开发版本 **0.3.13**，本轮修改尚未正式发布。
 
 ## 产品
 
@@ -13,6 +13,7 @@
 - `new`：12 维访谈 → outline → 并行 scaffolding，6 个结构原型；参考语料全部来自工作区（collect/sync，无内置）。
 - `scaffolding <slug> --retry-failed`：只重试框架失败章节（`new` 的恢复路径；serve 侧对应 `POST /api/v1/books/{slug}/scaffold-retry`）。
 - `expand`：调研 → 草稿 → 校验，保存完整 claims、脚注、章节状态与模型信息。调研阶段拒收登录墙/空壳源（reader.ContentIssue）。
+- 按章字数目标（v0.3.13）：outline 按章规划 `word_count_target`（档位区间引导，生成后夹紧 500–8000；未规划为 0），scaffolding 逐字段回写不覆盖，expand 草稿优先采用每章目标、未规划回退档位默认（cli/server/MCP 同一编排路径）。产物档位为小册子/系列长文（单章单次生成），见 [CAPABILITIES「篇幅与产物档位」](CAPABILITIES.md)。
 - `expand --all`：最多 5 个并发任务；大纲在生成期间只读；所有任务结束后逐个保存。失败返回非零退出码，独立成功章节保留。
 - `factcheck`：按 citation_ids 查找来源，不按位置关联。无关联、失效来源和读取失败保留未通过结论；登录墙/空壳源标记为 source unusable 并计入 SourceErrors；同一论断的多个来源分别核对。
 - `revise`：改写后重新校验正文（注入 style guide 保持行文连贯）、重建 claims 和引用，并撤销旧审阅/verdict；脚注日期按结构化引用数据回填。仍需再次 factcheck 与人工 review。
@@ -46,7 +47,7 @@
 
 验证命令：`go test -race ./...`、`go vet ./...`、`gofmt -l internal cmd`、`scripts/release_test.sh`、`scripts/release.sh <版本> --dry-run`。
 
-本轮全量竞态测试、vet、格式检查、发布保护测试与本地发布演练通过，详见 [交付记录](DELIVERY_2026-10-03.md)。真实样书/读者评估尚未完成，不将 mock 集成测试当作质量评估。
+本轮（0.3.13）`go test -race ./...`、`go vet ./...`、`gofmt -l internal cmd` 通过；发布流程无改动，未重跑发布演练。上一轮交付证据见 [交付记录](DELIVERY_2026-10-03.md)。真实样书/读者评估尚未完成，不将 mock 集成测试当作质量评估。
 
 **评估现状**：probability 单本机器部分完成（5 章展开 + factcheck；[运行记录](evaluations/2026-10-03/run-probability.md)），卡在人工审阅与环境两项（glm 余额不足已切 deepseek；jina 无 key 致 factcheck 来源读取中途失败）。下一步见 [路线图·当前主线](ROADMAP.md)。
 

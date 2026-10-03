@@ -21,9 +21,6 @@ func RunDraft(
 	progress ProgressCallback,
 ) (string, error) {
 	sys, user, err := buildDraftPrompts(in, dc, notes)
-	if err != nil {
-		return "", err
-	}
 	req := llm.ChatRequest{
 		Messages: []llm.Message{
 			{Role: "system", Content: sys},
@@ -73,7 +70,7 @@ func buildDraftPrompts(in ExpandInput, dc DraftContext, notes ResearchNotes) (st
 	sys, err := renderExpand("system_draft", sysBytes, map[string]any{
 		"Language":      defaultIfEmpty(in.Language, "zh"),
 		"ParagraphHint": paragraphHint(in.Length),
-		"WordTarget":    wordTarget(in.Length),
+		"WordTarget":    chapterWordTarget(in.WordCountTarget, in.Length),
 		"StyleGuide":    dc.StyleGuide,
 		"Samples":       dc.SampleText,
 		"Archetype":     dc.ArchetypeText,
@@ -132,6 +129,9 @@ func paragraphHint(length string) string {
 	}
 }
 
+// wordTarget returns the length-tier default per-chapter word target.
+// Anchors must stay consistent with outline.wordTargetHint (the planning
+// ranges given to the outline LLM).
 func wordTarget(length string) int {
 	switch length {
 	case "short":
@@ -141,6 +141,15 @@ func wordTarget(length string) int {
 	default:
 		return 2500
 	}
+}
+
+// chapterWordTarget prefers the outline-planned per-chapter target; a planned
+// value of 0 means unplanned and falls back to the tier default.
+func chapterWordTarget(planned int, length string) int {
+	if planned > 0 {
+		return planned
+	}
+	return wordTarget(length)
 }
 
 func joinComma(xs []string) string {

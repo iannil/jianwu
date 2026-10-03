@@ -122,7 +122,7 @@ func (s *Server) mcpCreateBook(ctx context.Context, topic string, dims map[strin
 		return nil, err
 	}
 	return &callToolShim{
-		slug:     bc.Meta.Slug,
+		slug:     filepath.Base(bc.BookDir),
 		chapters: mcpChapterCount(bc),
 		parts:    len(bc.Outline.Parts),
 	}, nil

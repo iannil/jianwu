@@ -6,7 +6,7 @@ Turn knowledge into structured, reviewable non-fiction books with traceable sour
 
 jianwu is an independent, local-first Go CLI for writers, researchers and people organizing knowledge. It guides book design, outlines and chapter drafting, records source checks, and keeps prose, citations and progress in your workspace.
 
-**Development version: 0.3.11, not yet released.** [Project status](docs/PROJECT_STATUS.md) · [Capabilities](docs/CAPABILITIES.md) · [Roadmap](docs/ROADMAP.md)
+**Development version: 0.3.13, not yet released.** [Project status](docs/PROJECT_STATUS.md) · [Capabilities](docs/CAPABILITIES.md) · [Roadmap](docs/ROADMAP.md)
 
 ## Workflow
 
@@ -30,6 +30,8 @@ Design interview → Outline → Chapter scaffolds → Research / Draft / Valida
 - `jianwu site` regenerates a static reading shelf from published releases only: catalog, chapter reading pages, EPUB downloads and an OPDS acquisition feed. Deterministic output, deployable to any static host.
 
 Source verification assists human review. Book quality and learning outcomes still require [real evaluation](docs/EVALUATION.md).
+
+Current chapter drafting is single-pass — one LLM draft per chapter, roughly 1.2k–5k characters each — so today's output tier is booklet / serialized long-form rather than full-length manuscript. Section-level generation to lift that ceiling is [roadmapped](docs/ROADMAP.md), gated on the sample-book evaluation.
 
 ## Getting started
 

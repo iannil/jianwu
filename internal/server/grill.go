@@ -264,6 +264,39 @@ func (s *Server) handleGrillAnswer(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, sessionView(session, next, nextRec))
 }
 
+// handleGrillUnanswer removes one answered dimension so the wizard can go
+// back and re-answer it. Later answers stay intact; the stored
+// recommendation is replayed without another LLM call.
+func (s *Server) handleGrillUnanswer(w http.ResponseWriter, r *http.Request) {
+	repo := grill.NewRepository(s.root())
+	session, err := repo.Load(r.PathValue("id"))
+	if err != nil {
+		fail(w, http.StatusNotFound, fmt.Sprintf("session %q not found", r.PathValue("id")))
+		return
+	}
+	dim := r.PathValue("dim")
+	if _, ok := session.Answers[dim]; !ok {
+		fail(w, http.StatusNotFound, fmt.Sprintf("dimension %q has no answer", dim))
+		return
+	}
+	delete(session.Answers, dim)
+	if session.Status == grill.SessionCompleted {
+		session.Status = grill.SessionInProgress
+	}
+	session.CurrentDim = dim
+	if err := repo.Save(session); err != nil {
+		failErr(w, err)
+		return
+	}
+	tree := grill.DefaultTree()
+	pending := tree.NextPending(session.Answers)
+	var rec string
+	if pending != nil {
+		rec = session.Recommendations[pending.ID]
+	}
+	writeJSON(w, http.StatusOK, sessionView(session, pending, rec))
+}
+
 // handleGrillAbandon marks a session abandoned so it stops appearing for resume.
 func (s *Server) handleGrillAbandon(w http.ResponseWriter, r *http.Request) {
 	repo := grill.NewRepository(s.root())

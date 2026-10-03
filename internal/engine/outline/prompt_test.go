@@ -18,6 +18,7 @@ func TestSystemTemplateRenders(t *testing.T) {
 		Goal:           "understanding",
 		Length:         "long",
 		Language:       "zh",
+		WordTargetHint: wordTargetHint("long"),
 	}
 	raw, err := loadSystem()
 	if err != nil {
@@ -41,6 +42,9 @@ func TestSystemTemplateRenders(t *testing.T) {
 	}
 	if !strings.Contains(out, "Book A outline") {
 		t.Errorf("missing corpus outlines content")
+	}
+	if !strings.Contains(out, "3000-5000") {
+		t.Errorf("missing word target hint in system prompt")
 	}
 	// Verify the template is non-empty
 	if len(out) == 0 {

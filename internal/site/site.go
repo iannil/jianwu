@@ -28,6 +28,15 @@ type ShelfBook struct {
 	Versions []string // all versions, latest first
 }
 
+// CoverRel returns the release-relative cover path (e.g. "cover.png") when
+// the release snapshotted one, else "".
+func (b *ShelfBook) CoverRel() string {
+	if b.Manifest != nil && b.Manifest.Cover != nil {
+		return b.Manifest.Cover.Path
+	}
+	return ""
+}
+
 // Scan lists the published shelf: every book under <wsRoot>/books with at
 // least one valid release. Books with unreadable manifests are reported in
 // skipped, never silently dropped; books without releases are simply absent
@@ -181,6 +190,17 @@ func GenerateAt(wsRoot, outDir, baseURL string) (*Result, error) {
 				return nil, err
 			}
 			res.EPUBs++
+		}
+		// Cover snapshot ships next to the book page (pages reference it
+		// relatively, e.g. src="cover.png").
+		if rel := b.CoverRel(); rel != "" {
+			data, err := os.ReadFile(filepath.Join(b.Dir, filepath.FromSlash(rel)))
+			if err != nil {
+				return nil, fmt.Errorf("book %q cover: %w", b.Slug, err)
+			}
+			if err := write(b.Slug+"/"+rel, data); err != nil {
+				return nil, err
+			}
 		}
 		entries = append(entries, opdsEntry{Book: b})
 	}

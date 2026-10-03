@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/iannil/jianwu/internal/book"
@@ -19,6 +20,28 @@ type ChapterDoc struct {
 	BodyMD       string
 	Meta         book.OutlineChapter
 	Missing      bool
+}
+
+// StripLeadingTitle removes a leading markdown heading that duplicates the
+// chapter title. Generators emit "## <title>" as the body's first line while
+// every output template (EPUB chapter page, reading-site page, md/hugo
+// exports) renders the title itself — keeping both produced stacked
+// duplicate titles.
+func StripLeadingTitle(body, title string) string {
+	if title == "" {
+		return body
+	}
+	first, rest, hasMore := strings.Cut(body, "\n")
+	if !hasMore {
+		first, rest = body, ""
+	}
+	t := strings.TrimSpace(strings.TrimLeft(strings.TrimSpace(first), "#"))
+	t = strings.TrimSpace(strings.TrimRight(t, "#")) // closed ATX form "## T ##"
+	if t != strings.TrimSpace(title) {
+		return body
+	}
+	// Swallow the blank line(s) that followed the removed heading.
+	return strings.TrimLeft(rest, "\n")
 }
 
 // Collect walks the outline in order and reads every chapter file from
@@ -53,6 +76,7 @@ func CollectDir(dir string, outline *book.Outline) ([]ChapterDoc, error) {
 				}
 				doc.Missing = true
 			} else {
+				body = StripLeadingTitle(body, c.Title)
 				renumbered, _ := book.RenumberFootnotes(body, 1)
 				accessed := map[string]time.Time{}
 				for _, cit := range c.Citations {

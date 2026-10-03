@@ -1,6 +1,6 @@
 # jianwu 功能概览
 
-> 开发版本：0.3.12（尚未发布） | 最后更新：2026-10-03
+> 开发版本：0.3.13（尚未发布） | 最后更新：2026-10-03
 
 ---
 
@@ -45,9 +45,9 @@
 
 - **工作区配置**：根目录按 `--dir` flag > 环境变量 `JIANWU_WORKSPACE` > 全局配置 `~/.config/jianwu/config.yaml` 的 `workspace:` 键 > 启动目录解析；Web 页面可随时切换（持久化到全局配置文件，CLI 共享）。**未配置/未初始化工作区时，新建图书、生成、展开、修订等操作被拦截**，页面引导先完成配置。
 - **工作区仪表盘**：初始化工作区、书籍列表与进度条、累计 Token 用量、配置摘要。
-- **新建图书向导**：12 维 grill 访谈逐题呈现，AI 推荐一键接受/修改/skip；完成后一键生成大纲与章节框架。
-- **书籍详情**：分 part 章节表（状态/字数/引用/未验证论断/核查结论）；逐章展开、重写、事实核查、修订、审阅、删除、插入；展开全部、定稿、导出 md/hugo/pdf/epub 并下载产物。
-- **章节阅读**：markdown 渲染、脚注、引用来源、事实核查结论（含建议改写）。
+- **新建图书向导**：12 维 grill 访谈逐题呈现，AI 推荐一键接受/修改/skip，支持「上一步」回退重答；完成后一键生成大纲与章节框架。
+- **书籍详情**：分 part 章节表（状态/字数/引用/未验证论断/核查结论）；逐章展开、重写、事实核查、修订、审阅（带论断四态摘要确认）、删除、插入；展开全部、定稿、导出（md/hugo/pdf/epub 下拉菜单，PDF 标注需本机 pandoc）并下载产物。
+- **章节阅读**：goldmark 同源渲染（与阅读站/EPUB 逐字一致，含表格/脚注锚点）、引用来源、事实核查结论（含建议改写）；API 侧返回 `body_html`，审阅预览即读者所见。
 - **语料管理**：列表/详情/统计、目录同步、重建 embedding 索引。
 - **任务面板**：所有长耗时操作以后台任务执行，实时进度、日志、取消。
 
@@ -83,9 +83,9 @@ books/<slug>/releases/<MAJOR.MINOR>/
 
 `jianwu site` 从**已发布 release** 生成静态阅读站（`<workspace>/site/`，`--out` 可改），可直接部署到任意静态托管。工作稿绝不上架——分发渠道只读 Release（ADR 29）：
 
-- **书架页** `index.html`：书名/副题/作者/版本/日期/未核验论断数，附 OPDS 订阅入口。
-- **书页** `<slug>/index.html`：colophon（许可 + AI 生成披露）、历史版本、目录、EPUB 下载（附 sha256 摘要）。
-- **章节页** `<slug>/ch-NN-MM.html`：正文 + 脚注 + 与 EPUB **逐字一致**的"来源与核验"节（复用同一渲染器），上一章/下一章导航。
+- **书架页** `index.html`：书名/副题/作者/版本/日期/未核验论断数 + 封面缩略（release 快照），附 OPDS 订阅入口。
+- **书页** `<slug>/index.html`：封面、colophon（许可 + AI 生成披露）、历史版本、目录、EPUB 下载（附 sha256 摘要）。
+- **章节页** `<slug>/ch-NN-MM.html`：正文 + 脚注 + 与 EPUB **逐字一致**的"来源与核验"节（复用同一渲染器；论断表含"涉及来源"列，可从核验结论反查来源编号），顶部与页底双章导航（上一章/目录/下一章）。
 - **OPDS** `opds.xml`：OPDS 1.x acquisition feed；阅读器 App 可发现并直接下载 `epub/<slug>.epub`（release artifact 逐字节副本）。
 - **RSS** `rss.xml`：RSS 2.0 发布订阅源（v0.3.12）——每版本一个 item，EPUB 以 enclosure 附带，描述含未核验论断数披露；`--base <url>` 使 RSS/OPDS 链接绝对化。
 - **确定性**：时间戳全部来自 manifest，同一书架状态重复生成字节相同；`site/` 为派生状态，每次整体重建。损坏的 release 跳过并报告，不中断生成。
@@ -104,9 +104,9 @@ grill → outline → scaffolding → expand → factcheck → [revise → factc
 | 阶段 | 包 | 说明 |
 |---|---|---|
 | **Grill** | `engine/grill` | 12 维度设计决策树问诊。LLM 逐维推荐，用户接受/修改/跳过。stateful session 可 Ctrl+C 恢复。 |
-| **Outline** | `engine/outline` | 单次 LLM 调用 + JSON Schema 强制输出，生成全书目录结构。 |
-| **Scaffolding** | `engine/scaffolding` | N 章并行生成章节框架（errgroup，continue-on-error），产出章节目录 + 关键概念。 |
-| **Expand** | `engine/expand` | 3 迭代 agent：① Research（web_search + read_url）→ ② Draft（注入 archetype + style + samples）→ ③ Validate（自检 + 修订）。产出带 `[^N]` 引用标记的 markdown。支持 streaming 输出。 |
+| **Outline** | `engine/outline` | 单次 LLM 调用 + JSON Schema 强制输出，生成全书目录结构；v0.3.13 起按章规划 `word_count_target`（档位区间引导，生成后夹紧到 500–8000，未规划为 0）。 |
+| **Scaffolding** | `engine/scaffolding` | N 章并行生成章节框架（errgroup，continue-on-error），产出章节目录 + 关键概念。逐字段回写，保留 outline 规划的每章字数目标。 |
+| **Expand** | `engine/expand` | 3 迭代 agent：① Research（web_search + read_url）→ ② Draft（注入 archetype + style + samples）→ ③ Validate（自检 + 修订）。产出带 `[^N]` 引用标记的 markdown。支持 streaming 输出。草稿字数目标优先取该章 `word_count_target`，未规划回退篇幅档位默认（short 1500 / medium 2500 / long 4000）。 |
 | **Factcheck** | `engine/factcheck` | 按 claim 的 citation_ids 核对来源支持程度，结果写入 outline.json；未知与失败保留未通过结论。 |
 | **Revise** | `engine/revise` | 基于 factcheck 的 `SuggestedRewrite`，LLM 修订未通过章节。 |
 
@@ -117,6 +117,10 @@ scaffolded → expanded → reviewed → final → export
 ```
 
 `outline.json` 为状态真相源，.md frontmatter 镜像同步。
+
+### 篇幅与产物档位（诚实分档）
+
+篇幅档位决定**章数规划**（short=3–5 章 | medium=8–12 章 | long=15–25 章），每章正文是**单次草稿输出**（字数目标按章规划，见上表 expand 行）。因此当前产物档位是**小册子 / 系列长文**（每章约 1.2k–5k 字），不是单章万字级的完整书稿——出版层（Release/EPUB/阅读站）按小册子档位服务。解除"单章=单次输出"上限的分节生成在 [ROADMAP 开放事项](ROADMAP.md) 中排队，前置条件是样书评估结论。
 
 ---
 
@@ -177,7 +181,7 @@ scaffolded → expanded → reviewed → final → export
 
 - `Meta` — 图书元数据、archetype 选择、参数（受众/深度/目标/篇幅）
 - `Outline` — 多 part 结构，每 part 含 chapters[]
-- `OutlineChapter` — 标题、状态、字数、引用、`Verdicts[]`
+- `OutlineChapter` — 标题、状态、字数、`word_count_target`（v0.3.13，按章规划目标）、引用、`Verdicts[]`
 - `ChapterFrontmatter` — 单章 YAML 头（状态/字数/模型/时间戳）
 - `Claim` / `ClaimVerdict` — 声明 + 事实复核结果（含 `SuggestedRewrite`）
 - `ClaimWhitelist` — 旧字段读取兼容，不再绕过来源验证
@@ -249,6 +253,10 @@ scaffolded → expanded → reviewed → final → export
 | v0.2.0–0.2.3 | factcheck/revise + Ollama + 章节迭代命令 + corpus sync + embedding 索引 + 6 原型 + 10 语料 |
 | v0.3.0–0.3.5 | Storage 接口 + 长任务进度模型 + Token 计量 + per-tenant Secrets + 并发安全装配 + SaaS 安全加固 |
 | 0.3.6-dev | 独立产品、可靠批量写入、显式引用、累计已报告用量、本地发布 |
+| 0.3.7–0.3.10 | Kimi/DeepSeek provider、Storage 迁移收尾、Web UI 完善、独立产品化（ADR 28） |
+| 0.3.11（ADR 29） | 出版层：不可变 Release、纯 Go EPUB3、静态阅读站 + OPDS |
+| 0.3.12（ADR 30） | agent 接入层：MCP stdio 服务器、API Bearer token、site RSS、SKILL 安装 |
+| 0.3.13 | 按章字数目标：outline 规划 `word_count_target` + expand 优先采用；篇幅档位诚实分档（小册子/系列长文） |
 
 ## 独立产品与可靠性边界
 

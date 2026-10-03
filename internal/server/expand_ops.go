@@ -98,7 +98,7 @@ func expandInputFor(bc *bookCtx, partIdx, chIdx int) (expand.ExpandInput, error)
 		Goal: bc.Meta.Parameters.Goal, Length: bc.Meta.Parameters.Length,
 		Language: bc.Meta.Language, PartIndex: partIdx, PartTitle: partTitle, PartRole: partRole,
 		ChapterIndex: chIdx, ChapterTitle: ch.Title, Abstract: ch.Abstract,
-		KeyConcepts: ch.KeyConcepts, WebSearchEnabled: true,
+		KeyConcepts: ch.KeyConcepts, WordCountTarget: ch.WordCountTarget, WebSearchEnabled: true,
 	}
 	in.PreviousChapter, _ = findChapter(bc.Outline, partIdx, chIdx-1)
 	in.NextChapter, _ = findChapter(bc.Outline, partIdx, chIdx+1)

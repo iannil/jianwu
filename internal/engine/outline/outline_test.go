@@ -108,3 +108,66 @@ func TestGenerateRenumberIndices(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateClampsWordTargets(t *testing.T) {
+	// LLM-planned word targets are unreliable at the extremes; Generate
+	// must clamp them into the single-pass draft range (absent stays 0).
+	sample := `{"parts":[{"index":1,"title":"P","role":"r","chapters":[
+        {"index":1,"title":"a","word_count_target":999999},
+        {"index":2,"title":"b","word_count_target":100},
+        {"index":3,"title":"c"},
+        {"index":4,"title":"d","word_count_target":3000}
+    ]}]}`
+	c := mock.New(llm.ChatResponse{Content: sample})
+	out, err := Generate(context.Background(), c, Input{
+		ArchetypeID: "micro-meso-macro", Topic: "t", Audience: "beginner",
+		Depth: "intermediate", Goal: "understanding", Length: "medium", Language: "zh",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []int{8000, 500, 0, 3000}
+	for j, w := range want {
+		if got := out.Parts[0].Chapters[j].WordCountTarget; got != w {
+			t.Errorf("chapter %d word_count_target = %d, want %d", j+1, got, w)
+		}
+	}
+}
+
+func TestClampWordTarget(t *testing.T) {
+	tests := []struct {
+		in   int
+		want int
+	}{
+		{0, 0},
+		{-5, 0},
+		{100, 500},
+		{1500, 1500},
+		{8000, 8000},
+		{999999, 8000},
+	}
+	for _, tt := range tests {
+		if got := clampWordTarget(tt.in); got != tt.want {
+			t.Errorf("clampWordTarget(%d) = %d, want %d", tt.in, got, tt.want)
+		}
+	}
+}
+
+func TestWordTargetHint(t *testing.T) {
+	tests := []struct {
+		length       string
+		wantContains string
+		wantAnchor   string
+	}{
+		{"short", "1200-2000", "1500"},
+		{"medium", "2000-3500", "2500"},
+		{"long", "3000-5000", "4000"},
+		{"", "2000-3500", "2500"},
+	}
+	for _, tt := range tests {
+		got := wordTargetHint(tt.length)
+		if !strings.Contains(got, tt.wantContains) || !strings.Contains(got, tt.wantAnchor) {
+			t.Errorf("wordTargetHint(%q) = %q, want range %q and anchor %q", tt.length, got, tt.wantContains, tt.wantAnchor)
+		}
+	}
+}

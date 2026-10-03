@@ -208,7 +208,10 @@ func (s *Server) listBooks() ([]bookSummary, error) {
 			continue // skip corrupt/incomplete book dirs
 		}
 		out = append(out, bookSummary{
-			Slug:       bc.Meta.Slug,
+			// The directory name is the resolution key (loadBook, site.Scan);
+			// reporting meta.slug here made the entry 404 whenever the two
+			// diverged (hand-renamed dir, edited meta).
+			Slug:       e.Name(),
 			Title:      bc.Meta.Title,
 			Status:     bc.Meta.Status,
 			Archetype:  bc.Meta.Archetype,

@@ -107,6 +107,9 @@ img {
   color: #666;
 }
 
+/* nowrap：状态/编号为短枚举，折行损伤扫视（与阅读站 site.css 同步）。 */
+.st-supported, .st-failed, .st-unverified, .st-uncited, .cite-ids { white-space: nowrap; }
+
 .st-supported { color: #2e7d32; }
 .st-failed    { color: #c62828; }
 .st-unverified,

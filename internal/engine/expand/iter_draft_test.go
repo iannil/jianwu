@@ -83,6 +83,45 @@ func TestWordTarget(t *testing.T) {
 	}
 }
 
+func TestChapterWordTarget(t *testing.T) {
+	tests := []struct {
+		name    string
+		planned int
+		length  string
+		want    int
+	}{
+		{"planned wins over tier", 3200, "short", 3200},
+		{"zero falls back to tier", 0, "short", 1500},
+		{"zero falls back to long", 0, "long", 4000},
+		{"zero falls back to default", 0, "", 2500},
+		{"negative falls back to tier", -1, "long", 4000},
+	}
+	for _, tt := range tests {
+		if got := chapterWordTarget(tt.planned, tt.length); got != tt.want {
+			t.Errorf("%s: chapterWordTarget(%d, %q) = %d, want %d", tt.name, tt.planned, tt.length, got, tt.want)
+		}
+	}
+}
+
+func TestBuildDraftPrompts_UsesPlannedWordTarget(t *testing.T) {
+	in := ExpandInput{Language: "zh", Length: "short", ChapterTitle: "C", WordCountTarget: 3200}
+	sys, _, err := buildDraftPrompts(in, DraftContext{}, ResearchNotes{})
+	if err != nil {
+		t.Fatalf("buildDraftPrompts: %v", err)
+	}
+	if !strings.Contains(sys, "3200 字") {
+		t.Error("system prompt should carry the planned per-chapter target")
+	}
+	in.WordCountTarget = 0
+	sys, _, err = buildDraftPrompts(in, DraftContext{}, ResearchNotes{})
+	if err != nil {
+		t.Fatalf("buildDraftPrompts: %v", err)
+	}
+	if !strings.Contains(sys, "1500 字") {
+		t.Error("unplanned chapter should fall back to the short-tier target")
+	}
+}
+
 func TestJoinComma(t *testing.T) {
 	tests := []struct {
 		input []string

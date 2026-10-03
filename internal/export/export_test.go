@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/xml"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -92,7 +94,15 @@ func TestSourcesXHTMLFourStates(t *testing.T) {
 		},
 	}
 	out := SourcesXHTML(c)
-	for _, want := range []string{"✓ 来源支持", "✗ 未通过", "未核验", "无引用", "来源A", "访问于 2026-10-01", "核验说明"} {
+	for _, want := range []string{
+		"✓ 来源支持", "✗ 未通过", "未核验", "无引用", "来源A", "访问于 2026-10-01",
+		// 涉及来源列：论断与来源编号可对读；无引用论断显示 —。
+		`<th>论断</th><th>涉及来源</th><th>状态</th><th>说明</th>`,
+		`<td class="cite-ids">[1]</td>`,
+		`<td class="cite-ids">—</td>`,
+		// 说明列 summary 为 reasoning 首行摘要，不再是重复的"核验说明"链接。
+		"<summary>来源仅部分支持</summary>",
+	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in sources section:\n%s", want, out)
 		}
@@ -100,6 +110,102 @@ func TestSourcesXHTMLFourStates(t *testing.T) {
 	// Claim text with angle brackets must be escaped.
 	if strings.Contains(out, "支持<论断>") {
 		t.Errorf("unescaped claim text:\n%s", out)
+	}
+}
+
+func TestStripLeadingTitle(t *testing.T) {
+	tests := []struct {
+		name  string
+		body  string
+		title string
+		want  string
+	}{
+		{"h2 匹配剥离", "## 第一章\n正文", "第一章", "正文"},
+		{"h1 匹配剥离", "# 第一章\n正文", "第一章", "正文"},
+		{"闭合式标题剥离", "## 第一章 ##\n正文", "第一章", "正文"},
+		{"前后空白容忍", "##  第一章  \n正文", "第一章", "正文"},
+		{"单行正文剥离", "## 第一章", "第一章", ""},
+		{"标题后空行一并吞掉", "## 第一章\n\n正文", "第一章", "正文"},
+		{"标题不同保留原样", "## 别的标题\n正文", "第一章", "## 别的标题\n正文"},
+		{"非标题首行保留", "正文开头", "第一章", "正文开头"},
+		{"无章节标题保留", "## 第一章\n正文", "", "## 第一章\n正文"},
+	}
+	for _, tt := range tests {
+		if got := StripLeadingTitle(tt.body, tt.title); got != tt.want {
+			t.Errorf("%s: StripLeadingTitle(%q, %q) = %q, want %q", tt.name, tt.body, tt.title, got, tt.want)
+		}
+	}
+}
+
+func TestCollectDirStripsDuplicateTitle(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "01-01.md"),
+		[]byte("---\ntitle: 第一章\n---\n\n## 第一章\n\n正文内容。\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	outline := &book.Outline{Parts: []book.OutlinePart{{
+		Index: 1, Title: "P",
+		Chapters: []book.OutlineChapter{{Index: 1, Title: "第一章"}},
+	}}}
+	docs, err := CollectDir(dir, outline)
+	if err != nil {
+		t.Fatalf("CollectDir: %v", err)
+	}
+	if len(docs) != 1 {
+		t.Fatalf("docs = %d, want 1", len(docs))
+	}
+	if strings.Contains(docs[0].BodyMD, "第一章") {
+		t.Errorf("body still carries the duplicate title heading:\n%q", docs[0].BodyMD)
+	}
+	if !strings.Contains(docs[0].BodyMD, "正文内容。") {
+		t.Errorf("body content lost:\n%q", docs[0].BodyMD)
+	}
+}
+
+func TestCitationIDsLabel(t *testing.T) {
+	tests := []struct {
+		name string
+		ids  []string
+		want string
+	}{
+		{"数值感知排序", []string{"10", "2", "1"}, "[1] [2] [10]"},
+		{"空为无引用符", nil, "—"},
+		{"非数值字典序", []string{"b", "a"}, "[a] [b]"},
+	}
+	for _, tt := range tests {
+		if got := citationIDsLabel(tt.ids); got != tt.want {
+			t.Errorf("%s: citationIDsLabel(%v) = %q, want %q", tt.name, tt.ids, got, tt.want)
+		}
+	}
+}
+
+func TestReasoningSummary(t *testing.T) {
+	if got := reasoningSummary("首行结论。\n第二行细节可以很长很长很长很长。"); got != "首行结论。" {
+		t.Errorf("first line: got %q", got)
+	}
+	long := strings.Repeat("长", 50)
+	got := reasoningSummary(long)
+	if got != strings.Repeat("长", 40)+"…" {
+		t.Errorf("truncation: got %q", got)
+	}
+}
+
+func TestSourcesXHTMLSortsCitations(t *testing.T) {
+	c := book.OutlineChapter{Citations: []book.Citation{
+		{ID: "3", Title: "C3"}, {ID: "10", Title: "C10"}, {ID: "4", Title: "C4"},
+		{ID: "6", Title: "C6"}, {ID: "1", Title: "C1"}, {ID: "2", Title: "C2"},
+	}}
+	out := SourcesXHTML(c)
+	prev := -1
+	for _, id := range []string{"1", "2", "3", "4", "6", "10"} {
+		idx := strings.Index(out, "["+id+"] ")
+		if idx < 0 {
+			t.Fatalf("citation [%s] missing in:\n%s", id, out)
+		}
+		if idx < prev {
+			t.Errorf("citation [%s] out of numeric order in:\n%s", id, out)
+		}
+		prev = idx
 	}
 }
 

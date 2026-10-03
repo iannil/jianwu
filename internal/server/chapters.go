@@ -18,6 +18,7 @@ import (
 	"github.com/iannil/jianwu/internal/engine/expand"
 	"github.com/iannil/jianwu/internal/engine/factcheck"
 	"github.com/iannil/jianwu/internal/engine/revise"
+	"github.com/iannil/jianwu/internal/export"
 	"github.com/iannil/jianwu/internal/storage"
 	"github.com/iannil/jianwu/internal/style"
 )
@@ -42,9 +43,13 @@ type chapterView struct {
 	ReviewedAt       *time.Time          `json:"reviewed_at,omitempty"`
 	ReviewedBy       string              `json:"reviewed_by,omitempty"`
 	// From the .md file (present once expanded).
-	Model  string `json:"model,omitempty"`
-	Body   string `json:"body,omitempty"`
-	FileOK bool   `json:"file_ok"`
+	Model string `json:"model,omitempty"`
+	Body  string `json:"body,omitempty"`
+	// BodyHTML is the goldmark render (same engine as EPUB/reading site,
+	// duplicate leading title stripped) so reviewers preview exactly what
+	// readers get; empty when rendering failed (client falls back).
+	BodyHTML string `json:"body_html,omitempty"`
+	FileOK   bool   `json:"file_ok"`
 }
 
 // handleChapterGet returns one chapter's outline metadata and markdown body.
@@ -70,6 +75,9 @@ func (s *Server) handleChapterGet(w http.ResponseWriter, r *http.Request) {
 		v.FileOK = true
 		v.Body = body
 		v.Model = fm.Model
+		if html, rerr := export.RenderXHTML(export.StripLeadingTitle(body, ch.Title)); rerr == nil {
+			v.BodyHTML = html
+		}
 	}
 	writeJSON(w, http.StatusOK, v)
 }

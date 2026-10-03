@@ -173,6 +173,41 @@ func TestPublish_FirstReleaseWritesVerifiableManifest(t *testing.T) {
 	}
 }
 
+func TestPublish_CoverSnapshottedIntoRelease(t *testing.T) {
+	in, bookDir := publishableBook(t, "covered")
+	// 约定封面（书根 cover.png）必须被快照进 release 并记入 manifest。
+	cover := []byte("\x89PNG-not-real-but-bytes")
+	if err := os.WriteFile(filepath.Join(bookDir, "cover.png"), cover, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	res, err := Publish(storage.OS, in, Options{JianwuVersion: "test"})
+	if err != nil {
+		t.Fatalf("Publish: %v", err)
+	}
+	// 读回 manifest 验证。
+	manRaw, err := os.ReadFile(filepath.Join(res.Dir, "manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var man Manifest
+	if err := json.Unmarshal(manRaw, &man); err != nil {
+		t.Fatal(err)
+	}
+	if man.Cover == nil {
+		t.Fatalf("manifest.cover missing:\n%s", manRaw)
+	}
+	if man.Cover.Path != "cover.png" || man.Cover.Bytes != len(cover) {
+		t.Errorf("cover info = %+v", man.Cover)
+	}
+	got, err := os.ReadFile(filepath.Join(res.Dir, "cover.png"))
+	if err != nil {
+		t.Fatalf("release cover not written: %v", err)
+	}
+	if string(got) != string(cover) {
+		t.Errorf("cover bytes differ")
+	}
+}
+
 func TestPublish_GateFailureReturnsReportAndError(t *testing.T) {
 	in, _ := publishableBook(t, "demo")
 	in.Meta.License = ""

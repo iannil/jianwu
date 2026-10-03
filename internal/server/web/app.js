@@ -101,7 +101,7 @@ const FocusTrap = {
 const Modal = {
   _resolve: null,
 
-  open({ title, text = "", input = false, value = "", placeholder = "", okText = "确定", danger = false }) {
+  open({ title, text = "", warn = "", input = false, value = "", placeholder = "", okText = "确定", danger = false }) {
     return new Promise(resolve => {
       if (this._resolve) this.close(null); // 被覆盖的旧对话框按取消收尾，Promise 不悬挂
       this._resolve = resolve;
@@ -109,6 +109,9 @@ const Modal = {
       const textEl = $("#modal-text");
       textEl.textContent = text;
       textEl.classList.toggle("hidden", !text);
+      const warnEl = $("#modal-warn");
+      warnEl.textContent = warn;
+      warnEl.classList.toggle("hidden", !warn);
       $("#modal-input-row").classList.toggle("hidden", !input);
       const inp = $("#modal-input");
       inp.value = value;
@@ -162,6 +165,28 @@ function statusBadge(s) {
 function fmtTokens(u) {
   if (!u || !u.call_count) return "—";
   return `${u.total_tokens ?? 0} tokens（${u.call_count} 次调用）`;
+}
+
+// 论断四态统计，口径与 export.claimStatus 一致：claim 文本匹配优先，
+// 其次 citation id 归属；无 citation_ids 记为无引用，有引用但无匹配判定记为未核验。
+function claimCounts(ch) {
+  const claims = ch.claims || [], verdicts = ch.verdicts || [];
+  const n = { supported: 0, failed: 0, unverified: 0, uncited: 0 };
+  for (const cl of claims) {
+    const ids = cl.citation_ids || [];
+    if (!ids.length) { n.uncited++; continue; }
+    if (!verdicts.length) { n.unverified++; continue; }
+    let matched = false, supported = false;
+    for (const v of verdicts) {
+      if (v.claim_text !== cl.text && !ids.includes(v.citation_id)) continue;
+      matched = true;
+      if (v.verified) { supported = true; break; }
+    }
+    if (supported) n.supported++;
+    else if (matched) n.failed++;
+    else n.unverified++;
+  }
+  return n;
 }
 
 // Minimal markdown renderer: headings, bold/italic/code, footnotes, lists, paragraphs.
@@ -509,14 +534,19 @@ const App = {
           <span class="tb-sep" aria-hidden="true"></span>
           <button class="btn" onclick="App.finalize(${jsAttr(slug)})">定稿</button>
           <span class="tb-sep" aria-hidden="true"></span>
-          <div class="tb-group" role="group" aria-label="导出">
-            <span class="tb-label">导出</span>
-            <button class="btn" onclick="App.exportBook(${jsAttr(slug)},'md')">Markdown</button>
-            <button class="btn" onclick="App.exportBook(${jsAttr(slug)},'hugo')">Hugo</button>
-            <button class="btn" onclick="App.exportBook(${jsAttr(slug)},'pdf')">PDF</button>
-            <button class="btn" onclick="App.exportBook(${jsAttr(slug)},'epub')">EPUB</button>
-            <button class="btn" onclick="App.downloadExport(${jsAttr(slug)},'md')">下载 .md</button>
-            <button class="btn" onclick="App.downloadExport(${jsAttr(slug)},'epub')">下载 .epub</button>
+          <div class="tb-group menu-anchor">
+            <button class="btn" id="export-menu-btn" aria-haspopup="true" aria-expanded="false" onclick="App.toggleExportMenu(event)">导出 ▾</button>
+            <div class="menu hidden" id="export-menu" role="menu" aria-label="导出与下载">
+              <div class="menu-cap">生成（后台任务）</div>
+              <button type="button" role="menuitem" onclick="App.exportBook(${jsAttr(slug)},'md')">Markdown</button>
+              <button type="button" role="menuitem" onclick="App.exportBook(${jsAttr(slug)},'hugo')">Hugo 站点</button>
+              <button type="button" role="menuitem" title="依赖本机已安装 pandoc" onclick="App.exportBook(${jsAttr(slug)},'pdf')">PDF（需 pandoc）</button>
+              <button type="button" role="menuitem" onclick="App.exportBook(${jsAttr(slug)},'epub')">EPUB</button>
+              <div class="menu-sep" aria-hidden="true"></div>
+              <div class="menu-cap">下载（已生成的文件）</div>
+              <button type="button" role="menuitem" onclick="App.downloadExport(${jsAttr(slug)},'md')">下载 .md</button>
+              <button type="button" role="menuitem" onclick="App.downloadExport(${jsAttr(slug)},'epub')">下载 .epub</button>
+            </div>
           </div>
           <span class="tb-sep" aria-hidden="true"></span>
           <div class="tb-group" role="group" aria-label="发布">
@@ -526,8 +556,8 @@ const App = {
         </div>
       </div>
       ${(rel.releases || []).length ? `
-      <div class="card" style="margin-bottom:14px">
-        <b>已发布版本</b>
+      <div class="part-block">
+        <div class="part-title">已发布版本</div>
         <table class="chapters">
           <tr><th>版本</th><th>发布时间</th><th>章节</th><th>未核验论断</th><th>EPUB</th></tr>
           ${rel.releases.map(r => `<tr><td class="addr">${esc(r.version)}</td><td>${esc(r.created_at)}</td><td>${r.chapters}</td><td>${r.claims_unverified}</td><td>${r.has_epub ? "✓" : "—"}</td></tr>`).join("")}
@@ -574,7 +604,28 @@ const App = {
       j => { if (j.slug === slug) this.route(); });
   },
   async reviewChapter(slug, p, c) {
+    const addr = `${String(p).padStart(2, "0")}-${String(c).padStart(2, "0")}`;
     try {
+      const ch = await api(`/books/${encodeURIComponent(slug)}/chapters/${p}/${c}`);
+      const n = claimCounts(ch);
+      const parts = [];
+      if (n.supported) parts.push(`${n.supported} 来源支持`);
+      if (n.failed) parts.push(`${n.failed} 未通过`);
+      if (n.unverified) parts.push(`${n.unverified} 未核验`);
+      if (n.uncited) parts.push(`${n.uncited} 无引用`);
+      const summary = parts.length ? `本章论断：${parts.join("，")}。` : "本章无论断记录。";
+      const risks = [];
+      if (n.failed) risks.push(`${n.failed} 条未通过`);
+      if (n.unverified) risks.push(`${n.unverified} 条未核验`);
+      const hasRisk = risks.length > 0;
+      const warn = hasRisk ? `⚠ 仍有 ${risks.join("、")}论断。\n建议先核查修订；确认无误后再审阅等于你为这些论断背书。` : "";
+      const ok = await Modal.open({
+        title: `标记已审阅 ${addr}`,
+        text: `${summary} 确认你已人工审阅本章正文？`,
+        warn,
+        okText: hasRisk ? "仍要标记已审阅" : "确认已审阅",
+      });
+      if (!ok) return;
       await api(`/books/${encodeURIComponent(slug)}/chapters/${p}/${c}/review`, { body: {} });
       toast("已标记为已审阅（人工确认）", "ok");
       this.route();
@@ -608,11 +659,32 @@ const App = {
       this.route();
     } catch (e) { toast(e.message, "err"); }
   },
+  // 导出下拉菜单：点击开关；菜单项点击/外点/Escape 后收起。
+  toggleExportMenu(ev) {
+    ev.stopPropagation();
+    const m = $("#export-menu");
+    if (!m) return;
+    const opening = m.classList.contains("hidden");
+    m.classList.toggle("hidden", !opening);
+    $("#export-menu-btn")?.setAttribute("aria-expanded", String(opening));
+    if (!opening) return;
+    const close = e => {
+      if (!m.contains(e.target)) App.closeExportMenu();
+      document.removeEventListener("click", close, true);
+    };
+    document.addEventListener("click", close, true);
+  },
+  closeExportMenu() {
+    $("#export-menu")?.classList.add("hidden");
+    $("#export-menu-btn")?.setAttribute("aria-expanded", "false");
+  },
   exportBook(slug, target) {
+    this.closeExportMenu();
     this.startJob(`/books/${encodeURIComponent(slug)}/export`, { target },
-      j => { if (j.slug === slug && j.status === "succeeded") toast("导出完成，可点击「下载 .md」获取文件", "ok"); });
+      j => { if (j.slug === slug && j.status === "succeeded") toast("导出完成，可从「导出 ▾」下载文件", "ok"); });
   },
   downloadExport(slug, target) {
+    this.closeExportMenu();
     window.open(`/api/v1/books/${encodeURIComponent(slug)}/export/file?target=${target}`, "_blank");
   },
   async publishBook(slug) {
@@ -656,7 +728,7 @@ const App = {
       }).join("");
       $("#chapter-drawer-body").innerHTML = `
         ${ch.abstract ? `<div class="muted" style="margin-bottom:10px">${esc(ch.abstract)}</div>` : ""}
-        <div class="md-body">${ch.body ? renderMD(ch.body) : `<div class="empty">尚未展开（状态：${STATUS_ZH[ch.status] || ch.status}）</div>`}</div>
+        ${ch.body_html ? `<div class="md-body">${ch.body_html}</div>` : ch.body ? `<div class="muted" style="font-size:12px;margin-bottom:8px">预览为简化渲染（表格、引用块等不显示）；完整格式以导出文件与阅读站为准。</div><div class="md-body">${renderMD(ch.body)}</div>` : `<div class="empty">尚未展开（状态：${STATUS_ZH[ch.status] || ch.status}）</div>`}
         ${(ch.verdicts || []).length ? `<h2>事实核查</h2>${verdicts}` : ""}
         ${cites ? `<h2>引用来源</h2><ul class="cite-list">${cites}</ul>` : ""}
       `;
@@ -702,7 +774,8 @@ const App = {
           <div class="muted" style="margin-top:10px;font-size:13px">其余 11 个维度（受众、目标、结构原型、深度、篇幅…）将逐个出现，回车或点按钮接受 AI 推荐即可。</div>
         </div>`;
       $("#wiz-topic").focus();
-      $("#wiz-topic").addEventListener("keydown", e => { if (e.key === "Enter") this.wizardStart(); });
+      // isComposing：中文输入法回车选词不提交。
+      $("#wiz-topic").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) this.wizardStart(); });
       return;
     }
     // Render current question.
@@ -712,7 +785,10 @@ const App = {
     const remaining = w.dim ? `<span class="step"></span>` : "";
     v.innerHTML = `
       <div class="page-head"><div><h1>新建图书</h1><div class="desc">主题：${esc(w.topic)}</div></div>
-        <button class="btn ghost" onclick="App.wizardAbort()">放弃</button></div>
+        <div class="tb-group">
+          ${w.answered.length ? `<button class="btn ghost" onclick="App.wizardBack()">← 上一步</button>` : ""}
+          <button class="btn ghost" onclick="App.wizardAbort()">放弃</button>
+        </div></div>
       <div class="card wizard">
         <div class="wizard-steps">${stepEls}${remaining}</div>
         ${w.complete ? `
@@ -737,7 +813,7 @@ const App = {
     const input = $("#wiz-answer");
     if (input) {
       input.focus();
-      input.addEventListener("keydown", e => { if (e.key === "Enter") this.wizardSubmit(); });
+      input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) this.wizardSubmit(); });
     }
   },
 
@@ -765,6 +841,22 @@ const App = {
     try {
       const res = await api(`/grill/sessions/${w.sessionId}/answer`, { body: { answer } });
       w.answered.push(w.dim.id);
+      w.answers = res.answers;
+      w.dim = res.dimension;
+      w.recommendation = res.recommendation;
+      w.complete = res.complete;
+      this.viewNewWizard(w);
+    } catch (e) { toast(e.message, "err"); }
+  },
+
+  // 回退到上一个已答维度：删除该答案后服务端回到该题，推荐从会话记录回放（无额外 LLM 调用）。
+  async wizardBack() {
+    const w = this.wizard;
+    if (!w || !w.answered.length) return;
+    const dimId = w.answered[w.answered.length - 1];
+    try {
+      const res = await api(`/grill/sessions/${w.sessionId}/answers/${encodeURIComponent(dimId)}`, { method: "DELETE" });
+      w.answered.pop();
       w.answers = res.answers;
       w.dim = res.dimension;
       w.recommendation = res.recommendation;
@@ -1077,11 +1169,12 @@ const App = {
 $("#modal-ok").addEventListener("click", () => Modal.submit());
 $("#modal-cancel").addEventListener("click", () => Modal.close(null));
 $("#modal").addEventListener("click", e => { if (e.target.id === "modal") Modal.close(null); });
-$("#modal-input").addEventListener("keydown", e => { if (e.key === "Enter") Modal.submit(); });
+$("#modal-input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) Modal.submit(); });
 $("#drawer-backdrop").addEventListener("click", () => { App.closeChapter(); App.closeJobs(); });
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return;
   if (!$("#modal").classList.contains("hidden")) return Modal.close(null);
+  if ($("#export-menu") && !$("#export-menu").classList.contains("hidden")) return App.closeExportMenu();
   if (!$("#chapter-drawer").classList.contains("hidden")) return App.closeChapter();
   if (!$("#jobs-drawer").classList.contains("hidden")) return App.closeJobs();
 });

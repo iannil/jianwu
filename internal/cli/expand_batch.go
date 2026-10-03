@@ -52,7 +52,7 @@ func generateExpandedChapter(parent context.Context, bc *bookCtx, cfg *config.Co
 	p := findPart(bc.Outline, partIdx)
 	in := expand.ExpandInput{ArchetypeID: m.Archetype, Topic: m.Title, Audience: m.Parameters.Audience, Depth: m.Parameters.Depth,
 		Goal: m.Parameters.Goal, Length: m.Parameters.Length, Language: m.Language, PartIndex: partIdx, PartTitle: p.Title, PartRole: p.Role,
-		ChapterIndex: chIdx, ChapterTitle: ch.Title, Abstract: ch.Abstract, KeyConcepts: ch.KeyConcepts, WebSearchEnabled: true}
+		ChapterIndex: chIdx, ChapterTitle: ch.Title, Abstract: ch.Abstract, KeyConcepts: ch.KeyConcepts, WordCountTarget: ch.WordCountTarget, WebSearchEnabled: true}
 	in.PreviousChapter, _ = findChapter(bc.Outline, partIdx, chIdx-1)
 	in.NextChapter, _ = findChapter(bc.Outline, partIdx, chIdx+1)
 	chatter := engine.NewTrackingChatter(deps.Chatter, tracker)

@@ -19,6 +19,7 @@ type Manifest struct {
 	JianwuVersion string          `json:"jianwu_version"`
 	Content       ManifestContent `json:"content"`
 	EPUB          *ArtifactInfo   `json:"epub,omitempty"`
+	Cover         *ArtifactInfo   `json:"cover,omitempty"`
 }
 
 // ManifestContent hashes and counts the snapshot files inside a release.
